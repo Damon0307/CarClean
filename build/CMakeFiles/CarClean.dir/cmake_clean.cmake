@@ -1,0 +1,16 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/CarClean.dir/src/AIIPC.cpp.o"
+  "CMakeFiles/CarClean.dir/src/CarCleanReporter.cpp.o"
+  "CMakeFiles/CarClean.dir/src/DetourReport.cpp.o"
+  "CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
+  "CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
+  "CMakeFiles/CarClean.dir/src/main.cpp.o"
+  "CMakeFiles/CarClean.dir/src/uart.cpp.o"
+  "CarClean"
+  "CarClean.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/CarClean.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
