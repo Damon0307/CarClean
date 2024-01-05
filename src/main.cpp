@@ -18,7 +18,7 @@ const char *DEF_CFG_FILE = "default_info.json";
  
 int main()
 {
-  printf("CarClean Debug ver 1.4 start up \n");
+  printf("CarClean Debug ver 1.4 start up pay \n");
  
  
   // std::unique_ptr<UartMod> uni_uart(new UartMod());  //串口模块
