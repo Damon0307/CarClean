@@ -4,13 +4,11 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/wjc/WorkSpace/HTTPTEST/src/AIIPC.cpp" "/home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/CarClean.dir/src/AIIPC.cpp.o"
-  "/home/wjc/WorkSpace/HTTPTEST/src/CarCleanReporter.cpp" "/home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/CarClean.dir/src/CarCleanReporter.cpp.o"
-  "/home/wjc/WorkSpace/HTTPTEST/src/DetourReport.cpp" "/home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/CarClean.dir/src/DetourReport.cpp.o"
-  "/home/wjc/WorkSpace/HTTPTEST/src/UartMod.cpp" "/home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
-  "/home/wjc/WorkSpace/HTTPTEST/src/WashReport.cpp" "/home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
-  "/home/wjc/WorkSpace/HTTPTEST/src/main.cpp" "/home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/CarClean.dir/src/main.cpp.o"
-  "/home/wjc/WorkSpace/HTTPTEST/src/uart.cpp" "/home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/CarClean.dir/src/uart.cpp.o"
+  "/home/wjc/CarClean/src/NetFoundation.cpp" "/home/wjc/CarClean/build/CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o"
+  "/home/wjc/CarClean/src/UartMod.cpp" "/home/wjc/CarClean/build/CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
+  "/home/wjc/CarClean/src/WashReport.cpp" "/home/wjc/CarClean/build/CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
+  "/home/wjc/CarClean/src/main.cpp" "/home/wjc/CarClean/build/CMakeFiles/CarClean.dir/src/main.cpp.o"
+  "/home/wjc/CarClean/src/uart.cpp" "/home/wjc/CarClean/build/CMakeFiles/CarClean.dir/src/uart.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

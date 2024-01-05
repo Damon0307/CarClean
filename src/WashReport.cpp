@@ -683,8 +683,6 @@ void WashReport::StartReportingProcess()
                     std::cout << "Timeout occurred while waiting for ai ipc data." << std::endl;
                 }
 #endif 
-
-
                 PostJsonToServer(capture_res);
                 // NotificationsToUart
                 if (capture_res["cleanRes"] == 2)

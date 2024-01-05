@@ -1,7 +1,5 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/CarClean.dir/src/AIIPC.cpp.o"
-  "CMakeFiles/CarClean.dir/src/CarCleanReporter.cpp.o"
-  "CMakeFiles/CarClean.dir/src/DetourReport.cpp.o"
+  "CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o"
   "CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
   "CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
   "CMakeFiles/CarClean.dir/src/main.cpp.o"

@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/wjc/WorkSpace/HTTPTEST
+CMAKE_SOURCE_DIR = /home/wjc/CarClean
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/wjc/WorkSpace/HTTPTEST/build
+CMAKE_BINARY_DIR = /home/wjc/CarClean/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles /home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/wjc/CarClean/build/CMakeFiles /home/wjc/CarClean/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/wjc/WorkSpace/HTTPTEST/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/wjc/CarClean/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -123,86 +123,32 @@ CarClean/fast:
 	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/build
 .PHONY : CarClean/fast
 
-src/AIIPC.o: src/AIIPC.cpp.o
+src/NetFoundation.o: src/NetFoundation.cpp.o
 
-.PHONY : src/AIIPC.o
-
-# target to build an object file
-src/AIIPC.cpp.o:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/AIIPC.cpp.o
-.PHONY : src/AIIPC.cpp.o
-
-src/AIIPC.i: src/AIIPC.cpp.i
-
-.PHONY : src/AIIPC.i
-
-# target to preprocess a source file
-src/AIIPC.cpp.i:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/AIIPC.cpp.i
-.PHONY : src/AIIPC.cpp.i
-
-src/AIIPC.s: src/AIIPC.cpp.s
-
-.PHONY : src/AIIPC.s
-
-# target to generate assembly for a file
-src/AIIPC.cpp.s:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/AIIPC.cpp.s
-.PHONY : src/AIIPC.cpp.s
-
-src/CarCleanReporter.o: src/CarCleanReporter.cpp.o
-
-.PHONY : src/CarCleanReporter.o
+.PHONY : src/NetFoundation.o
 
 # target to build an object file
-src/CarCleanReporter.cpp.o:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/CarCleanReporter.cpp.o
-.PHONY : src/CarCleanReporter.cpp.o
+src/NetFoundation.cpp.o:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o
+.PHONY : src/NetFoundation.cpp.o
 
-src/CarCleanReporter.i: src/CarCleanReporter.cpp.i
+src/NetFoundation.i: src/NetFoundation.cpp.i
 
-.PHONY : src/CarCleanReporter.i
-
-# target to preprocess a source file
-src/CarCleanReporter.cpp.i:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/CarCleanReporter.cpp.i
-.PHONY : src/CarCleanReporter.cpp.i
-
-src/CarCleanReporter.s: src/CarCleanReporter.cpp.s
-
-.PHONY : src/CarCleanReporter.s
-
-# target to generate assembly for a file
-src/CarCleanReporter.cpp.s:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/CarCleanReporter.cpp.s
-.PHONY : src/CarCleanReporter.cpp.s
-
-src/DetourReport.o: src/DetourReport.cpp.o
-
-.PHONY : src/DetourReport.o
-
-# target to build an object file
-src/DetourReport.cpp.o:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/DetourReport.cpp.o
-.PHONY : src/DetourReport.cpp.o
-
-src/DetourReport.i: src/DetourReport.cpp.i
-
-.PHONY : src/DetourReport.i
+.PHONY : src/NetFoundation.i
 
 # target to preprocess a source file
-src/DetourReport.cpp.i:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/DetourReport.cpp.i
-.PHONY : src/DetourReport.cpp.i
+src/NetFoundation.cpp.i:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/NetFoundation.cpp.i
+.PHONY : src/NetFoundation.cpp.i
 
-src/DetourReport.s: src/DetourReport.cpp.s
+src/NetFoundation.s: src/NetFoundation.cpp.s
 
-.PHONY : src/DetourReport.s
+.PHONY : src/NetFoundation.s
 
 # target to generate assembly for a file
-src/DetourReport.cpp.s:
-	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/DetourReport.cpp.s
-.PHONY : src/DetourReport.cpp.s
+src/NetFoundation.cpp.s:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/NetFoundation.cpp.s
+.PHONY : src/NetFoundation.cpp.s
 
 src/UartMod.o: src/UartMod.cpp.o
 
@@ -321,15 +267,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... CarClean"
-	@echo "... src/AIIPC.o"
-	@echo "... src/AIIPC.i"
-	@echo "... src/AIIPC.s"
-	@echo "... src/CarCleanReporter.o"
-	@echo "... src/CarCleanReporter.i"
-	@echo "... src/CarCleanReporter.s"
-	@echo "... src/DetourReport.o"
-	@echo "... src/DetourReport.i"
-	@echo "... src/DetourReport.s"
+	@echo "... src/NetFoundation.o"
+	@echo "... src/NetFoundation.i"
+	@echo "... src/NetFoundation.s"
 	@echo "... src/UartMod.o"
 	@echo "... src/UartMod.i"
 	@echo "... src/UartMod.s"

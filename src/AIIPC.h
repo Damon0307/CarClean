@@ -34,13 +34,9 @@ public:
 
     void DealAIIPCData(const json &pjson)
     {
-       
         detect_json["label"] = pjson["label"];
-       
         detect_json["img_base64"] = pjson["img_base64"];
-        
         detect_json["device_id"] = pjson["device_id"];
-         
         detect_json["device_version"] = pjson["device_version"];
         detect_json["date"] = pjson["date"];
         detect_json["timestamp"] = pjson["timestamp"];
