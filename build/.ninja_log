@@ -1,0 +1,7 @@
+# ninja log v5
+12	416	1704526931	CMakeFiles/CarClean.dir/src/uart.cpp.o	c18a9d68598aac4a
+3	8253	1704526938	CMakeFiles/CarClean.dir/src/UartMod.cpp.o	a8c77a79c6239ac
+9	13226	1704526943	CMakeFiles/CarClean.dir/src/main.cpp.o	edd51c31634e62fe
+1	14460	1704526945	CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o	ad50a56d3e409231
+9	14756	1704526945	CMakeFiles/CarClean.dir/src/WashReport.cpp.o	31b8ecb24f2c86d1
+14756	15477	1704526946	CarClean	32043bb6d1147dd5

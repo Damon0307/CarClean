@@ -369,7 +369,7 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
 // todo 接收到绕道摄像头推送的数据
 void WashReport::DealDetourIPCData(const json &p_json, Response &res)
 {
-   // printf("Got Detour IPC Data time  %s\n",);
+    printf("Got Detour IPC Data time  %s\n",);
     // 组符合后端服务器的JSON
     json capture_res = GetCaptureJson(); // 已经包含默认信息
     capture_res["captureTime"] = utc_to_string(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
@@ -397,8 +397,7 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
     }
  
     // ResetAllSensor(); 绕道未触发传感器
-   
-
+    
     // ipc.json_data = p_json;
     // ipc.has_trigger = true;
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
@@ -639,7 +638,7 @@ void WashReport::StartReportingProcess()
                 int ipc_dir=ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["direction"]; 
                    
                  capture_res["direction"] =  GetDirByIPC(ipc_dir); // 通过IPC 
-             #if 1  //AI摄像机有问题
+          
                  bool ai_all_res = false;
                 
                  for(int i=0;i<10;i++)
@@ -682,7 +681,6 @@ void WashReport::StartReportingProcess()
                     // 超时处理  重置动作放在流程上报末尾统一触发
                     std::cout << "Timeout occurred while waiting for ai ipc data." << std::endl;
                 }
-#endif 
                 PostJsonToServer(capture_res);
                 // NotificationsToUart
                 if (capture_res["cleanRes"] == 2)
