@@ -8,6 +8,7 @@
 #include <deque>
 #include <mutex>
 #include <time.h>
+#include "spdlog/spdlog.h"
 #include "json.hpp"
 #include "httplib.h"
 #include "Point.h"
@@ -38,16 +39,10 @@ public:
 //处理左右两侧AIIPC 冲洗干净程度数据
     void Deal_L_AIIPCData(const json &p_json, Response &res);
     void Deal_R_AIIPCData(const json &p_json, Response &res);
-
-
     void DealSerialData();
-
     void StartReportingProcess();
-
     void SetPassJsonFunc(std::function<void(json)> func);
-
     void AlarmReport(int exceptionType); //需要加锁？
-
     // 其实是util
     std::string getTime(const std::string &format);
     static unsigned short do_crc_table(unsigned char *ptr, int len);
@@ -57,6 +52,8 @@ public:
     int GetScore(float p);
 
 private:
+    //todo 简单的日志实例,测试使用实际使用应该封装一下
+    
     bool has_report;
     bool has_triger;
     int  wash_alarm_time;

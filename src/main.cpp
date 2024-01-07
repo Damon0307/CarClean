@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <iostream>
 #include <memory>
-
 #include "NetFoundation.h"
 #include "WashReport.h"
- 
-
 #include "Timer.h"
 
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/rotating_file_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 // #include "UartMod.h"
 using namespace httplib;
 
@@ -15,12 +15,34 @@ const char *RS232_CFG_FILE = "rs232.json";
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 
+std::shared_ptr<spdlog::logger> g_console_logger;
+std::shared_ptr<spdlog::logger> g_file_logger;
  
 int main()
 {
-  printf("CarClean Debug ver 1.4 start up pay \n");
+ 
+    // 创建一个名为 "console" 的日志对象，输出到标准输出流（彩色）
+     g_console_logger = spdlog::stdout_color_mt("console");
+     g_console_logger->set_level(spdlog::level::debug); // 设置日志级别
+    // 使用日志对象记录日志
+    g_console_logger->info("StartUp!!! {}", "CarClean Debug ver 1.5 AIIPC"); 
+
+    auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+        "/home/developer/TestStartUp/CarClean/build/mylogfile.log",  // 日志文件名
+        10 * 1024 * 1024,       // 文件最大尺寸：10MB
+        3);                     // 保留的文件份数
+
+    // 设置日志器名称和sink
+    g_file_logger = std::make_shared<spdlog::logger>("file_logger", rotating_sink);
+
+    // 设置日志级别以及其他全局选项
+    spdlog::set_level(spdlog::level::debug);
+    g_file_logger->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] %v");  // 设置时间格式等
+    // 开始记录日志
+    g_file_logger->info("StartUp!!! {}", "CarClean Debug ver 1.5 AIIPC");
  
  
+ #if 1
   // std::unique_ptr<UartMod> uni_uart(new UartMod());  //串口模块
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
@@ -30,7 +52,7 @@ int main()
   uni_wash_report.get()->InitSerialComm(RS232_CFG_FILE);
   uni_ccr.get()->InitNetCFG(NET_CFG_FILE);
   
-#if 1
+
  //绑定冲洗场景的 上传服务器通道
   auto g_post_to_ser_func = std::bind(&NetFoundation::PostDataToServer, uni_ccr.get(), std::placeholders::_1);
   uni_wash_report.get()->SetPassJsonFunc(g_post_to_ser_func);
