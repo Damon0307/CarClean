@@ -437,8 +437,6 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 void WashReport::DealSerialData()
 {
 
-    g_console_logger->debug("DealSerialData...");
-
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(serial_fd, &readfds);
@@ -620,11 +618,11 @@ void WashReport::StartReportingProcess()
 {
     printf("WashReporter StartReportingProcess...\n");
     StartHeartBeat();
-    int last_point_a_working = -1;
-    int last_point_a_status = -1;
-    int last_point_b_status = -1;
-    int last_point_b_working = -1;
-    int exit_car_leaving = -1;
+    bool last_point_a_working = true;
+    bool last_point_a_status = true;
+    bool last_point_b_status = true;
+    bool last_point_b_working = true;
+    bool exit_car_leaving = true;
 
     while (1)
     {
@@ -633,29 +631,29 @@ void WashReport::StartReportingProcess()
         if (point_a.is_working != last_point_a_working || point_a.cur_status != last_point_a_status)
         {
             // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
-            g_console_logger->debug("Pa Working  Status {}", point_a.is_working, point_a.cur_status);
+            g_console_logger->debug("A Working  Status {}   {}",static_cast<int>(point_a.is_working) ,static_cast<int>(point_a.cur_status));
             last_point_a_working = point_a.is_working;
             last_point_a_status = point_a.cur_status;
         }
+
+        //   static_cast<int>
 
         if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
         {
             // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
-            g_console_logger->debug("Pb Working  Status  leaving ", point_b.is_working, point_b.cur_status, point_b.exit_car_leaving);
-            last_point_a_working = point_a.is_working;
-            last_point_a_status = point_a.cur_status;
+            g_console_logger->debug("B Working  Status  Leaving {}  {}  {} ", static_cast<int>(point_b.is_working), static_cast<int>(point_b.cur_status), static_cast<int>(point_b.exit_car_leaving));
+            last_point_b_working = point_b.is_working;
+            last_point_b_status = point_b.cur_status;
             exit_car_leaving = point_b.exit_car_leaving;
         }
         // printf("B working  ,B status  B leaving  %d  %d  %d \n", point_b.is_working, point_b.cur_status, point_b.exit_car_leaving);
 
-        if (point_b.is_working && point_b.IsLeaving() == true) // B点触发，且下降沿
+        if ( (point_b.is_working) && (point_b.IsLeaving() == true)) // B点触发，且下降沿
         {
-             
             if (ipc.has_trigger == true) // IPC已经有推送结果则开始处理
             {
-                printf("ipc.has_trigger ==  true\n");
-                g_console_logger->debug("Leaving and ipc data triggered  going to report ");    
-                  g_file_logger->debug("Leaving and ipc data triggered  going to  report");
+                g_console_logger->debug("Leaving and ipc data triggered  going to report A Working {}", static_cast<int>(point_a.is_working));
+                g_file_logger->debug("Leaving and ipc data triggered  going to  report A Working {}", static_cast<int>(point_a.is_working));
                 // 组符合后端服务器的JSON
                 json capture_res = GetCaptureJson(); // 已经包含默认信息
                 capture_res["captureTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
@@ -688,10 +686,7 @@ void WashReport::StartReportingProcess()
                 }
                 if (ai_all_res)
                 {
-                    g_console_logger->debug("Got Left And Right AIIPC Data");
-                    // todo
                     //  获取AI摄像机数据
-
                     json l_detect_json_data = l_ai_ipc.GetDetectRes();
                     json r_detect_json_data = r_ai_ipc.GetDetectRes();
 
@@ -743,14 +738,19 @@ void WashReport::StartReportingProcess()
 
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
-                g_console_logger->debug("ResetAllSensor Pass and reset....");
-                g_file_logger->debug("ResetAllSensor Pass and reset....");
-            }else{
-                 g_console_logger->debug("Leaving but ipc no data triggered will not report"); 
-                 g_file_logger->debug("Leaving but ipc no data triggered will not report");
+                g_console_logger->debug("Pass and reset....");
+                g_file_logger->debug(" Pass and reset....");
+            }
+            else
+            {
+                g_console_logger->debug("Leaving but ipc no data triggered will not report");
+                g_file_logger->debug("Leaving but ipc no data triggered will not report");
+
+                // TODO b点出发了，但是没有捕捉到车牌需要重置传感器
+                ResetAllSensor();
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
 

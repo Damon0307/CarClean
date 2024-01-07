@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 2.8.4)
 
 project(CarClean)
+
 #include ($ENV{HOME}/configs/cross.cmake)
+
+ option(ENABLE_CROSS_COMPILE "Enable cross compile" ON)
+ 
+ if(ENABLE_CROSS_COMPILE)
+    include ($ENV{HOME}/configs/cross.cmake)
+ endif()
  
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE "Debug")

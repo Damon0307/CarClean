@@ -61,7 +61,6 @@ void NetFoundation::PostDataToServer(json p_json)
   //! NB
   // httplib::Client cli("https://hwlock.br-app.cn", 8080, "./cert.pem", "./key.pem");
 
-  
   // 处理响应
   if (res && res->status == 200)
   {

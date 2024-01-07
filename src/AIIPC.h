@@ -21,7 +21,6 @@ public:
     AIIPC(/* args */)
     {
         has_res = false;
-      
     }
     ~AIIPC()
     {

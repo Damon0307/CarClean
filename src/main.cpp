@@ -17,6 +17,9 @@ const char *DEF_CFG_FILE = "default_info.json";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
+
+//const std::string file_path_logger = "/home/developer/TestStartUp/CarClean/build/mylogfile.log";
+const std::string file_path_logger = "/userdata/CarCleanLogFile.log";
  
 int main()
 {
@@ -28,7 +31,7 @@ int main()
     g_console_logger->info("StartUp!!! {}", "CarClean Debug ver 1.5 AIIPC"); 
 
     auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-        "/home/developer/TestStartUp/CarClean/build/mylogfile.log",  // 日志文件名
+         file_path_logger,  // 日志文件名
         10 * 1024 * 1024,       // 文件最大尺寸：10MB
         3);                     // 保留的文件份数
 
@@ -36,11 +39,13 @@ int main()
     g_file_logger = std::make_shared<spdlog::logger>("file_logger", rotating_sink);
 
     // 设置日志级别以及其他全局选项
-    spdlog::set_level(spdlog::level::debug);
+    g_file_logger->set_level(spdlog::level::debug);
+    g_file_logger->flush_on(spdlog::level::debug);//等于高于debug级别会被立刻刷新
     g_file_logger->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] %v");  // 设置时间格式等
     // 开始记录日志
     g_file_logger->info("StartUp!!! {}", "CarClean Debug ver 1.5 AIIPC");
  
+    //g_file_logger->flush();
  
  #if 1
   // std::unique_ptr<UartMod> uni_uart(new UartMod());  //串口模块
