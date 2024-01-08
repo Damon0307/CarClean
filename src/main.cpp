@@ -28,7 +28,7 @@ int main()
      g_console_logger = spdlog::stdout_color_mt("console");
      g_console_logger->set_level(spdlog::level::debug); // 设置日志级别
     // 使用日志对象记录日志
-    g_console_logger->info("StartUp!!! {}", "CarClean Debug ver 1.5 AIIPC"); 
+ 
 
     auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
          file_path_logger,  // 日志文件名
@@ -43,7 +43,8 @@ int main()
     g_file_logger->flush_on(spdlog::level::debug);//等于高于debug级别会被立刻刷新
     g_file_logger->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] %v");  // 设置时间格式等
     // 开始记录日志
-    g_file_logger->info("StartUp!!! {}", "CarClean Debug ver 1.5 AIIPC");
+    g_console_logger->info("StartUp!!! {}", "CarClean Debug ver 1.6 AIIPC"); 
+    g_file_logger->info("StartUp!!! {}", "CarClean Debug ver 1.6 AIIPC");
  
     //g_file_logger->flush();
  

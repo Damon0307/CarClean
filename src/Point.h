@@ -4,7 +4,13 @@
 #include <time.h>
 #include <stdio.h>
 #include "Timer.h"
+#include <string>
 // 光电模块，由于业务的问题
+
+extern std::shared_ptr<spdlog::logger> g_console_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
+
+
 using alarm_func_t = std::function<void(int)>;
 
 #define    ALARM_TIMEOUT            (600*1000)
@@ -30,8 +36,7 @@ public:
     {
         is_exit = status;
     }
-
-
+    std::string  point_id;
     time_t trigger_time; // 光电模块触发时间
     time_t leave_time; // 出口光电模块下降沿触发时间 
     char cur_status;        // 当前光电模块状态
@@ -47,10 +52,8 @@ public:
     }
     void DealStatus(char status) // 处理开关量的状态
     {
- 
         if (status == 0x01)
         {
-            
             if (is_working == false)
             {
                  //异常报警开启
@@ -64,7 +67,8 @@ public:
                 is_working = true; // 处于工作流程中，上报结束以后才会被恢复
                 cur_status = status;
                 time(&trigger_time);
-              
+                g_console_logger->debug("Point {} Triggered",point_id);
+                g_file_logger->debug("Point {} Triggered",point_id);
             }
             else
             {
@@ -99,6 +103,10 @@ public:
                 } // 在工作状态，即使 A点检测不到状态也不进行更新
             }
         }
+    }
+    void SetPointID(const std::string& pid)
+    {
+        point_id = pid;
     }
 
     void ResetStatus() // 此次流程上报完成 重置模块
