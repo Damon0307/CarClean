@@ -425,17 +425,23 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
 // 处理两侧车轮冲洗干净程度的数据
 void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
 {
-    g_console_logger->debug("Deal_L_AIIPCData");
-    g_file_logger->debug("Deal_L_AIIPCData");
+     if(p_json.contains("label"))
+    {
+     g_console_logger->debug("Deal_L_AIIPCData {} ", p_json["label"].dump().c_str());
+     g_file_logger->debug("Deal_L_AIIPCData {}", p_json["label"].dump().c_str());
+    }   
 
     l_ai_ipc.DealAIIPCData(p_json);
     res.set_content("OK", "text/plain");
 }
 void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 {
-    g_console_logger->debug("Deal_R_AIIPCData");
-    g_file_logger->debug("Deal_R_AIIPCData");
 
+    if(p_json.contains("label"))
+    {
+     g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
+     g_file_logger->debug("Deal_R_AIIPCData {}", p_json["label"].dump().c_str());
+    }   
     r_ai_ipc.DealAIIPCData(p_json);
     res.set_content("OK", "text/plain");
 }
@@ -530,8 +536,8 @@ json WashReport::GetCaptureJson()
     res["enterTime"] = "";
     res["leaveTime"] = "";
     res["alarmType"];
-    res["frontWheelWashTime"] = "";
-    res["hindWheelWashTime"] = "";
+    res["frontWheelWashTime"] = 0;
+    res["hindWheelWashTime"] = 0;
     res["deviceSerial"] = nvr_serial_num;
     res["localIndex"] = nvr_channel;
     res["picture"] = "";
@@ -679,7 +685,7 @@ void WashReport::StartReportingProcess()
                 capture_res["enterTime"] = time_to_string(point_a.trigger_time);
                 capture_res["leaveTime"] = time_to_string(point_b.leave_time);
                 capture_res["alarmType"] = GetAlarmTypeByPoint();
-                // 压根没有这条数据？
+                //前后轮冲洗时间改为 0
                 capture_res["frontWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
                 capture_res["hindWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
                 capture_res["picture"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];

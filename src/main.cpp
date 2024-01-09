@@ -15,6 +15,8 @@ const char *RS232_CFG_FILE = "rs232.json";
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 
+const char *version_str = "Version 1.7 delete front wheel"; 
+
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
 
@@ -40,11 +42,12 @@ int main()
 
     // 设置日志级别以及其他全局选项
     g_file_logger->set_level(spdlog::level::debug);
-    g_file_logger->flush_on(spdlog::level::debug);//等于高于debug级别会被立刻刷新
-    g_file_logger->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] %v");  // 设置时间格式等
+    g_file_logger->flush_on(spdlog::level::debug);//等于高于debug级别会被立刻刷新到磁盘
+    g_file_logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");// 设置时间格式等
+
     // 开始记录日志
-    g_console_logger->info("StartUp!!! {}", "CarClean Debug ver 1.6 AIIPC"); 
-    g_file_logger->info("StartUp!!! {}", "CarClean Debug ver 1.6 AIIPC");
+    g_console_logger->info("StartUp!!! {}", version_str); 
+    g_file_logger->info("StartUp!!! {}", version_str);
  
     //g_file_logger->flush();
  
