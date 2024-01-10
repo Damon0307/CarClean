@@ -397,6 +397,10 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
     capture_res["frontWheelWashTime"] = 0;
     capture_res["hindWheelWashTime"] = 0;
 
+    capture_res.erase("rightclean");
+    capture_res.erase("leftclean");
+ 
+
     int ipc_dir = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
 
    
@@ -545,9 +549,9 @@ json WashReport::GetCaptureJson()
     res["direction"];
     res["cleanRes"];          // 车辆车轮清洗结果 1：未知  2：冲洗干净  3：未冲洗干净
     res["leftphotoUrl"] = ""; // 车辆左侧抓拍图片
-    res["leftclean"] = 0;     // 车辆左侧冲洗洁净 度数值
     res["rightphotoUrl"] = "";
     res["rightclean"] = 0;
+    res["leftclean"] = 0;     // 车辆左侧冲洗洁净 度数值
 
     return res;
 }
