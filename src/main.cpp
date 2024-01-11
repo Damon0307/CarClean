@@ -15,7 +15,7 @@ const char *RS232_CFG_FILE = "rs232.json";
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 
-const char *version_str = "Version 1.8  erase clean_res when report detour"; 
+const char *version_str = "Version 1.9 filter aiipc data"; 
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
