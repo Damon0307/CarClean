@@ -739,14 +739,14 @@ void WashReport::StartReportingProcess()
                     // 检查 "score" 字段是否存在，如果不存在则默认为 0
                     float l_score = l_detect_json_data.contains("score") ? l_detect_json_data["score"].get<float>() : 0.0;
                     float r_score = r_detect_json_data.contains("score") ? r_detect_json_data["score"].get<float>() : 0.0;
-                    capture_res["leftclean"] = GetScore(l_score); // 车辆左侧冲洗洁净 度数值
-                    capture_res["rightclean"] = GetScore(r_score);
+                    capture_res["leftclean"] = l_score; // 车辆左侧冲洗洁净 度数值
+                    capture_res["rightclean"] = r_score;
                 }
                 else
                 {
                     capture_res["cleanRes"] = 1;  // 超时，冲洗结果为未知
-                    capture_res["leftclean"] = 1; // 车辆左侧冲洗洁净 度数值
-                    capture_res["rightclean"] = 1;
+                    capture_res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
+                    capture_res["rightclean"] = 0;
                     // 超时处理  重置动作放在流程上报末尾统一触
                     g_console_logger->debug("Timeout occurred while waiting for ai ipc data");
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");

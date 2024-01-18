@@ -8,6 +8,7 @@ project(CarClean)
  
  if(ENABLE_CROSS_COMPILE)
     include ($ENV{HOME}/configs/cross.cmake)
+    SET (CMAKE_BUILD_TYPE Release)
  endif()
  
 set(CMAKE_CXX_STANDARD 11)
