@@ -440,7 +440,7 @@ void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
 }
 void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 {
-
+    
     if(p_json.contains("label"))
     {
      g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
