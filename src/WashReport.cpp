@@ -497,12 +497,6 @@ void WashReport::DealSerialData()
                     {
                         if (serial_data_queue[i] = 0x55 && (i + 8) <= (serial_data_queue.size() - 1))
                         { // 寻找到帧头，且后续长度足够解
-                          //  printf(" PA  PB PC %d %d %d \n", serial_data_queue[i + 1], serial_data_queue[i + 2], serial_data_queue[i + 5]);
-                            // if((serial_data_queue[i+1] == 1) && (serial_data_queue[i+1]!=pa_prev_value))
-                            // {
-                            //     pa_prev_value = serial_data_queue[i+1];
-                            //     //通过ID记录似乎更简单
-                            // }
                             have_decode = true;
                             // 校验CRC16
                             point_a.DealStatus(serial_data_queue[i + 1]);
