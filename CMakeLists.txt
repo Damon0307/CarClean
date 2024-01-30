@@ -4,6 +4,8 @@ project(CarClean)
 
 #include ($ENV{HOME}/configs/cross.cmake)
 
+
+
  option(ENABLE_CROSS_COMPILE "Enable cross compile" ON)
  
  if(ENABLE_CROSS_COMPILE)
@@ -12,7 +14,6 @@ project(CarClean)
  endif()
  
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE "Debug")
 
 file(GLOB_RECURSE SOURCES  src/*.cpp src/*.c  ) 
 

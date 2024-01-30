@@ -363,20 +363,22 @@ void WashReport::InitDefInfo(const char *file_path)
 // 接收到摄像头推送的抓拍数据
 void WashReport::DealWashIPCData(const json &p_json, Response &res)
 {
- 
+
     // std::cout << p_json.dump() << std::endl;
     ipc.json_data = p_json;
     ipc.has_trigger = true;
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
 
- if (p_json.contains("AlarmInfoPlate") && p_json["AlarmInfoPlate"].contains("result") && p_json["AlarmInfoPlate"]["result"].contains("PlateResult") && p_json["AlarmInfoPlate"]["result"]["PlateResult"].contains("license"))
+    if (p_json.contains("AlarmInfoPlate") && p_json["AlarmInfoPlate"].contains("result") && p_json["AlarmInfoPlate"]["result"].contains("PlateResult") && p_json["AlarmInfoPlate"]["result"]["PlateResult"].contains("license"))
     {
-     g_file_logger->debug("Got Wash IPC Data {} ",p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
-     g_console_logger->debug("Got Wash IPC Data {} ",p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
-    } else {
-     g_file_logger->debug("Got Wash IPC Data  NO  Licenses!!! ");
-     g_console_logger->debug("Got Wash IPC Data NO  Licenses!!!  "); 
+        g_file_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
+        g_console_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
+    }
+    else
+    {
+        g_file_logger->debug("Got Wash IPC Data  NO  Licenses!!! ");
+        g_console_logger->debug("Got Wash IPC Data NO  Licenses!!!  ");
     }
 }
 
@@ -399,11 +401,9 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
 
     capture_res.erase("rightclean");
     capture_res.erase("leftclean");
- 
 
     int ipc_dir = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
 
-   
     // 只有明确出场上报，左右摇摆的都不上报为绕道
     if (ipc_dir == 4) // 由远及近，对应车牌轨迹从上到下，方向是向下
     {
@@ -416,7 +416,7 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
     else
     {
         g_console_logger->warn("Not Report Detour with direction {} of  {}", ipc_dir, capture_res["ztcCph"].dump().c_str());
-        g_file_logger->warn("Not Report Detour with direction {} of  {}", ipc_dir, capture_res["ztcCph"].dump().c_str()); 
+        g_file_logger->warn("Not Report Detour with direction {} of  {}", ipc_dir, capture_res["ztcCph"].dump().c_str());
         // printf("Not Report Detour with direction %d \n",ipc_dir);
     }
 
@@ -429,24 +429,41 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
 // 处理两侧车轮冲洗干净程度的数据
 void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
 {
-     if(p_json.contains("label"))
+    if (p_json.contains("label"))
     {
-     g_console_logger->debug("Deal_L_AIIPCData {} ", p_json["label"].dump().c_str());
-     g_file_logger->debug("Deal_L_AIIPCData {}", p_json["label"].dump().c_str());
-    }   
+        if (point_a.is_working)
+        {
+            l_ai_ipc.DealAIIPCData(p_json);
+            g_console_logger->debug("Deal_L_AIIPCData {} ", p_json["label"].dump().c_str());
+            g_file_logger->debug("Deal_L_AIIPCData {}", p_json["label"].dump().c_str());
+        }
+        else
+        {
+            g_console_logger->debug("Rejected handle cause no point a working");
+            g_file_logger->debug("Rejected handle cause no point a working");
+        }
+    }
 
-    l_ai_ipc.DealAIIPCData(p_json);
     res.set_content("OK", "text/plain");
 }
 void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 {
-    
-    if(p_json.contains("label"))
+
+    if (p_json.contains("label"))
     {
-     g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
-     g_file_logger->debug("Deal_R_AIIPCData {}", p_json["label"].dump().c_str());
-    }   
-    r_ai_ipc.DealAIIPCData(p_json);
+        if (point_a.is_working)
+        {
+            r_ai_ipc.DealAIIPCData(p_json);
+            g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
+            g_file_logger->debug("Deal_R_AIIPCData {}", p_json["label"].dump().c_str());
+        }
+        else
+        {
+            g_console_logger->debug("Rejected handle cause no point a working");
+            g_file_logger->debug("Rejected handle cause no point a working");
+        }
+    }
+
     res.set_content("OK", "text/plain");
 }
 
@@ -456,8 +473,8 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 void WashReport::DealSerialData()
 {
 
-    static int  pa_prev_value = -1;
-    static int  pb_prev_value = -1;
+    static int pa_prev_value = -1;
+    static int pb_prev_value = -1;
 
     fd_set readfds;
     FD_ZERO(&readfds);
@@ -545,7 +562,7 @@ json WashReport::GetCaptureJson()
     res["leftphotoUrl"] = ""; // 车辆左侧抓拍图片
     res["rightphotoUrl"] = "";
     res["rightclean"] = 0;
-    res["leftclean"] = 0;     // 车辆左侧冲洗洁净 度数值
+    res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
 
     return res;
 }
@@ -652,7 +669,7 @@ void WashReport::StartReportingProcess()
         if (point_a.is_working != last_point_a_working || point_a.cur_status != last_point_a_status)
         {
             // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
-            g_console_logger->debug("A Working  Status {}   {}",static_cast<int>(point_a.is_working),static_cast<int>(point_a.cur_status));
+            g_console_logger->debug("A Working  Status {}   {}", static_cast<int>(point_a.is_working), static_cast<int>(point_a.cur_status));
             last_point_a_working = point_a.is_working;
             last_point_a_status = point_a.cur_status;
         }
@@ -669,11 +686,11 @@ void WashReport::StartReportingProcess()
         }
         // printf("B working  ,B status  B leaving  %d  %d  %d \n", point_b.is_working, point_b.cur_status, point_b.exit_car_leaving);
 
-        if ( (point_b.is_working) && (point_b.IsLeaving() == true)) // B点触发，且下降沿
+        if ((point_b.is_working) && (point_b.IsLeaving() == true)) // B点触发，且下降沿
         {
             if (ipc.has_trigger == true) // IPC已经有推送结果则开始处理
             {
-               
+
                 // 组符合后端服务器的JSON
                 json capture_res = GetCaptureJson(); // 已经包含默认信息
                 capture_res["captureTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
@@ -683,15 +700,15 @@ void WashReport::StartReportingProcess()
                 capture_res["enterTime"] = time_to_string(point_a.trigger_time);
                 capture_res["leaveTime"] = time_to_string(point_b.leave_time);
                 capture_res["alarmType"] = GetAlarmTypeByPoint();
-                //前后轮冲洗时间改为 0
+                // 前后轮冲洗时间改为 0
                 capture_res["frontWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
                 capture_res["hindWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
                 capture_res["picture"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
                 int ipc_dir = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
                 capture_res["direction"] = GetDirByIPC(ipc_dir); // 通过IPC
-            
-                g_console_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working),capture_res["ztcCph"].dump().c_str());
-                g_file_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working),capture_res["ztcCph"].dump().c_str());
+
+                g_console_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working), capture_res["ztcCph"].dump().c_str());
+                g_file_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working), capture_res["ztcCph"].dump().c_str());
 
                 bool ai_all_res = false;
                 for (int i = 0; i < 10; i++)

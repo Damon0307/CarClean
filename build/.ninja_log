@@ -5,3 +5,10 @@
 1	14460	1704526945	CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o	ad50a56d3e409231
 9	14756	1704526945	CMakeFiles/CarClean.dir/src/WashReport.cpp.o	31b8ecb24f2c86d1
 14756	15477	1704526946	CarClean	32043bb6d1147dd5
+4	145	1705810138	CMakeFiles/CarClean.dir/src/uart.cpp.o	d3463ac968e374a
+2	4172	1705810142	CMakeFiles/CarClean.dir/src/UartMod.cpp.o	cddbd011287adc9f
+1	15010	1705810152	CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o	7d93c63b9a41c2c7
+3	26077	1705810163	CMakeFiles/CarClean.dir/src/main.cpp.o	c46533e8256d756d
+2	27894	1705810165	CMakeFiles/CarClean.dir/src/WashReport.cpp.o	18584850c2f3e05a
+27894	29103	1705810167	CarClean	32043bb6d1147dd5
+0	27	1705810169	build.ninja	d70c19294d4cea62
