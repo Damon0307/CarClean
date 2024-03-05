@@ -673,9 +673,7 @@ void WashReport::StartReportingProcess()
             last_point_a_working = point_a.is_working;
             last_point_a_status = point_a.cur_status;
         }
-
-        //   static_cast<int>
-
+ 
         if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
         {
             // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);

@@ -27,7 +27,7 @@ public:
     void InitNetCFG(const char* file_name);
     //处理 正常冲洗场景的  摄像头数据
     void WashIPCDataHandler(const Request& req, Response& res);
-     void DetourIPCDataHandler(const Request& req, Response& res);
+    void DetourIPCDataHandler(const Request& req, Response& res);
  
     void LeftSideAIIPCDataHandler(const Request& req, Response& res);
     void RightSideAIIPCDataHandler(const Request& req, Response& res);
@@ -39,7 +39,7 @@ public:
       wash_hadler_func =  p_func; 
     }
 
-   void SetDetourIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
+    void SetDetourIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
     {
       detour_hadler_func =  p_func; 
     }
@@ -66,7 +66,7 @@ private:
     //冲洗摄像头
     std::function<void(const json&, Response&)> wash_hadler_func;
     //绕道摄像头
-     std::function<void(const json&, Response&)> detour_hadler_func;
+    std::function<void(const json&, Response&)> detour_hadler_func;
  
     //左侧ai ipc
     std::function<void(const json&, Response&)> wash_l_aiipc_func;
@@ -80,10 +80,6 @@ private:
     int local_port;
     int remote_port;
    
-/*
-上传域名 nvr.hcwash.cn
-端口19507
-*/
 
 };
 

@@ -6,7 +6,7 @@ project(CarClean)
 
 
 
- option(ENABLE_CROSS_COMPILE "Enable cross compile" ON)
+ option(ENABLE_CROSS_COMPILE "Enable cross compile" OFF)
  
  if(ENABLE_CROSS_COMPILE)
     include ($ENV{HOME}/configs/cross.cmake)

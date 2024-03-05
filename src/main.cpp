@@ -15,7 +15,7 @@ const char *RS232_CFG_FILE = "rs232.json";
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 
-const char *version_str = "Version 1.11  add filter for ai ipc data"; 
+const char *version_str = "Version 1.12  优化左右AI摄像头数据处理逻辑"; 
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
