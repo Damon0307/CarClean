@@ -123,6 +123,33 @@ CarClean/fast:
 	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/build
 .PHONY : CarClean/fast
 
+src/DirectorLinkClient.o: src/DirectorLinkClient.cpp.o
+
+.PHONY : src/DirectorLinkClient.o
+
+# target to build an object file
+src/DirectorLinkClient.cpp.o:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o
+.PHONY : src/DirectorLinkClient.cpp.o
+
+src/DirectorLinkClient.i: src/DirectorLinkClient.cpp.i
+
+.PHONY : src/DirectorLinkClient.i
+
+# target to preprocess a source file
+src/DirectorLinkClient.cpp.i:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.i
+.PHONY : src/DirectorLinkClient.cpp.i
+
+src/DirectorLinkClient.s: src/DirectorLinkClient.cpp.s
+
+.PHONY : src/DirectorLinkClient.s
+
+# target to generate assembly for a file
+src/DirectorLinkClient.cpp.s:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.s
+.PHONY : src/DirectorLinkClient.cpp.s
+
 src/NetFoundation.o: src/NetFoundation.cpp.o
 
 .PHONY : src/NetFoundation.o
@@ -265,8 +292,11 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
-	@echo "... CarClean"
 	@echo "... edit_cache"
+	@echo "... CarClean"
+	@echo "... src/DirectorLinkClient.o"
+	@echo "... src/DirectorLinkClient.i"
+	@echo "... src/DirectorLinkClient.s"
 	@echo "... src/NetFoundation.o"
 	@echo "... src/NetFoundation.i"
 	@echo "... src/NetFoundation.s"

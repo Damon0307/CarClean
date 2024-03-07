@@ -12,6 +12,11 @@
 #include <deque>
 #include "json.hpp"
 
+// extern logger obj
+extern std::shared_ptr<spdlog::logger> g_console_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
+
+
 using json = nlohmann::json;
 using namespace std;
 
@@ -36,7 +41,8 @@ public:
     }
 
     void DealAIIPCData(const json &pjson)
-    {
+    {   
+        g_file_logger->debug("AI IPC data: {}", pjson.dump());   // 记录AI IPC数据
         if (pjson.contains("label"))
         {
             res_queue.push_back(pjson["label"]);

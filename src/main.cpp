@@ -5,6 +5,11 @@
 #include "WashReport.h"
 #include "Timer.h"
 
+#include "Poco/Net/SocketAddress.h"
+#include "Poco/Net/StreamSocket.h"
+
+#include "DirectorLinkClient.h"
+
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -14,18 +19,43 @@ using namespace httplib;
 const char *RS232_CFG_FILE = "rs232.json";
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
+const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version 1.12  优化左右AI摄像头数据处理逻辑"; 
+const char *version_str = "Version 1.12  优化左右AI摄像头数据处理逻辑";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
 
-//const std::string file_path_logger = "/home/developer/TestStartUp/CarClean/build/mylogfile.log";
+// const std::string file_path_logger = "/home/developer/TestStartUp/CarClean/build/mylogfile.log";
 const std::string file_path_logger = "/userdata/CarCleanLogFile.log";
- 
+// const std::string file_path_logger = "CarCleanLogFile.log";
+
+using josn = nlohmann::json;
+
 int main()
 {
- 
+#if 1
+  DirectorLinkClient *Client = new DirectorLinkClient(DIRECT_LINK_CFG_FILE);
+  Client->ConnectToserver();
+
+  json simple_json;
+  simple_json["id"] = 1;
+  simple_json["method"] = "report_carwash_info";
+
+  // Client->ReportCarWashInfo(simple_json);
+  // Client->ReportStatus();
+  Client->ReportCarPass(simple_json);
+
+  // 创建一个新的线程来运行RecvServerMessage函数
+  std::thread t([](DirectorLinkClient *c)
+                { c->RecvServerMessage(); },
+                Client);
+
+  // 等待线程完成
+  t.join();
+  #endif
+
+#if 0
     // 创建一个名为 "console" 的日志对象，输出到标准输出流（彩色）
      g_console_logger = spdlog::stdout_color_mt("console");
      g_console_logger->set_level(spdlog::level::debug); // 设置日志级别
@@ -51,7 +81,7 @@ int main()
  
     //g_file_logger->flush();
  
- #if 1
+ 
   // std::unique_ptr<UartMod> uni_uart(new UartMod());  //串口模块
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
@@ -88,12 +118,7 @@ int main()
   uni_ccr.get()->StartServer();
  
   reporter_thread.join();
+#endif
 
-
-#endif 
- 
   return 0;
 }
-
-//todo 离开时间改成点的方式， 对比上一次上报的车牌
- 

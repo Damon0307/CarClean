@@ -715,6 +715,8 @@ void WashReport::StartReportingProcess()
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
                     {
+                        g_console_logger->debug("Get AI ipc data"); 
+                        g_file_logger->debug("Get AI ipc data");    
                         break;
                     }
                     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -760,6 +762,9 @@ void WashReport::StartReportingProcess()
                     g_console_logger->debug("Timeout occurred while waiting for ai ipc data");
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");
                 }
+                    g_console_logger->debug("Report res {}",capture_res.dump()); 
+                    g_file_logger->debug("Report res {}",capture_res.dump());   
+                    
                 PostJsonToServer(capture_res);
                 // NotificationsToUart
                 if (capture_res["cleanRes"] == 2)
