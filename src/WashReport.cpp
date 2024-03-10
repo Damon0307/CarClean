@@ -412,6 +412,7 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
         // printf("Report Detour %s    time %s \n",capture_res["ztcCph"].dump().c_str(),capture_res["captureTime"].dump().c_str()); // 输出车牌
         g_console_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
         g_file_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
+        dl_report_wash(capture_res,true); 
     }
     else
     {
@@ -421,9 +422,11 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
     }
 
     // ResetAllSensor(); 绕道未触发传感器
-
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
+
+   
+
 }
 
 // 处理两侧车轮冲洗干净程度的数据
@@ -673,7 +676,7 @@ void WashReport::StartReportingProcess()
             last_point_a_working = point_a.is_working;
             last_point_a_status = point_a.cur_status;
         }
- 
+
         if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
         {
             // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
@@ -715,8 +718,8 @@ void WashReport::StartReportingProcess()
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
                     {
-                        g_console_logger->debug("Get AI ipc data"); 
-                        g_file_logger->debug("Get AI ipc data");    
+                        g_console_logger->debug("Get AI ipc data");
+                        g_file_logger->debug("Get AI ipc data");
                         break;
                     }
                     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -762,9 +765,9 @@ void WashReport::StartReportingProcess()
                     g_console_logger->debug("Timeout occurred while waiting for ai ipc data");
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");
                 }
-                    g_console_logger->debug("Report res {}",capture_res.dump()); 
-                    g_file_logger->debug("Report res {}",capture_res.dump());   
-                    
+                g_console_logger->debug("Report res {}", capture_res.dump());
+                g_file_logger->debug("Report res {}", capture_res.dump());
+
                 PostJsonToServer(capture_res);
                 // NotificationsToUart
                 if (capture_res["cleanRes"] == 2)
@@ -775,18 +778,18 @@ void WashReport::StartReportingProcess()
                 {
                     NotificationsToUart(1);
                 }
-
+                 dl_report_wash(capture_res,false);
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
                 g_file_logger->debug("===================Pass and reset===================");
+               
+                dl_report_car_pass(capture_res);
             }
             else
             {
                 g_console_logger->debug("Leaving without report no wash ipc data");
                 g_file_logger->debug("Leaving without report no wash ipc data");
-
-                // TODO b点出发了，但是没有捕捉到车牌需要重置传感器
                 ResetAllSensor();
             }
         }
@@ -934,4 +937,39 @@ void WashReport::StartHeartBeat()
 
                                     PostJsonToServer(res); },
                                 120 * 1000);
+
+    mDlReportStatusTimer.setInterval([&]()
+                                     {
+                                        dl_report_status(deviceNo,0);
+                                     },
+                                    120* 1000);    //5 minutes
 }
+
+void WashReport::SetDLWashFunc(dl_report_wash_func_t func)
+{
+    if (func != NULL)
+    {
+        dl_report_wash = func;
+    }
+    else
+    {
+        throw invalid_argument("func is null");
+    }
+}
+void WashReport::SetDLCarPassFunc(dl_report_car_pass_func_t func)
+{
+    if (func != NULL)
+    {
+        dl_report_car_pass = func;
+    }
+    else
+    {
+        // TODO: throw exception
+    }
+}
+
+ void WashReport::SetDLStatusFunc(dl_report_status_func_t func)
+ {
+    if (func)
+        dl_report_status = func;    
+ }

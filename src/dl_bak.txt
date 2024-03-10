@@ -1,0 +1,151 @@
+#if 0
+
+#include <Poco/Net/StreamSocket.h>
+#include <Poco/Net/SocketAddress.h>
+#include <Poco/Net/NetException.h>
+#include <Poco/StreamCopier.h>
+#include <Poco/Exception.h>
+#include <Poco/Logger.h>
+#include <Poco/ConsoleChannel.h>
+#include <Poco/DOM/DOMParser.h>
+#include <Poco/DOM/Document.h>
+#include <Poco/DOM/NodeList.h>
+#include <Poco/DOM/Element.h>
+
+using namespace Poco;
+using namespace Poco::Net;
+using namespace Poco::Util;
+
+// 函数声明
+bool receiveAndParseMessage(StreamSocket& socket, std::string& messageType, std::string& xmlData);
+
+int main() {
+    // 初始化日志
+    ConsoleChannel* channel = new ConsoleChannel();
+    Logger& logger = Logger::create("MyApp", channel);
+    logger.setLevel("debug");
+    
+    // 建立连接
+    StreamSocket socket;
+    socket.connect(SocketAddress("36.156.64.198", 11011));
+    
+    // 接收并解析消息
+    std::string messageType;
+    std::string xmlData;
+    if (receiveAndParseMessage(socket, messageType, xmlData)) {
+        // 处理解析后的消息
+        logger.debug("Message Type: " + messageType);
+        logger.debug("XML Data: " + xmlData);
+    }
+    
+    // 关闭连接
+    socket.close();
+    
+    return 0;
+}
+
+// 接收并解析消息的实现
+bool receiveAndParseMessage(StreamSocket& socket, std::string& messageType, std::string& xmlData) {
+    try {
+        // 接收固定头
+        char header[4];
+        int bytesRead = socket.receiveBytes(header, sizeof(header) - 1);
+        header[bytesRead] = '\0';
+        if (bytesRead != 4 || std::string(header) != "XZCC") {
+            return false;
+        }
+        
+        // 接收数据包类型
+        char packetType[2];
+        bytesRead = socket.receiveBytes(packetType, sizeof(packetType) - 1);
+        packetType[bytesRead] = '\0';
+        messageType = std::string(packetType);
+        
+        // 判断数据包类型并接收剩余数据
+        if (messageType == "GJ") {
+            // 接收XML数据
+            std::string xmlBuffer;
+            char buffer[1024];
+            while (true) {
+                bytesRead = socket.receiveBytes(buffer, sizeof(buffer) - 1);
+                buffer[bytesRead] = '\0';
+                xmlBuffer += buffer;
+                
+                // 检查是否接收完毕
+                if (xmlBuffer.find("</Data>") != std::string::npos) {
+                    break;
+                }
+            }
+            xmlData = xmlBuffer;
+        } else if (messageType == "ZT") {
+            // 处理设备状态数据
+        } else if (messageType == "GC") {
+            // 处理过车数据
+        }
+        
+        return true;
+    } catch (Poco::Exception& e) {
+        std::cerr << e.displayText() << std::endl;
+        return false;
+    }
+}
+
+#endif
+
+
+
+#if 0
+重连机制
+void DirectorLinkClient::ReportCarwashInfoWithReconnect(const json &data)
+{
+    while (!isConnected)
+    {
+        try
+        {
+            // 连接到服务器
+            if (!_socket->connected())
+            {
+                _socket->connect(_address);
+                isConnected = true;
+            }
+
+            // 执行正常的报告流程
+            DOMParser parser;
+            // ... 你的XML构建代码 ...
+            // 创建并发送XML数据
+            std::string xmlData = ss.str();
+            xmlData = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" + xmlData;
+            std::string header = "XZCC";
+            std::string packetType = "ZT";
+            std::string dataToSend = header + packetType + xmlData;
+            _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
+        }
+        catch (const Poco::Net::ConnectionRefusedException&)
+        {
+            // 无法连接，等待一段时间后重试
+            isConnected = false;
+            poco_error_f1(stderr, "Connection refused, will retry in %d ms", reconnectDelay);
+            Poco::Thread::sleep(reconnectDelay);
+        }
+        catch (const Poco::IOException&)
+        {
+            // 连接中断，等待一段时间后重试
+            isConnected = false;
+            poco_error_f1(stderr, "IO Exception, will retry in %d ms", reconnectDelay);
+            Poco::Thread::sleep(reconnectDelay);
+        }
+
+        // 限制最大重试次数
+        maxReconnectAttempts--;
+        if (maxReconnectAttempts <= 0)
+        {
+            poco_error(stderr, "Exceeded maximum reconnection attempts, giving up.");
+            break;
+        }
+    }
+}
+
+// 在初始化DirectorLinkClient时设置_socket和_address
+// 并且可以在适当的地方调用ReportCarwashInfoWithReconnect函数来报告信息
+
+#endif

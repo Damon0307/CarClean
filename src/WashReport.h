@@ -20,7 +20,11 @@ using json = nlohmann::json;
 using namespace httplib;
 
 using alarm_func_t = std::function<void(int)>;
- 
+
+using dl_report_wash_func_t = std::function<void(const json&,bool)>; 
+using dl_report_car_pass_func_t = std::function<void(const json&)>;
+using dl_report_status_func_t = std::function<void(const std::string&,int)>;   
+
 class WashReport
 {
 
@@ -42,6 +46,11 @@ public:
     void DealSerialData();
     void StartReportingProcess();
     void SetPassJsonFunc(std::function<void(json)> func);
+
+    void SetDLWashFunc(dl_report_wash_func_t func);
+    void SetDLCarPassFunc(dl_report_car_pass_func_t func);  
+    void SetDLStatusFunc(dl_report_status_func_t func);
+
     void AlarmReport(int exceptionType); //需要加锁？
     // 其实是util
     std::string getTime(const std::string &format);
@@ -52,8 +61,7 @@ public:
     int GetScore(float p);
 
 private:
-    //todo 简单的日志实例,测试使用实际使用应该封装一下
-    
+ 
     bool has_report;
     bool has_triger;
     int  wash_alarm_time;
@@ -76,6 +84,11 @@ private:
     bool GetAIIPCDetectResult();
     void ResetAllSensor();
     std::function<void(json)> PostJsonToServer;
+    dl_report_wash_func_t dl_report_wash;   
+    dl_report_car_pass_func_t dl_report_car_pass;   
+    dl_report_status_func_t dl_report_status;
+
+ 
     // 嵌套类 摄像头的抽象
     class IPC
     {
@@ -175,6 +188,7 @@ private:
 
 //2分钟一次心跳
     Timer mHeartBearTimer;
+    Timer mDlReportStatusTimer;
     void StartHeartBeat();
  
 };
