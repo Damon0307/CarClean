@@ -63,6 +63,9 @@ void DirectorLinkClient::ConnectToserver()
 // 由于我们没有离开图片，所以目前只能上传冲洗时候的过车视频
 void DirectorLinkClient::ReportCarPass(const json &data)
 {
+    std::lock_guard<std::mutex> lock(mtx);
+    g_file_logger->info("dl clinet ReportCarPass in..."); 
+
     DOMParser parser;
     std::string xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Data></Data>";
     AutoPtr<Document> pDoc = parser.parseString(xmlString);
@@ -136,10 +139,14 @@ void DirectorLinkClient::ReportCarPass(const json &data)
     _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
     g_console_logger->info("dl clinet ReportCarPass {}",dataToSend.c_str());
     g_file_logger->info("dl clinet ReportCarPass {}",dataToSend.c_str());   
+    g_file_logger->info("dl clinet ReportCarPass out...");  
 }
 
 void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
 {
+      std::lock_guard<std::mutex> lock(mtx);
+      g_file_logger->info("dl clinet ReportCarWashInfo in..."); 
+
     DOMParser parser;
     std::string xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Data></Data>";
     AutoPtr<Document> pDoc = parser.parseString(xmlString);
@@ -183,11 +190,14 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
     if (is_detour)
     {
         std::string video_url_prefix = "http://36.156.67.46:9001/updateApi/FileDownload/downloadFile?fileName=";
-        std::string enter_time_str = data["captureTime"];
-        std::string dateOnly = enter_time_str.substr(0, 4) + enter_time_str.substr(5, 2) + enter_time_str.substr(8, 2);
-        std::string dateTime = formatDateTime(enter_time_str);
+        std::string photo_url_prefix = "http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong";
+
+        std::string dateOnly = p_capture_time.substr(0, 4) + p_capture_time.substr(5, 2) + p_capture_time.substr(8, 2);
+        std::string dateTime = formatDateTime(p_capture_time);
+      
         AutoPtr<Element> pPhotoUrl = pDoc->createElement("PhotoUrl");
-        pPhotoUrl->appendChild(pDoc->createTextNode(""));
+        std::string photo_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + ".jpg";
+        pPhotoUrl->appendChild(pDoc->createTextNode(photo_url_res));
         pData->appendChild(pPhotoUrl);
 
         AutoPtr<Element> pPhotoUrlL = pDoc->createElement("LeftphotoUrl");
@@ -206,7 +216,7 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         AutoPtr<Element> LeavededioUrl = pDoc->createElement("LeaveVideoUrl");
         LeavededioUrl->appendChild(pDoc->createTextNode(""));
         pData->appendChild(LeavededioUrl);
-        // 绕行之填video_url字段其他都是空
+         
     }
     else
     {
@@ -232,21 +242,15 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
 
         std::string video_url_prefix = "http://36.156.67.46:9001/updateApi/FileDownload/downloadFile?fileName=";
         std::string photo_url_prefix = "http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong";
-        // 2.照片规则
-        // http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong/20240302/MSCCM003/20240302131217.jpg
-        // 红色部分为变量：
-        // 20240302为上传数据json中的enterTime（进入时间）转为YYYYMMDD格式
-        // MSCCM003为上传数据json中的deviceNo（设备号）
-        // 20240302131217为上传数据json中的enterTime（进入时间）转为YYYYMMDDHHmmsS格式
-        // ，其中如果是抓拍照片，后面什么也不加，如果是左轮照片，后面加L（20240302131217L），右轮照片，后面加R（20240302131217R）
-        std::string enter_time_str = data["enterTime"];
-        std::string dateOnly = enter_time_str.substr(0, 4) + enter_time_str.substr(5, 2) + enter_time_str.substr(8, 2);
-        std::string dateTime = formatDateTime(enter_time_str);
+         
+        std::string video_time =data["enterTime"];
 
-        // std::string leave_time_str = data["leaveTime"];
-        // std::string dateOnlyLeave = leave_time_str.substr(0, 4) + leave_time_str.substr(5, 2) + leave_time_str.substr(8, 2);
-        // std::string dateTimeLeave = formatDateTime(leave_time_str);
-
+        std::string video_dateOnly = video_time.substr(0, 4) + video_time.substr(5, 2) + video_time.substr(8, 2);
+        std::string video_dateTime = formatDateTime(video_time);
+ 
+        std::string dateOnly = p_capture_time.substr(0, 4) + p_capture_time.substr(5, 2) + p_capture_time.substr(8, 2);
+        std::string dateTime = formatDateTime(p_capture_time);
+ 
         AutoPtr<Element> pPhotoUrl = pDoc->createElement("PhotoUrl");
         std::string photo_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + ".jpg";
         pPhotoUrl->appendChild(pDoc->createTextNode(photo_url_res));
@@ -263,12 +267,12 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         pData->appendChild(pPhotoUrlR);
 
         AutoPtr<Element> VidioUrl = pDoc->createElement("VideoUrl");
-        std::string video_url_res = video_url_prefix + dateOnly + "/" + pDeviceNo_str + "/" + "zp" + "/" + dateTime + ".mp4";
+        std::string video_url_res = video_url_prefix + video_dateOnly + "/" + pDeviceNo_str + "/" + "zp" + "/" + video_dateTime + ".mp4";
         VidioUrl->appendChild(pDoc->createTextNode(video_url_res));
         pData->appendChild(VidioUrl);
 
         AutoPtr<Element> LeavededioUrl = pDoc->createElement("LeaveVideoUrl");
-        std::string leave_video_url_res = video_url_prefix + dateOnly + "/" + pDeviceNo_str + "/" + "mk" + "/" + dateTime + ".mp4";
+        std::string leave_video_url_res = video_url_prefix + video_dateOnly + "/" + pDeviceNo_str + "/" + "mk" + "/" + video_dateTime + ".mp4";
         LeavededioUrl->appendChild(pDoc->createTextNode(leave_video_url_res));
         pData->appendChild(LeavededioUrl);
     }
@@ -293,10 +297,14 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
     _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
     g_console_logger->info("dl clinet ReportCarWashInfo {}",dataToSend.c_str());
     g_file_logger->info("dl clinet ReportCarWashInfo {}",dataToSend.c_str());   
+    g_file_logger->info("dl clinet ReportCarWashInfo out...");
 }
 
 void DirectorLinkClient::ReportStatus(const std::string &device_no, int status)
 {
+    std::lock_guard<std::mutex> lock(mtx);
+    g_file_logger->info("dl clinet ReportStatus in...");
+
     DOMParser parser;
     std::string xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Data></Data>";
     AutoPtr<Document> pDoc = parser.parseString(xmlString);
@@ -332,6 +340,7 @@ void DirectorLinkClient::ReportStatus(const std::string &device_no, int status)
     std::string dataToSend = header + packetType + xmlData;
 
     _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
+    g_file_logger->info("dl clinet ReportStatus out...");
 }
 
 void DirectorLinkClient::RecvServerMessage()
@@ -343,7 +352,6 @@ void DirectorLinkClient::RecvServerMessage()
         if (recv_res == false)
         {
             std::cout << "recv error" << std::endl;
-            break;
         }
         else
         {
@@ -501,7 +509,8 @@ int DirectorLinkClient::convertCarCleanResR(const json &data)
 }
 
 bool DirectorLinkClient::receiveAndParseMessage(Poco::Net::StreamSocket &socket, std::string &messageType, std::string &xmlData)
-{
+{  
+    g_file_logger->info("dl clinet receiveAndParseMessage in...");  
     try
     {
         // 假设协议头部固定为12字节：4字节帧头 + 2字节或8字节类型 + 数据体
@@ -561,16 +570,21 @@ bool DirectorLinkClient::receiveAndParseMessage(Poco::Net::StreamSocket &socket,
         }
         // 这里可以添加XML数据的验证逻辑，例如检查是否有完整的XML根元素等
         std::cout << "xmlData->" << xmlData << std::endl;
+         g_file_logger->info("dl clinet receiveAndParseMessage out...{}",xmlData.c_str()); 
+         //g_console_logger->info("dl clinet receiveAndParseMessage out...");
+         
         // 清空xmlData
-        xmlData.clear();
-
+        xmlData = "";
         return true;
     }
     catch (Poco::Exception &exc)
     {
+        g_file_logger->info("dl clinet receiveAndParseMessage exception: {}",exc.displayText());    
+
         std::cerr << "DirectorLinkClient::receiveAndParseMessage exception: " << exc.displayText() << std::endl;
         return false;
     }
+
 }
 
 std::string DirectorLinkClient::formatDateTime(const std::string &dateTime)

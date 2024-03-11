@@ -215,6 +215,9 @@ CarClean_BINARY_DIR:STATIC=/opt/TestStartUp/CarClean/build
 //Value Computed by CMake
 CarClean_SOURCE_DIR:STATIC=/opt/TestStartUp/CarClean
 
+//The directory containing a CMake configuration file for Poco.
+Poco_DIR:PATH=Poco_DIR-NOTFOUND
+
 
 ########################
 # INTERNAL cache entries

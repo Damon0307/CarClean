@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <mutex>
 #include <functional>
 #include "json.hpp"
 #include "Poco/Net/StreamSocket.h"
@@ -52,6 +53,7 @@ public:
    void RecvServerMessage(); 
 
 private:
+   std::mutex mtx;
    std::string _ip;
    int _port;
    Poco::Net::StreamSocket *_socket;

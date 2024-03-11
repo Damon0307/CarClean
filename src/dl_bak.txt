@@ -149,3 +149,9 @@ void DirectorLinkClient::ReportCarwashInfoWithReconnect(const json &data)
 // 并且可以在适当的地方调用ReportCarwashInfoWithReconnect函数来报告信息
 
 #endif
+
+/home/developer/develop_environment/files/cross.cmake
+cmake .. -DCMAKE_TOOLCHAIN_FILE=/home/developer/develop_environment/files/cross.cmake -DPOCO_STATIC=ON -DPOCO_DYNAMIC=OFF -DCMAKE_INSTALL_PREFIX=/home/developer/wjc/poco-poco-1.12.4-release/cmake-build/_static_poco_lib
+
+#编译环境
+cmake .. -DCMAKE_TOOLCHAIN_FILE=/opt/develop_environment/files/cross.cmake -DPOCO_STATIC=ON -DPOCO_DYNAMIC=OFF -DCMAKE_INSTALL_PREFIX=/home/developer/wjc/poco-poco-1.12.4-release/cmake-build/_static_poco_lib

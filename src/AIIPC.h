@@ -42,7 +42,7 @@ public:
 
     void DealAIIPCData(const json &pjson)
     {   
-        g_file_logger->debug("AI IPC data: {}", pjson.dump());   // 记录AI IPC数据
+       // g_file_logger->debug("AI IPC data: {}", pjson.dump());   // 记录AI IPC数据
         if (pjson.contains("label"))
         {
             res_queue.push_back(pjson["label"]);

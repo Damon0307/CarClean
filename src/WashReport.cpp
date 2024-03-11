@@ -765,9 +765,7 @@ void WashReport::StartReportingProcess()
                     g_console_logger->debug("Timeout occurred while waiting for ai ipc data");
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");
                 }
-                g_console_logger->debug("Report res {}", capture_res.dump());
-                g_file_logger->debug("Report res {}", capture_res.dump());
-
+                
                 PostJsonToServer(capture_res);
                 // NotificationsToUart
                 if (capture_res["cleanRes"] == 2)
@@ -779,12 +777,11 @@ void WashReport::StartReportingProcess()
                     NotificationsToUart(1);
                 }
                  dl_report_wash(capture_res,false);
+                 dl_report_car_pass(capture_res);
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
                 g_file_logger->debug("===================Pass and reset===================");
-               
-                dl_report_car_pass(capture_res);
             }
             else
             {
