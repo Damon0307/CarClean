@@ -46,7 +46,7 @@ public:
    }
    void ConnectToserver();
 
-   void ReportCarPass(const json &data); 
+   void ReportCarPass(const json &data,bool is_in); 
    
    void ReportCarWashInfo(const json &data,bool is_detour = false);
    void ReportStatus(const std::string& device_no,int status);

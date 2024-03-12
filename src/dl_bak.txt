@@ -150,6 +150,19 @@ void DirectorLinkClient::ReportCarwashInfoWithReconnect(const json &data)
 
 #endif
 
+#if 0
+
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Data>
+    <Ret>0</Ret>
+    <Msg>success</Msg>
+</Data>
+
+#endif 
+
+XZCCGJ<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Data><Token>m8ac9ca5-11c1-7d272-2d52-29bfeafr6adp</Token><Xmbh/><CaptureTime>2024-03-11 15:37:51</CaptureTime><ZtcCph>09CLD006</ZtcCph><ZtcColor>2</ZtcColor><AlarmType>3</AlarmType><DeviceNo>20231212_CLWCX_11480110</DeviceNo><CleanRes>2</CleanRes><VehicleType>2</VehicleType><Leftclean>-1</Leftclean><Rightclean>-1</Rightclean><PhotoUrl>http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong/20240311/20231212_CLWCX_11480110/20240311153751.jpg</PhotoUrl><LeftphotoUrl>http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong/20240311/20231212_CLWCX_11480110/20240311153751L.jpg</LeftphotoUrl><RightphotoUrl>http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong/20240311/20231212_CLWCX_11480110/20240311153751R.jpg</RightphotoUrl><VideoUrl>http://36.156.67.46:9001/updateApi/FileDownload/downloadFile?fileName=20240311/20231212_CLWCX_11480110/zp/20240311153533.mp4</VideoUrl><LeaveVideoUrl>http://36.156.67.46:9001/updateApi/FileDownload/downloadFile?fileName=20240311/20231212_CLWCX_11480110/mk/20240311153533.mp4</LeaveVideoUrl></Data>
+
+
 /home/developer/develop_environment/files/cross.cmake
 cmake .. -DCMAKE_TOOLCHAIN_FILE=/home/developer/develop_environment/files/cross.cmake -DPOCO_STATIC=ON -DPOCO_DYNAMIC=OFF -DCMAKE_INSTALL_PREFIX=/home/developer/wjc/poco-poco-1.12.4-release/cmake-build/_static_poco_lib
 

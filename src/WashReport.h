@@ -22,7 +22,7 @@ using namespace httplib;
 using alarm_func_t = std::function<void(int)>;
 
 using dl_report_wash_func_t = std::function<void(const json&,bool)>; 
-using dl_report_car_pass_func_t = std::function<void(const json&)>;
+using dl_report_car_pass_func_t = std::function<void(const json&,bool)>;
 using dl_report_status_func_t = std::function<void(const std::string&,int)>;   
 
 class WashReport
@@ -39,6 +39,8 @@ public:
     void DealWashIPCData(const json &p_json, Response &res);
 //处理绕道摄像头数据
     void DealDetourIPCData(const json &p_json, Response &res);
+//处理车辆进场数据
+    void DealCarInIPCData(const json &p_json, Response &res);
 
 //处理左右两侧AIIPC 冲洗干净程度数据
     void Deal_L_AIIPCData(const json &p_json, Response &res);
@@ -80,6 +82,7 @@ private:
     // 构建符合云端协议的json数据
     json GetCaptureJson();
     json GetDeviceStatusJson();
+    json GetCarInJson();  //进场时候上传给王工后台的消息
    
     bool GetAIIPCDetectResult();
     void ResetAllSensor();

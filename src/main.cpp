@@ -72,7 +72,7 @@ int main()
   
   
   auto dl_report_wash_func = std::bind(&DirectorLinkClient::ReportCarWashInfo, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2); 
-  auto dl_car_pass_func = std::bind(&DirectorLinkClient::ReportCarPass, uni_dl_client.get(), std::placeholders::_1);
+  auto dl_car_pass_func = std::bind(&DirectorLinkClient::ReportCarPass, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);
   auto dl_report_status_func = std::bind(&DirectorLinkClient::ReportStatus, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);  
   
   uni_wash_report.get()->SetDLWashFunc(dl_report_wash_func);

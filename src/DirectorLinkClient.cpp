@@ -60,8 +60,7 @@ void DirectorLinkClient::ConnectToserver()
     }
 }
 
-// 由于我们没有离开图片，所以目前只能上传冲洗时候的过车视频
-void DirectorLinkClient::ReportCarPass(const json &data)
+void DirectorLinkClient::ReportCarPass(const json &data ,bool is_in)
 {
     std::lock_guard<std::mutex> lock(mtx);
     g_file_logger->info("dl clinet ReportCarPass in..."); 
@@ -108,13 +107,11 @@ void DirectorLinkClient::ReportCarPass(const json &data)
 
     // <PhotoUrl>https://oss-xzzhgd.oss-cn-hangzhou.aliyuncs.com/11264930.jpg</PhotoUrl>
     AutoPtr<Element> pPhotoUrl = pDoc->createElement("PhotoUrl");
-    //! 实时过车时候利用的是进入时间？
+    //! 现在都改成用captureTime
     std::string photo_url_prefix = "http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong";
-    //?std::string enter_time_str = data["captureTime"];
-    std::string enter_time_str = data["enterTime"];
-
-    std::string dateOnly = enter_time_str.substr(0, 4) + enter_time_str.substr(5, 2) + enter_time_str.substr(8, 2);
-    std::string dateTime = formatDateTime(enter_time_str);
+    
+    std::string dateOnly = p_capture_time.substr(0, 4) + p_capture_time.substr(5, 2) + p_capture_time.substr(8, 2);
+    std::string dateTime = formatDateTime(p_capture_time);
 
     std::string photo_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + ".jpg";
     pPhotoUrl->appendChild(pDoc->createTextNode(photo_url_res));
@@ -216,7 +213,7 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         AutoPtr<Element> LeavededioUrl = pDoc->createElement("LeaveVideoUrl");
         LeavededioUrl->appendChild(pDoc->createTextNode(""));
         pData->appendChild(LeavededioUrl);
-         
+    
     }
     else
     {
@@ -244,9 +241,6 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         std::string photo_url_prefix = "http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong";
          
         std::string video_time =data["enterTime"];
-
-        std::string video_dateOnly = video_time.substr(0, 4) + video_time.substr(5, 2) + video_time.substr(8, 2);
-        std::string video_dateTime = formatDateTime(video_time);
  
         std::string dateOnly = p_capture_time.substr(0, 4) + p_capture_time.substr(5, 2) + p_capture_time.substr(8, 2);
         std::string dateTime = formatDateTime(p_capture_time);
@@ -267,12 +261,12 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         pData->appendChild(pPhotoUrlR);
 
         AutoPtr<Element> VidioUrl = pDoc->createElement("VideoUrl");
-        std::string video_url_res = video_url_prefix + video_dateOnly + "/" + pDeviceNo_str + "/" + "zp" + "/" + video_dateTime + ".mp4";
+        std::string video_url_res = video_url_prefix + dateOnly + "/" + pDeviceNo_str + "/" + "zp" + "/" + dateTime + ".mp4";
         VidioUrl->appendChild(pDoc->createTextNode(video_url_res));
         pData->appendChild(VidioUrl);
 
         AutoPtr<Element> LeavededioUrl = pDoc->createElement("LeaveVideoUrl");
-        std::string leave_video_url_res = video_url_prefix + video_dateOnly + "/" + pDeviceNo_str + "/" + "mk" + "/" + video_dateTime + ".mp4";
+        std::string leave_video_url_res = video_url_prefix + dateOnly + "/" + pDeviceNo_str + "/" + "mk" + "/" + dateTime + ".mp4";
         LeavededioUrl->appendChild(pDoc->createTextNode(leave_video_url_res));
         pData->appendChild(LeavededioUrl);
     }
@@ -295,7 +289,7 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
     std::string dataToSend = header + packetType + xmlData;
 
     _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
-    g_console_logger->info("dl clinet ReportCarWashInfo {}",dataToSend.c_str());
+   // g_console_logger->info("dl clinet ReportCarWashInfo {}",dataToSend.c_str());
     g_file_logger->info("dl clinet ReportCarWashInfo {}",dataToSend.c_str());   
     g_file_logger->info("dl clinet ReportCarWashInfo out...");
 }
@@ -357,6 +351,7 @@ void DirectorLinkClient::RecvServerMessage()
         {
             std::cout << "recv success" << std::endl;
         }
+        this_thread::sleep_for(chrono::seconds(5)); 
     }
 }
 
@@ -510,7 +505,27 @@ int DirectorLinkClient::convertCarCleanResR(const json &data)
 
 bool DirectorLinkClient::receiveAndParseMessage(Poco::Net::StreamSocket &socket, std::string &messageType, std::string &xmlData)
 {  
-    g_file_logger->info("dl clinet receiveAndParseMessage in...");  
+     std::lock_guard<std::mutex> lock(mtx);
+    // 接收并打印收到的数据
+    g_file_logger->info("dl client receiveAndParseMessage in...");
+    g_console_logger->info("dl client receiveAndParseMessage in...");
+
+    char buffer[1024];
+    std::string data;
+    int bytesReceived = socket.receiveBytes(buffer, sizeof(buffer));
+    if (bytesReceived > 0)
+    {
+        data.assign(buffer, bytesReceived);
+        g_console_logger->info("dl client receiveAndParseMessage out...%s", data.c_str());
+        g_file_logger->info("dl client receiveAndParseMessage out...%s", data.c_str());
+    }
+    else
+    {
+        g_console_logger->error("dl client receiveAndParseMessage failed...");
+        g_file_logger->error("dl client receiveAndParseMessage failed...");
+    }
+
+#if 0
     try
     {
         // 假设协议头部固定为12字节：4字节帧头 + 2字节或8字节类型 + 数据体
@@ -520,6 +535,9 @@ bool DirectorLinkClient::receiveAndParseMessage(Poco::Net::StreamSocket &socket,
         Poco::Buffer<char> buffer(HEADER_SIZE + TYPE_SIZE_LARGE + 4096); // 预分配足够大的缓冲区，4096是XML数据的大致预估大小
         // 读取固定长度的头部和数据类型
         int bytesRead = socket.receiveBytes(buffer.begin(), HEADER_SIZE + TYPE_SIZE_LARGE);
+
+        g_file_logger->info("dl clinet receiveAndParseMessage in...{}",bytesRead);
+
         if (bytesRead < HEADER_SIZE + TYPE_SIZE_SMALL)
         {
             // 读取到的数据长度不足以包含头部和数据类型，返回错误
@@ -584,7 +602,7 @@ bool DirectorLinkClient::receiveAndParseMessage(Poco::Net::StreamSocket &socket,
         std::cerr << "DirectorLinkClient::receiveAndParseMessage exception: " << exc.displayText() << std::endl;
         return false;
     }
-
+#endif
 }
 
 std::string DirectorLinkClient::formatDateTime(const std::string &dateTime)

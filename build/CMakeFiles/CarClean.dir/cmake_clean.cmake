@@ -5,8 +5,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
   "CMakeFiles/CarClean.dir/src/main.cpp.o"
   "CMakeFiles/CarClean.dir/src/uart.cpp.o"
-  "CarClean"
   "CarClean.pdb"
+  "CarClean"
 )
 
 # Per-language clean rules from dependency scanning.

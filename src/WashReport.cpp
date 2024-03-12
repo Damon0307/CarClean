@@ -424,10 +424,29 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
     // ResetAllSensor(); 绕道未触发传感器
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
-
-   
-
 }
+
+void WashReport::DealCarInIPCData(const json &p_json, Response &res)
+{
+   json car_in_json =GetCarInJson();
+   car_in_json["captureTime"] = utc_to_string(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
+   car_in_json["ztcCph"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"];
+    car_in_json["ztcColor"] = CarColorConvert(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]);
+    car_in_json["vehicleType"] = CarTypeConvert(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
+    car_in_json["picture"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
+   car_in_json["direction"] = 0;
+  
+     g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
+      g_file_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
+
+      PostJsonToServer(car_in_json);
+       // dl_report_wash(car_in_json,true); 
+      dl_report_car_pass(car_in_json,true);
+    
+    json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
+    res.set_content(response.dump(), "application/json");
+}
+
 
 // 处理两侧车轮冲洗干净程度的数据
 void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
@@ -577,6 +596,20 @@ json WashReport::GetDeviceStatusJson()
     res["status"];
     res["dataType"] = 2;
     return res;
+}
+
+json WashReport::GetCarInJson()
+{
+    json res;
+    res["xmbh"] = "XMBH00000003";
+    res["deviceNo"] = deviceNo;
+    res["captureTime"] = "";
+    res["ztcCph"] = "";
+    res["ztcColor"];
+    res["vehicleType"];
+    res["picture"] = "";
+    res["dataType"] = 4;
+    res["direction"]=0;
 }
 
 std::string WashReport::getTime(const std::string &format)
@@ -777,7 +810,7 @@ void WashReport::StartReportingProcess()
                     NotificationsToUart(1);
                 }
                  dl_report_wash(capture_res,false);
-                 dl_report_car_pass(capture_res);
+                 dl_report_car_pass(capture_res,false);
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
