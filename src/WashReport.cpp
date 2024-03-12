@@ -436,12 +436,13 @@ void WashReport::DealCarInIPCData(const json &p_json, Response &res)
     car_in_json["picture"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
    car_in_json["direction"] = 0;
   
-     g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
-      g_file_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
+    PostJsonToServer(car_in_json);
+    dl_report_car_pass(car_in_json,true);
 
-      PostJsonToServer(car_in_json);
-       // dl_report_wash(car_in_json,true); 
-      dl_report_car_pass(car_in_json,true);
+    g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
+    g_file_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
+
+   
     
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");

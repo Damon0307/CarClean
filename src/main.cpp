@@ -27,7 +27,7 @@ std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
 
 
-const std::string file_path_logger = "/userdata/CarCleanLogFile.log";
+const std::string file_path_logger = "/userdata/LogFile.log";
 //const std::string file_path_logger = "CarCleanLogFile.log";
 
 using josn = nlohmann::json;
@@ -92,6 +92,9 @@ int main()
   auto wash_ipc_hander=std::bind(&WashReport::DealWashIPCData,uni_wash_report.get(),std::placeholders::_1,std::placeholders::_2);
   uni_ccr.get()->SetWashIPCDataHandleFunc(wash_ipc_hander);
 
+  //绑定车辆进场场景 摄像头数据处理通道
+  auto car_in_ipc_hander=std::bind(&WashReport::DealCarInIPCData,uni_wash_report.get(),std::placeholders::_1,std::placeholders::_2);
+  uni_ccr.get()->SetCarInIPCDataHandleFunc(car_in_ipc_hander); 
 
  //绑定绕道场景的 摄像头数据处理通道
   auto detour_ipc_hander=std::bind(&WashReport::DealDetourIPCData,uni_wash_report.get(),std::placeholders::_1,std::placeholders::_2);

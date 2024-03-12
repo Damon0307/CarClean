@@ -44,8 +44,14 @@ void NetFoundation::WashIPCDataHandler(const Request &req, Response &res)
   auto body = req.body;
   json req_data = json::parse(body);
   detour_hadler_func(req_data, res);
- 
  }
+
+void NetFoundation::CarInIPCDataHandler(const Request& req, Response& res)
+{
+  auto body = req.body;
+  json req_data = json::parse(body);
+  car_in_ipc_func(req_data, res); 
+}
 
 void NetFoundation::PostDataToServer(json p_json)
 {
@@ -87,6 +93,9 @@ void NetFoundation::StartServer()
                {LeftSideAIIPCDataHandler(req, res);});
   mServer.Post("/aiipc/right", [&](const Request &req, Response &res)
                {RightSideAIIPCDataHandler(req, res);});
+  //增加一个车辆入场的处理
+  mServer.Post("/car_in", [&](const Request &req, Response &res)
+               {CarInIPCDataHandler(req, res);});
 
   // 启动服务器
   mServer.listen(local_server, local_port);

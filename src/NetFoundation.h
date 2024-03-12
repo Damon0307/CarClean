@@ -28,9 +28,11 @@ public:
     //处理 正常冲洗场景的  摄像头数据
     void WashIPCDataHandler(const Request& req, Response& res);
     void DetourIPCDataHandler(const Request& req, Response& res);
- 
+    void CarInIPCDataHandler(const Request& req, Response& res);
     void LeftSideAIIPCDataHandler(const Request& req, Response& res);
     void RightSideAIIPCDataHandler(const Request& req, Response& res);
+
+
  
     void PostDataToServer(json p_json);
     
@@ -53,6 +55,10 @@ public:
     {
       wash_r_aiipc_func =  p_func; 
     }
+    void SetCarInIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
+    {
+      car_in_ipc_func =  p_func; 
+    } 
  
     //注册AIIPC 的webhook
     void RegisterWebHookForAIIPC();
@@ -67,11 +73,12 @@ private:
     std::function<void(const json&, Response&)> wash_hadler_func;
     //绕道摄像头
     std::function<void(const json&, Response&)> detour_hadler_func;
- 
     //左侧ai ipc
     std::function<void(const json&, Response&)> wash_l_aiipc_func;
     //右侧ai ipc
     std::function<void(const json&, Response&)> wash_r_aiipc_func;
+    //车辆入场摄像头
+    std::function<void(const json&, Response&)> car_in_ipc_func; 
   
     httplib::Server mServer;
 
