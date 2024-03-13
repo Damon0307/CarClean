@@ -337,23 +337,6 @@ void DirectorLinkClient::ReportStatus(const std::string &device_no, int status)
     g_file_logger->info("dl clinet ReportStatus out...");
 }
 
-void DirectorLinkClient::RecvServerMessage()
-{
-    // 在一个线程中循环接收并处理消息
-    while (true)
-    {
-        bool recv_res = receiveAndParseMessage(*_socket, messageType, xmlData);
-        if (recv_res == false)
-        {
-            std::cout << "recv error" << std::endl;
-        }
-        else
-        {
-            std::cout << "recv success" << std::endl;
-        }
-        this_thread::sleep_for(chrono::seconds(5)); 
-    }
-}
 
 int DirectorLinkClient::convertToDLAlarmType(const json &data)
 {
@@ -503,108 +486,56 @@ int DirectorLinkClient::convertCarCleanResR(const json &data)
     return -1;
 }
 
-bool DirectorLinkClient::receiveAndParseMessage(Poco::Net::StreamSocket &socket, std::string &messageType, std::string &xmlData)
+void DirectorLinkClient::receiveAndParseMessage()
 {  
-     std::lock_guard<std::mutex> lock(mtx);
-    // 接收并打印收到的数据
-    g_file_logger->info("dl client receiveAndParseMessage in...");
-    g_console_logger->info("dl client receiveAndParseMessage in...");
-
+   std::lock_guard<std::mutex> lock(mtx);
     char buffer[1024];
     std::string data;
-    int bytesReceived = socket.receiveBytes(buffer, sizeof(buffer));
-    if (bytesReceived > 0)
-    {
-        data.assign(buffer, bytesReceived);
-        g_console_logger->info("dl client receiveAndParseMessage out...%s", data.c_str());
-        g_file_logger->info("dl client receiveAndParseMessage out...%s", data.c_str());
-    }
-    else
-    {
-        g_console_logger->error("dl client receiveAndParseMessage failed...");
-        g_file_logger->error("dl client receiveAndParseMessage failed...");
+
+  //  g_file_logger->info("dl client receiveAndParseMessage in...");
+    g_console_logger->info("dl client receiveAndParseMessage in...");
+
+    // 设置 socket 为阻塞模式
+    _socket->setBlocking(true); // Changed to blocking mode
+
+    // 设置超时时间为1秒
+    _socket->setReceiveTimeout(Poco::Timespan(1, 0)); // Set timeout to 1 second
+
+    int totalBytesReceived = 0;
+    int bytesReceived = 0;
+
+    // 不断尝试读取数据，直到没有数据可读或达到退出条件
+    while (true) {
+        // 尝试读取数据
+        try {
+            bytesReceived = _socket->receiveBytes(buffer, sizeof(buffer));
+        } catch (Poco::TimeoutException&) {
+            // 超时，退出循环
+            break;
+        }
+
+        if (bytesReceived > 0) {
+            totalBytesReceived += bytesReceived;
+            data.append(buffer, bytesReceived);
+        } else {
+            // 没有数据可读，退出循环
+            break;
+        }
     }
 
-#if 0
-    try
-    {
-        // 假设协议头部固定为12字节：4字节帧头 + 2字节或8字节类型 + 数据体
-        const int HEADER_SIZE = 4;
-        const int TYPE_SIZE_SMALL = 2;
-        const int TYPE_SIZE_LARGE = 8;
-        Poco::Buffer<char> buffer(HEADER_SIZE + TYPE_SIZE_LARGE + 4096); // 预分配足够大的缓冲区，4096是XML数据的大致预估大小
-        // 读取固定长度的头部和数据类型
-        int bytesRead = socket.receiveBytes(buffer.begin(), HEADER_SIZE + TYPE_SIZE_LARGE);
-
-        g_file_logger->info("dl clinet receiveAndParseMessage in...{}",bytesRead);
-
-        if (bytesRead < HEADER_SIZE + TYPE_SIZE_SMALL)
-        {
-            // 读取到的数据长度不足以包含头部和数据类型，返回错误
-            return false;
-        }
-        // 检查帧头
-        std::string frameHeader(buffer.begin(), buffer.begin() + HEADER_SIZE);
-        if (frameHeader != "XZCC")
-        {
-            // 帧头不匹配
-            return false;
-        }
-        // 解析数据包类型
-        std::string type(buffer.begin() + HEADER_SIZE, buffer.begin() + HEADER_SIZE + TYPE_SIZE_SMALL);
-        if (type == "GJ")
-        {
-            messageType = type;
-            // 跳过2字节类型，开始读取XML数据
-            bytesRead = socket.receiveBytes(buffer.begin(), buffer.size());
-            if (bytesRead <= 0)
-            {
-                // 没有更多数据可读
-                return false;
-            }
-            xmlData.append(buffer.begin(), buffer.begin() + bytesRead);
-        }
-        else
-        {
-            // 尝试将类型作为整数解析
-            try
-            {
-                int typeId = std::stoi(type);
-                messageType = std::to_string(typeId);
-                // 跳过8字节类型，开始读取XML数据
-                bytesRead = socket.receiveBytes(buffer.begin(), buffer.size());
-                if (bytesRead <= 0)
-                {
-                    // 没有更多数据可读
-                    return false;
-                }
-                xmlData.append(buffer.begin(), buffer.begin() + bytesRead);
-            }
-            catch (const std::invalid_argument &)
-            {
-                // 解析整数失败
-                return false;
-            }
-        }
-        // 这里可以添加XML数据的验证逻辑，例如检查是否有完整的XML根元素等
-        std::cout << "xmlData->" << xmlData << std::endl;
-         g_file_logger->info("dl clinet receiveAndParseMessage out...{}",xmlData.c_str()); 
-         //g_console_logger->info("dl clinet receiveAndParseMessage out...");
-         
-        // 清空xmlData
-        xmlData = "";
-        return true;
+    // 如果有数据接收到
+    if (totalBytesReceived > 0) {
+        g_console_logger->info("dl client receiveAndParseMessage out...{}", data.c_str());
+        g_file_logger->info("dl client receiveAndParseMessage out...{}", data.c_str());
+    } else {
+        // 没有数据接收到
+       // g_console_logger->error("dl client receiveAndParseMessage failed...");
+       // g_file_logger->error("dl client receiveAndParseMessage failed...");
     }
-    catch (Poco::Exception &exc)
-    {
-        g_file_logger->info("dl clinet receiveAndParseMessage exception: {}",exc.displayText());    
-
-        std::cerr << "DirectorLinkClient::receiveAndParseMessage exception: " << exc.displayText() << std::endl;
-        return false;
-    }
-#endif
+    g_console_logger->info("dl client receiveAndParseMessage out...");
+    
 }
-
+ 
 std::string DirectorLinkClient::formatDateTime(const std::string &dateTime)
 {
     std::string formattedDateTime;

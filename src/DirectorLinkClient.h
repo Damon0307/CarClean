@@ -50,8 +50,9 @@ public:
    
    void ReportCarWashInfo(const json &data,bool is_detour = false);
    void ReportStatus(const std::string& device_no,int status);
-   void RecvServerMessage(); 
-
+    
+  //接收和解析
+   void receiveAndParseMessage();
 private:
    std::mutex mtx;
    std::string _ip;
@@ -79,8 +80,6 @@ std::string formatDateTime(const std::string& dateTime);
 std::string addSeconds(const std::string& dateTime, int secondsToAdd);
  
 
-//解析
-   bool receiveAndParseMessage(Poco::Net::StreamSocket& socket, std::string& messageType, std::string& xmlData);
 };
 
 #endif // __DIRECTORLINKCLIENT_H__

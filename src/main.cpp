@@ -21,7 +21,7 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version 1.15  增加直连功能+图片规则CaptureTime+日志崩溃";
+const char *version_str = "Version 1.17 直连功能+日志崩溃+车辆进场处理+接收优化";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -61,10 +61,7 @@ int main()
     //g_file_logger->flush();
   
   std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
-  // std::ifstream f("test_dl.json"); 
-  // json data = json::parse(f);
-  // uni_dl_client.get()->ReportCarWashInfo(data,false);
-  
+   
 #if 1
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
@@ -111,7 +108,16 @@ int main()
   std::thread reporter_thread(&WashReport::StartReportingProcess,uni_wash_report.get());
   
   //直连模块接收服务端消息线程
-  std::thread dl_client_thread(&DirectorLinkClient::RecvServerMessage,uni_dl_client.get());
+  std::thread dl_client_thread([&uni_dl_client](){
+
+      while (1)
+      {
+       this_thread::sleep_for(chrono::seconds(1));
+       uni_dl_client.get()->receiveAndParseMessage();  
+      }
+      
+
+  });
   
   uni_ccr.get()->StartServer();
  
