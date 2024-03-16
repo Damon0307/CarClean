@@ -30,6 +30,7 @@ CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poc
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poco/DOM/EventTarget.h
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poco/DOM/MutationEvent.h
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poco/DOM/Node.h
+CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poco/DOM/NodeList.h
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poco/DOM/Text.h
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poco/DefaultStrategy.h
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/armpoco/include/Poco/Event.h

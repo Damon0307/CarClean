@@ -256,6 +256,12 @@ Poco/XML/XMLString.h
 Poco/SAX/NamespaceSupport.h
 ../src/armpoco/include/Poco/DOM/Poco/SAX/NamespaceSupport.h
 
+../src/armpoco/include/Poco/DOM/NodeList.h
+Poco/XML/XML.h
+../src/armpoco/include/Poco/DOM/Poco/XML/XML.h
+Poco/DOM/DOMObject.h
+../src/armpoco/include/Poco/DOM/Poco/DOM/DOMObject.h
+
 ../src/armpoco/include/Poco/DOM/Text.h
 Poco/XML/XML.h
 ../src/armpoco/include/Poco/DOM/Poco/XML/XML.h
@@ -1551,6 +1557,10 @@ Poco/DOM/Text.h
 /opt/TestStartUp/CarClean/src/Poco/DOM/Text.h
 Poco/DOM/AutoPtr.h
 /opt/TestStartUp/CarClean/src/Poco/DOM/AutoPtr.h
+Poco/DOM/NodeList.h
+/opt/TestStartUp/CarClean/src/Poco/DOM/NodeList.h
+Poco/DOM/Node.h
+/opt/TestStartUp/CarClean/src/Poco/DOM/Node.h
 Poco/XML/XMLWriter.h
 /opt/TestStartUp/CarClean/src/Poco/XML/XMLWriter.h
 Poco/DOM/DOMWriter.h

@@ -748,7 +748,8 @@ void WashReport::StartReportingProcess()
                 bool ai_all_res = false;
                 for (int i = 0; i < 10; i++)
                 {
-                    printf("waiting for  ai ipc data... \n");
+                     
+                    g_console_logger->debug("waiting for  ai ipc data...");  
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
                     {
@@ -824,7 +825,7 @@ void WashReport::StartReportingProcess()
                 ResetAllSensor();
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 

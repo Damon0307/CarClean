@@ -26,7 +26,8 @@ public:
 //   _port = data["server_port"];
   // token_str = data["token"];
    token_str = "m8ac9ca5-11c1-7d272-2d52-29bfeafr6adp";
-//   xmbh_str = data["xmbh"]; 
+  // xmbh_str = data["xmbh"]; 
+   xmbh_str =  "XMBH00000003";
    _ip = "36.156.64.198";
    _port = 11011;
 

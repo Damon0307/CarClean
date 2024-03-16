@@ -21,7 +21,7 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version 1.17 直连功能+日志崩溃+车辆进场处理+接收优化";
+const char *version_str = "Version 1.19 直连+车辆进场处理+内存泄露修复A";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -61,7 +61,49 @@ int main()
     //g_file_logger->flush();
   
   std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
-   
+
+    //直连模块接收服务端消息线程
+
+  // json  test_json = {
+  //   {"alarmType",3},
+  //   {"captureTime","2023-09-18 22:40:05"},
+  //   {"cleanRes",1},
+  //   {"dataType",1},
+  //   {"deviceNo","deviceNo_1"},
+  //   {"deviceSerial","nvr_serial_num_1"},
+  //   {"direction",1},
+  //   {"enterTime","2023-11-19 22:16:52"},
+  //   {"frontWheelWashTime",0},
+  //   {"hindWheelWashTime",0},
+  //   {"leaveTime","2023-11-19 22:17:28"},
+  //   {"leftclean",1},
+  //   {"leftphotoUrl",""},
+  //   {"localIndex","nvr_channel_1"},
+  //   {"picture","pic"},
+  //   {"rightclean",1},
+  //   {"rightphotoUrl",""},
+  //   {"vehicleType",1},
+  //   {"xmbh","XMBH00000003"},
+  //   {"ztcColor",3},
+  //  {"ztcCph","苏AXY377"}
+  // };
+ 
+ // while (1)
+//  {
+     //uni_dl_client.get()->ReportCarWashInfo(test_json,true);
+     // uni_dl_client.get()->ReportCarPass(test_json,true);
+    // this_thread::sleep_for(chrono::microseconds(100));
+    //  uni_dl_client.get()->ReportCarWashInfo(test_json,true);
+    //  this_thread::sleep_for(chrono::microseconds(100));
+    //  uni_dl_client.get()->ReportCarPass(test_json,false);
+    //  this_thread::sleep_for(chrono::microseconds(100));
+    //  uni_dl_client.get()->ReportStatus("test_json",true); 
+    //  this_thread::sleep_for(chrono::microseconds(100));   
+ // }
+  
+
+      
+
 #if 1
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
@@ -124,10 +166,6 @@ int main()
   reporter_thread.join();
   dl_client_thread.join();  
  #endif 
-
-
-
-  g_console_logger->info("End!!!"); 
-  g_file_logger->info("End!!!");  
+  
   return 0;
 }
