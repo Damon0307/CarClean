@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/opt/TestStartUp/CarClean/src/UartMod.cpp" "/opt/TestStartUp/CarClean/build/CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
   "/opt/TestStartUp/CarClean/src/WashReport.cpp" "/opt/TestStartUp/CarClean/build/CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
   "/opt/TestStartUp/CarClean/src/main.cpp" "/opt/TestStartUp/CarClean/build/CMakeFiles/CarClean.dir/src/main.cpp.o"
+  "/opt/TestStartUp/CarClean/src/tinyxml2.cpp" "/opt/TestStartUp/CarClean/build/CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o"
   "/opt/TestStartUp/CarClean/src/uart.cpp" "/opt/TestStartUp/CarClean/build/CMakeFiles/CarClean.dir/src/uart.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
@@ -17,7 +18,6 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../src"
   "../src/spdlog"
-  "../src/armpoco/include"
   )
 
 # Targets to which this target links.

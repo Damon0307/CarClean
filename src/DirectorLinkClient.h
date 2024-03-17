@@ -7,8 +7,10 @@
 #include <string>
 #include <mutex>
 #include <functional>
+#include "tinyxml2.h"
+
 #include "json.hpp"
-#include "Poco/Net/StreamSocket.h"
+
 using json = nlohmann::json;
 
 class DirectorLinkClient
@@ -28,22 +30,16 @@ public:
    token_str = "m8ac9ca5-11c1-7d272-2d52-29bfeafr6adp";
   // xmbh_str = data["xmbh"]; 
    xmbh_str =  "XMBH00000003";
-   _ip = "36.156.64.198";
-   _port = 11011;
-
-   // _ip = "192.168.169.1";
-   // _port = 9090;
-   _socket = new Poco::Net::StreamSocket();
-
+ 
+   // ip = "192.168.169.1";
+   // port = 9090;
+    
    ConnectToserver();
 
    }
    ~DirectorLinkClient()
    {
-      if (_socket)
-      {
-         _socket->close();
-      }
+     close(socket_fd);
    }
    void ConnectToserver();
 
@@ -51,21 +47,21 @@ public:
    
    void ReportCarWashInfo(const json &data,bool is_detour = false);
    void ReportStatus(const std::string& device_no,int status);
+   
     
   //接收和解析
    void receiveAndParseMessage();
 private:
    std::mutex mtx;
-   std::string _ip;
-   int _port;
-   Poco::Net::StreamSocket *_socket;
+   int socket_fd; 
+
    std::string messageType;
    std::string xmlData;
    int heartbeat_interval;
    std::string token_str;
    std::string xmbh_str;
    
-
+   int SendData(const std::string& data);
    //util 函数 辅助转换过程
    int convertToDLAlarmType(const json &data);
    std::string convertLicensePlate(const std::string& licensePlate);

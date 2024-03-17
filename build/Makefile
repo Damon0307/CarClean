@@ -258,6 +258,33 @@ src/main.cpp.s:
 	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/tinyxml2.o: src/tinyxml2.cpp.o
+
+.PHONY : src/tinyxml2.o
+
+# target to build an object file
+src/tinyxml2.cpp.o:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o
+.PHONY : src/tinyxml2.cpp.o
+
+src/tinyxml2.i: src/tinyxml2.cpp.i
+
+.PHONY : src/tinyxml2.i
+
+# target to preprocess a source file
+src/tinyxml2.cpp.i:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/tinyxml2.cpp.i
+.PHONY : src/tinyxml2.cpp.i
+
+src/tinyxml2.s: src/tinyxml2.cpp.s
+
+.PHONY : src/tinyxml2.s
+
+# target to generate assembly for a file
+src/tinyxml2.cpp.s:
+	$(MAKE) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/tinyxml2.cpp.s
+.PHONY : src/tinyxml2.cpp.s
+
 src/uart.o: src/uart.cpp.o
 
 .PHONY : src/uart.o
@@ -309,6 +336,9 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/tinyxml2.o"
+	@echo "... src/tinyxml2.i"
+	@echo "... src/tinyxml2.s"
 	@echo "... src/uart.o"
 	@echo "... src/uart.i"
 	@echo "... src/uart.s"

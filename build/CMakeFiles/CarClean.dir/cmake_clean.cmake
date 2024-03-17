@@ -4,6 +4,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
   "CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
   "CMakeFiles/CarClean.dir/src/main.cpp.o"
+  "CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o"
   "CMakeFiles/CarClean.dir/src/uart.cpp.o"
   "CarClean"
   "CarClean.pdb"

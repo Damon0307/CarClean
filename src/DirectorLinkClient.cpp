@@ -6,33 +6,23 @@
 #include <locale>
 #include <codecvt>
 #include <memory>
-
-#include "Poco/Net/StreamSocket.h"
-#include "Poco/Net/SocketAddress.h"
-#include "Poco/Net/NetException.h"
-#include "Poco/DOM/Document.h"
-#include "Poco/DOM/Element.h"
-#include "Poco/DOM/DOMParser.h"
-#include "Poco/DOM/Text.h"
-#include "Poco/DOM/AutoPtr.h"
-#include "Poco/DOM/NodeList.h"
-#include "Poco/DOM/Node.h"
-#include "Poco/XML/XMLWriter.h"
-#include "Poco/DOM/DOMWriter.h"
-#include "Poco/DOM/Document.h"
+#include <iostream>
+#include <string>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include "DirectorLinkClient.h"
 #include "spdlog/spdlog.h"
 
-using Poco::Net::SocketAddress;
+#define BUFFER_SIZE  1024
 
-using namespace Poco::XML;
 using namespace std;
-using Poco::XML::AutoPtr;
-using Poco::XML::Document;
-using Poco::XML::DOMWriter;
+
 using std::cout;
 using std::stringstream;
-
+using namespace tinyxml2;
 using json = nlohmann::json;
 
 // extern logger obj
@@ -41,290 +31,230 @@ extern std::shared_ptr<spdlog::logger> g_file_logger;
 
 void DirectorLinkClient::ConnectToserver()
 {
-    while (true)
+ 
+
+    std::string ip = "36.156.64.198";
+    int port = 11011;
+
+    // std::string ip = "192.168.169.1";
+    // int port = 9090;
+
+    int max_attempts = 5;
+    for (int attempt = 1; attempt <= max_attempts; ++attempt)
     {
-        try
+        socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (socket_fd < 0)
         {
-            Poco::Net::SocketAddress sa(_ip, _port);
-            _socket->connect(sa);
-            std::cout << "Connected to server" << std::endl;
-            g_console_logger->info("dl clinet Connected to server");
-            g_file_logger->info("dl clinet Connected to server");
+            std::cerr << "创建套接字失败\n";
+            exit(-1);
+        }
+        sockaddr_in server_addr;
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(port);
+        inet_pton(AF_INET, ip.c_str(), &(server_addr.sin_addr));
+        if (connect(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+        {
+            std::cerr << "连接失败，尝试 #" << attempt << "\n";
+            close(socket_fd);
+            // 如果是ECONNREFUSED错误，可能需要稍等一下
+            if (attempt < max_attempts)
+            {
+                sleep(1);
+            }
+            continue;
+        }
+        else
+        {
+            std::cout << "成功连接到 " << ip << ":" << port << "\n";
             break;
         }
-        catch (Poco::Net::ConnectionRefusedException &e)
-        {
-            std::cout << "Connection refused, retrying in 5 seconds..." << std::endl;
-            g_console_logger->warn("dl clinet Connection refused, retrying in 5 seconds...");
-            g_file_logger->warn("dl clinet Connection refused, retrying in 5 seconds...");
-            std::this_thread::sleep_for(std::chrono::seconds(5));
-        }
     }
+}
+int DirectorLinkClient::SendData(const std::string &data)
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    
+    if (socket_fd < 0)
+    {
+        std::cerr << "无效的套接字描述符 尝试重连\n";
+       ConnectToserver();   
+    }
+    g_console_logger->info("dl client SendData in...{}",data);
+    g_file_logger->info("dl client SendData in...{}",data);
+
+    int bytes_sent = send(socket_fd, data.c_str(), data.length(), 0);
+    if (bytes_sent < 0)
+    {
+        std::cerr << "发送数据失败\n";
+        socket_fd =-1;
+        return -1;
+    }
+    return bytes_sent;
+}
+
+void DirectorLinkClient::ReportStatus(const std::string &device_no, int status)
+{
+    g_console_logger->info("dl clinet ReportStatus in...");
+    XMLDocument doc;
+    // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
+    XMLDeclaration* declaration = doc.NewDeclaration();
+   // declaration->SetValue("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+    declaration->SetValue("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
+
+    doc.InsertFirstChild(declaration);
+  
+    XMLElement *root = doc.NewElement("Data");
+    doc.InsertAfterChild(declaration, root);
+    // 确保token_str是类的成员变量并且已经被正确初始化
+    XMLElement *child = doc.NewElement("Token");
+    child->SetText(token_str.c_str());
+    root->InsertEndChild(child);
+    child = doc.NewElement("DeviceNo");
+    child->SetText(device_no.c_str());
+    root->InsertEndChild(child);
+    child = doc.NewElement("Devstatus");
+    // 直接使用std::string，避免不必要的转换
+    child->SetText(std::to_string(status).c_str());
+    root->InsertEndChild(child);
+    // 序列化XML文档
+    XMLPrinter printer;
+    doc.Accept(&printer);
+    std::string xmlStr = printer.CStr();
+    std::string header = "XZCC";
+    std::string packetType = "ZT";
+    std::string dataToSend = header + packetType + xmlStr;
+    // 发送数据，确保有错误处理
+    if (!SendData(dataToSend))
+    {
+        g_console_logger->error("Failed to send data");
+        // 处理错误...
+    }
+    g_console_logger->info("dl client ReportStatus out...{}",dataToSend);
 }
 
 void DirectorLinkClient::ReportCarPass(const json &data, bool is_in)
 {
-   static std::unique_ptr<DOMParser> parser;
-   static AutoPtr<Document> pDoc;
-
-   static AutoPtr<Element> pData;
-    static AutoPtr<Element> pToken;
-    static AutoPtr<Element> pXmbh;
-    static AutoPtr<Element> pCaptureTime;
-    static AutoPtr<Element> pZtcCph;
-    static AutoPtr<Element> pZtcColor;
-    static AutoPtr<Element> pDeviceNo;
-    static AutoPtr<Element> pVehicleType;
-    static AutoPtr<Element> pPhotoUrl;
-    static  DOMWriter writer;
-    std::stringstream ss;
-    std::string xmlData;
-    std::lock_guard<std::mutex> lock(mtx);
-    if (!parser)
-    {
-        parser = std::make_unique<DOMParser>();
-    }
-    if (!pDoc)
-    {
-        pDoc = parser->parseString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Data></Data>");
-    }
- 
-    if (!pData)
-    {
-        pData = pDoc->documentElement();
-    }
-    if (!pToken)
-    {
-        pToken = pDoc->createElement("Token");
-    }
- 
-    // 获取根元素
-    pData = pDoc->documentElement();
-
-      // 清除 pData 下的所有子元素
-    AutoPtr<NodeList> childNodes = pData->childNodes();
-    while (childNodes->length() > 0) {
-        pData->removeChild(childNodes->item(0));
-    }
-
+    g_console_logger->info("dl clinet ReportCarPass  in...");
+    // 创建XML文档并设置内容
+      XMLDocument doc;
+    // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
+    XMLDeclaration* declaration = doc.NewDeclaration();
+    //declaration->SetValue("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+   // declaration->SetValue("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
+    declaration->SetValue("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
+    doc.InsertFirstChild(declaration);
+  
+    XMLElement *root = doc.NewElement("Data");
+    doc.InsertAfterChild(declaration, root);
+    // 确保token_str是类的成员变量并且已经被正确初始化
+    XMLElement *child = doc.NewElement("Token");
+    child->SetText(token_str.c_str());
+    root->InsertEndChild(child);
     // 创建子元素并设置文本内容
-    pToken = pDoc->createElement("Token");
-    pToken->appendChild(pDoc->createTextNode(token_str)); // 将文本节点添加到元素节点中
-    pData->appendChild(pToken);
 
-    pXmbh = pDoc->createElement("Xmbh");
-    pXmbh->appendChild(pDoc->createTextNode(xmbh_str));
-    pData->appendChild(pXmbh);
+    child = doc.NewElement("Xmbh");
+    child->SetText(xmbh_str.c_str());
+    root->InsertEndChild(child);
 
-    pCaptureTime = pDoc->createElement("CaptureTime");
+    child = doc.NewElement("CaptureTime");
     std::string p_capture_time = data["captureTime"];
-    pCaptureTime->appendChild(pDoc->createTextNode(p_capture_time));
-    pData->appendChild(pCaptureTime);
+    child->SetText(p_capture_time.c_str());
+    root->InsertEndChild(child);
 
+    child = doc.NewElement("ztcCph");
     std::string ztcCph_str = data["ztcCph"];
     ztcCph_str = convertLicensePlate(ztcCph_str);
+    child->SetText(ztcCph_str.c_str());
+    root->InsertEndChild(child);
 
-    pZtcCph = pDoc->createElement("ZtcCph");
-    pZtcCph->appendChild(pDoc->createTextNode(ztcCph_str));
-    pData->appendChild(pZtcCph);
-
-    pZtcColor = pDoc->createElement("ZtcColor");
+    child = doc.NewElement("ztcColor");
     int ztcColor = convertCarColor(data);
-    pZtcColor->appendChild(pDoc->createTextNode(std::to_string(ztcColor)));
-    pData->appendChild(pZtcColor);
+    child->SetText(std::to_string(ztcColor).c_str());
+    root->InsertEndChild(child);
 
-    pDeviceNo = pDoc->createElement("DeviceNo");
+    child = doc.NewElement("DeviceNo");
     std::string pDeviceNo_str = data["deviceNo"];
-    pDeviceNo->appendChild(pDoc->createTextNode(pDeviceNo_str));
-    pData->appendChild(pDeviceNo);
+    child->SetText(pDeviceNo_str.c_str());
+    root->InsertEndChild(child);
 
-    pVehicleType = pDoc->createElement("VehicleType");
+    child = doc.NewElement("VehicleType");
     int vehicleType_int = convertCarType(data);
-    pVehicleType->appendChild(pDoc->createTextNode(std::to_string(vehicleType_int)));
-    pData->appendChild(pVehicleType);
+    child->SetText(std::to_string(vehicleType_int).c_str());
+    root->InsertEndChild(child);
 
-    // <PhotoUrl>https://oss-xzzhgd.oss-cn-hangzhou.aliyuncs.com/11264930.jpg</PhotoUrl>
-    pPhotoUrl = pDoc->createElement("PhotoUrl");
-    //! 现在都改成用captureTime
+    child = doc.NewElement("PhotoUrl");
     std::string photo_url_prefix = "http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong";
-
     std::string dateOnly = p_capture_time.substr(0, 4) + p_capture_time.substr(5, 2) + p_capture_time.substr(8, 2);
     std::string dateTime = formatDateTime(p_capture_time);
-
     std::string photo_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + ".jpg";
-    pPhotoUrl->appendChild(pDoc->createTextNode(photo_url_res));
-    pData->appendChild(pPhotoUrl);
- 
-    // 将XML文档写入stringstream。
-    writer.writeNode(ss, pDoc);
-  
-    xmlData = ss.str();
-    // 手动添加XML声明 <?xml version="1.0" encoding="UTF-8" standalone="yes"?> 到stringstream的开头。
-    xmlData = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" + xmlData;
+    child->SetText(photo_url_res.c_str());
+    root->InsertEndChild(child);
 
+    // 序列化XML文档
+    XMLPrinter printer;
+    doc.Accept(&printer);
+    std::string xmlStr = printer.CStr();
     std::string header = "XZCC";
     std::string packetType = "GC";
-    std::string dataToSend = header + packetType + xmlData;
 
-    _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
-    g_console_logger->info("dl clinet ReportCarPass {}", dataToSend.c_str());
-    g_file_logger->info("dl clinet ReportCarPass {}", dataToSend.c_str());
-    
-    // 清除 pToken 的所有子节点
-    AutoPtr<NodeList> tokenChildNodes = pToken->childNodes();
-    while (tokenChildNodes->length() > 0)
+    std::string dataToSend = header + packetType + xmlStr;
+    // 发送数据，确保有错误处理
+    if (!SendData(dataToSend))
     {
-        pToken->removeChild(tokenChildNodes->item(0));
-         // 手动释放节点内存
+        g_console_logger->error("Failed to send data");
+        // 处理错误...
     }
-      
-    // 清除 pDeviceNo 的所有子节点
-    AutoPtr<NodeList> deviceNoChildNodes = pDeviceNo->childNodes();
-    while (deviceNoChildNodes->length() > 0)
-    {
-        pDeviceNo->removeChild(deviceNoChildNodes->item(0));
-    }
-  
-
-    AutoPtr<NodeList> xmbhChildNodes = pXmbh->childNodes();
-    while (xmbhChildNodes->length() > 0)
-    {
-        pXmbh->removeChild(xmbhChildNodes->item(0));
-    }
-   
-
-
-    AutoPtr<NodeList> captureTimeChildNodes = pCaptureTime->childNodes();
-    while (captureTimeChildNodes->length() > 0)
-    {
-        pCaptureTime->removeChild(captureTimeChildNodes->item(0));
-    }
-  
-
-
-    AutoPtr<NodeList> ztcCphChildNodes = pZtcCph->childNodes();
-    while (ztcCphChildNodes->length() > 0)
-    {
-        pZtcCph->removeChild(ztcCphChildNodes->item(0));
-    }
- 
-
-    AutoPtr<NodeList> ztcColorChildNodes = pZtcColor->childNodes();
-    while (ztcColorChildNodes->length() > 0)
-    {
-        pZtcColor->removeChild(ztcColorChildNodes->item(0));
-    }
-   
-
-
-    AutoPtr<NodeList> vehicleTypeChildNodes = pVehicleType->childNodes();
-    while (vehicleTypeChildNodes->length() > 0)
-    {
-        pVehicleType->removeChild(vehicleTypeChildNodes->item(0));
-    }
- 
-    AutoPtr<NodeList> photoUrlChildNodes = pPhotoUrl->childNodes();
-    while (photoUrlChildNodes->length() > 0)
-    {
-        pPhotoUrl->removeChild(photoUrlChildNodes->item(0));
-    }
-  
-
+    g_console_logger->info("dl client ReportCarPass out...");
 }
 
 void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
 {
-     
-    static std::unique_ptr<DOMParser> parser;
-    static AutoPtr<Document> pDoc;
-    static AutoPtr<Element> pData;
-    static AutoPtr<Element> pToken;
-    static AutoPtr<Element> pDeviceNo;
-    static AutoPtr<Element> pDevstatus;
-    static AutoPtr<Element> pXmbh;
-    static AutoPtr<Element> pCaptureTime;
-    static AutoPtr<Element> pZtcCph;
-    static AutoPtr<Element> pZtcColor;
-    static AutoPtr<Element> pAlarmType;
-    static AutoPtr<Element> pLeftclean;
-    static AutoPtr<Element> pRightclean;
-    static AutoPtr<Element> pVehicleType;
-    static AutoPtr<Element> pPhotoUrl;
-    static AutoPtr<Element> pPhotoUrlL;
-    static AutoPtr<Element> pPhotoUrlR;
-    static AutoPtr<Element> pVideoUrl;
-    static AutoPtr<Element> pLeavededioUrl;
-    static AutoPtr<Element> pCleanRes;
-    static DOMWriter writer;
-
-    std::lock_guard<std::mutex> lock(mtx);
-
-    if (!parser)
-    {
-        parser = std::make_unique<DOMParser>();
-    }
-    if (!pDoc)
-    {
-        pDoc = parser->parseString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Data></Data>");
-    }
-    if (!pData)
-    {
-        pData = pDoc->documentElement();
-    }
-    if (!pToken)
-    {
-        pToken = pDoc->createElement("Token");
-    }
-
     g_file_logger->info("dl clinet ReportCarWashInfo in...");
- 
 
-    std::string xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Data></Data>";
-    pDoc = parser.get()->parseString(xmlString);
-
+      XMLDocument doc;
+    // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
+    XMLDeclaration* declaration = doc.NewDeclaration();
+    //declaration->SetValue("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+    declaration->SetValue("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
+    doc.InsertFirstChild(declaration);
   
-    // 获取根元素
-    pData = pDoc->documentElement();
+    XMLElement *root = doc.NewElement("Data");
+    doc.InsertAfterChild(declaration, root);
+    // 确保token_str是类的成员变量并且已经被正确初始化
+    XMLElement *child = doc.NewElement("Token");
+    child->SetText(token_str.c_str());
+    root->InsertEndChild(child);
     // 创建子元素并设置文本内容
-    pToken = pDoc->createElement("Token");
-    pToken->appendChild(pDoc->createTextNode(token_str)); // 将文本节点添加到元素节点中
-    pData->appendChild(pToken);
 
-    pXmbh = pDoc->createElement("Xmbh");
-    pXmbh->appendChild(pDoc->createTextNode(xmbh_str));
-    pData->appendChild(pXmbh);
+    child = doc.NewElement("Xmbh");
+    child->SetText(xmbh_str.c_str());
+    root->InsertEndChild(child);
 
-    
-
-    pCaptureTime = pDoc->createElement("CaptureTime");
+    child = doc.NewElement("CaptureTime");
     std::string p_capture_time = data["captureTime"];
-    pCaptureTime->appendChild(pDoc->createTextNode(p_capture_time));
-    pData->appendChild(pCaptureTime);
+    child->SetText(p_capture_time.c_str());
+    root->InsertEndChild(child);
 
-
-    // ztcCph
+    child = doc.NewElement("ZtcCph");
     std::string ztcCph_str = data["ztcCph"];
     ztcCph_str = convertLicensePlate(ztcCph_str);
-    pZtcCph = pDoc->createElement("ZtcCph");
-    pZtcCph->appendChild(pDoc->createTextNode(ztcCph_str));
-    pData->appendChild(pZtcCph);
+    child->SetText(ztcCph_str.c_str());
+    root->InsertEndChild(child);
 
-    pZtcColor = pDoc->createElement("ZtcColor");
+    child = doc.NewElement("ZtcColor");
     int ztcColor = convertCarColor(data);
-    pZtcColor->appendChild(pDoc->createTextNode(std::to_string(ztcColor)));
-    pData->appendChild(pZtcColor);
+    child->SetText(std::to_string(ztcColor).c_str());
+    root->InsertEndChild(child);
 
-    pAlarmType = pDoc->createElement("AlarmType");
-    int alarmType_int = convertToDLAlarmType(data);
-    pAlarmType->appendChild(pDoc->createTextNode(std::to_string(alarmType_int)));
-    pData->appendChild(pAlarmType);
-
-    pDeviceNo = pDoc->createElement("DeviceNo");
+    child = doc.NewElement("DeviceNo");
     std::string pDeviceNo_str = data["deviceNo"];
-    pDeviceNo->appendChild(pDoc->createTextNode(pDeviceNo_str));
-    pData->appendChild(pDeviceNo);
+    child->SetText(pDeviceNo_str.c_str());
+    root->InsertEndChild(child);
 
-
+    child = doc.NewElement("AlarmType");
+    int alarmType_int = convertToDLAlarmType(data);
+    child->SetText(std::to_string(alarmType_int).c_str());
+    root->InsertEndChild(child);
 
     if (is_detour)
     {
@@ -334,49 +264,46 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         std::string dateOnly = p_capture_time.substr(0, 4) + p_capture_time.substr(5, 2) + p_capture_time.substr(8, 2);
         std::string dateTime = formatDateTime(p_capture_time);
 
-        pPhotoUrl = pDoc->createElement("PhotoUrl");
+        child = doc.NewElement("PhotoUrl");
         std::string photo_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + ".jpg";
-        pPhotoUrl->appendChild(pDoc->createTextNode(photo_url_res));
-        pData->appendChild(pPhotoUrl);
+        child->SetText(photo_url_res.c_str());
+        root->InsertEndChild(child);
+        child = doc.NewElement("LeftphotoUrl");
+        child->SetText("");
+        root->InsertEndChild(child);
+        child = doc.NewElement("RightphotoUrl");
+        child->SetText("");
+        root->InsertEndChild(child);
 
-        pPhotoUrlL = pDoc->createElement("LeftphotoUrl");
-        pPhotoUrlL->appendChild(pDoc->createTextNode(""));
-        pData->appendChild(pPhotoUrlL);
-
-        pPhotoUrlR = pDoc->createElement("RightphotoUrl");
-        pPhotoUrlR->appendChild(pDoc->createTextNode(""));
-        pData->appendChild(pPhotoUrlR);
-
-        pVideoUrl = pDoc->createElement("VideoUrl");
+        child = doc.NewElement("VideoUrl");
         std::string video_url_res = video_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + "rx/" + dateTime + ".mp4";
-        pVideoUrl->appendChild(pDoc->createTextNode(video_url_res));
-        pData->appendChild(pVideoUrl);
-
-        pLeavededioUrl = pDoc->createElement("LeaveVideoUrl");
-        pLeavededioUrl->appendChild(pDoc->createTextNode(""));
-        pData->appendChild(pLeavededioUrl);
+        child->SetText(video_url_res.c_str());
+        root->InsertEndChild(child);
+        child = doc.NewElement("LeaveVideoUrl");
+        child->SetText("");
+        root->InsertEndChild(child);
     }
     else
     {
-        pCleanRes = pDoc->createElement("CleanRes");
+        child = doc.NewElement("CleanRes");
         int cleanres_int = data["cleanRes"];
-        pCleanRes->appendChild(pDoc->createTextNode(std::to_string(cleanres_int)));
-        pData->appendChild(pCleanRes);
+        child->SetText(std::to_string(cleanres_int).c_str());
+        root->InsertEndChild(child);
 
-        pVehicleType = pDoc->createElement("VehicleType");
+        child = doc.NewElement("VehicleType");
         int vehicleType_int = convertCarType(data);
-        pVehicleType->appendChild(pDoc->createTextNode(std::to_string(vehicleType_int)));
-        pData->appendChild(pVehicleType);
+        child->SetText(std::to_string(vehicleType_int).c_str());
+        root->InsertEndChild(child);
 
-        pLeftclean = pDoc->createElement("Leftclean");
+        child = doc.NewElement("Leftclean");
         int leftclean_int = convertCarCleanResL(data);
-        pLeftclean->appendChild(pDoc->createTextNode(std::to_string(leftclean_int)));
-        pData->appendChild(pLeftclean);
+        child->SetText(std::to_string(leftclean_int).c_str());
+        root->InsertEndChild(child);
 
-        pRightclean = pDoc->createElement("Rightclean");
+        child = doc.NewElement("Rightclean");
         int rightclean_int = convertCarCleanResR(data);
-        pRightclean->appendChild(pDoc->createTextNode(std::to_string(rightclean_int)));
-        pData->appendChild(pRightclean);
+        child->SetText(std::to_string(rightclean_int).c_str());
+        root->InsertEndChild(child);
 
         static std::string video_url_prefix = "http://36.156.67.46:9001/updateApi/FileDownload/downloadFile?fileName=";
         static std::string photo_url_prefix = "http://36.156.67.46:8237/prod-api/thirdPlatFace/getCheChongImg?fileName=/profile/chechong";
@@ -386,167 +313,83 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         std::string dateOnly = p_capture_time.substr(0, 4) + p_capture_time.substr(5, 2) + p_capture_time.substr(8, 2);
         std::string dateTime = formatDateTime(p_capture_time);
 
-        pPhotoUrl = pDoc->createElement("PhotoUrl");
+        child = doc.NewElement("PhotoUrl");
         std::string photo_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + ".jpg";
-        pPhotoUrl->appendChild(pDoc->createTextNode(photo_url_res));
-        pData->appendChild(pPhotoUrl);
+        child->SetText(photo_url_res.c_str());
+        root->InsertEndChild(child);
 
-        pPhotoUrlL = pDoc->createElement("LeftphotoUrl");
+        child = doc.NewElement("LeftphotoUrl");
         std::string leftphoto_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + "L.jpg";
-        pPhotoUrlL->appendChild(pDoc->createTextNode(leftphoto_url_res));
-        pData->appendChild(pPhotoUrlL);
+        child->SetText(leftphoto_url_res.c_str());
+        root->InsertEndChild(child);
 
-        pPhotoUrlR = pDoc->createElement("RightphotoUrl");
+        child = doc.NewElement("RightphotoUrl");
         std::string rightphoto_url_res = photo_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + dateTime + "R.jpg";
-        pPhotoUrlR->appendChild(pDoc->createTextNode(rightphoto_url_res));
-        pData->appendChild(pPhotoUrlR);
+        child->SetText(rightphoto_url_res.c_str());
+        root->InsertEndChild(child);
 
-        pVideoUrl = pDoc->createElement("VideoUrl");
-        std::string video_url_res = video_url_prefix + dateOnly + "/" + pDeviceNo_str + "/" + "zp" + "/" + dateTime + ".mp4";
-        pVideoUrl->appendChild(pDoc->createTextNode(video_url_res));
-        pData->appendChild(pVideoUrl);
+        child = doc.NewElement("VideoUrl");
+        std::string video_url_res = video_url_prefix + "/" + dateOnly + "/" + pDeviceNo_str + "/" + "zp" + "/" + dateTime + ".mp4";
+        child->SetText(video_url_res.c_str());
+        root->InsertEndChild(child);
 
-        pLeavededioUrl = pDoc->createElement("LeaveVideoUrl");
+        child = doc.NewElement("LeaveVideoUrl");
         std::string leave_video_url_res = video_url_prefix + dateOnly + "/" + pDeviceNo_str + "/" + "mk" + "/" + dateTime + ".mp4";
-        pLeavededioUrl->appendChild(pDoc->createTextNode(leave_video_url_res));
-        pData->appendChild(pLeavededioUrl);
+        child->SetText(leave_video_url_res.c_str());
+        root->InsertEndChild(child);
     }
 
-    // std::cout << "苏AXY377----->" << convertLicensePlate("川AXY377") << std::endl;
-    // 创建一个DOMWriter实例。
-
-    stringstream ss;
-    // 将XML文档写入stringstream。
-    writer.writeNode(ss, pDoc);
-    // 输出XML字符串。
-    cout << ss.str() << std::endl;
-
-    std::string xmlData = ss.str();
-    // 手动添加XML声明 <?xml version="1.0" encoding="UTF-8" standalone="yes"?> 到stringstream的开头。
-    xmlData = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" + xmlData;
+    // 序列化XML文档
+    XMLPrinter printer;
+    doc.Accept(&printer);
+    std::string xmlStr = printer.CStr();
 
     std::string header = "XZCC";
     std::string packetType = "GJ";
-    std::string dataToSend = header + packetType + xmlData;
+    std::string dataToSend = header + packetType + xmlStr;
 
-    _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
-    // g_console_logger->info("dl clinet ReportCarWashInfo {}",dataToSend.c_str());
-    g_file_logger->info("dl clinet ReportCarWashInfo {}", dataToSend.c_str());
-    g_file_logger->info("dl clinet ReportCarWashInfo out...");
-
-#if 0
-    AutoPtr<NodeList> tokenChildNodes = pToken->childNodes();
-    while (tokenChildNodes->length() > 0)
+    if (!SendData(dataToSend))
     {
-        pToken->removeChild(tokenChildNodes->item(0));
+        g_console_logger->error("Failed to send data");
+        // 处理错误...
     }
-    AutoPtr<NodeList> deviceNoChildNodes = pDeviceNo->childNodes();
-    while (deviceNoChildNodes->length() > 0)
-    {
-        pDeviceNo->removeChild(deviceNoChildNodes->item(0));
-    }
-    AutoPtr<NodeList> devstatusChildNodes = pDevstatus->childNodes();
-    while (devstatusChildNodes->length() > 0)
-    {
-        pDevstatus->removeChild(devstatusChildNodes->item(0));
-    }
-    AutoPtr<NodeList> xmbhChildNodes = pXmbh->childNodes();
-    while (xmbhChildNodes->length() > 0)
-    {
-        pXmbh->removeChild(xmbhChildNodes->item(0));
-    }
-    #endif
-
+    g_file_logger->info("dl client ReportCarWashInfo out...");
 }
 
-void DirectorLinkClient::ReportStatus(const std::string &device_no, int status)
+std::string DirectorLinkClient::formatDateTime(const std::string &dateTime)
 {
-    static std::unique_ptr<DOMParser> parser;
-    static AutoPtr<Document> pDoc;
-    static AutoPtr<Element> pData;
-    static AutoPtr<Element> pToken;
-    static AutoPtr<Element> pDeviceNo;
-    static AutoPtr<Element> pDevstatus;
-    static DOMWriter writer;
-    std::stringstream ss;
-    std::string xmlData;
-    std::lock_guard<std::mutex> lock(mtx);
-
-    if (!parser)
+    std::string formattedDateTime;
+    for (char c : dateTime)
     {
-        parser = std::make_unique<DOMParser>();
+        if (c != '-' && c != ' ' && c != ':')
+        {
+            formattedDateTime += c;
+        }
     }
-    if (!pDoc)
-    {
-        pDoc = parser->parseString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Data></Data>");
-    }
-    if (!pData)
-    {
-        pData = pDoc->documentElement();
-    }
-    if (!pToken)
-    {
-        pToken = pDoc->createElement("Token");
-    }
-    if (!pDeviceNo)
-    {
-        pDeviceNo = pDoc->createElement("DeviceNo");
-    }
-    if (!pDevstatus)
-    {
-        pDevstatus = pDoc->createElement("Devstatus");
-    }
+    return formattedDateTime;
+}
+std::string DirectorLinkClient::addSeconds(const std::string &dateTime, int secondsToAdd)
+{
+    int hours = std::stoi(dateTime.substr(11, 2));
+    int minutes = std::stoi(dateTime.substr(14, 2));
+    int seconds = std::stoi(dateTime.substr(17, 2));
 
-    g_file_logger->info("dl clinet ReportStatus in...");
+    seconds += secondsToAdd;
 
-    pToken->appendChild(pDoc->createTextNode(token_str)); // 将文本节点添加到元素节点中
-    pData->appendChild(pToken);
+    // 处理秒数溢出
+    minutes += seconds / 60;
+    seconds %= 60;
+    hours += minutes / 60;
+    minutes %= 60;
+    hours %= 24;
 
-    pDeviceNo->appendChild(pDoc->createTextNode(device_no));
-    pData->appendChild(pDeviceNo);
+    // 构造新的日期时间字符串
+    std::string newDateTime = dateTime.substr(0, 11) +
+                              (hours < 10 ? "0" : "") + std::to_string(hours) + ":" +
+                              (minutes < 10 ? "0" : "") + std::to_string(minutes) + ":" +
+                              (seconds < 10 ? "0" : "") + std::to_string(seconds);
 
-    //<Devstatus>0</Devstatus>//状态(0：正常 1：异常)
-
-    pDevstatus->appendChild(pDoc->createTextNode(to_string(status)));
-    pData->appendChild(pDevstatus);
-
-    // 创建一个DOMWriter实例。
-
-    // 将XML文档写入stringstream。
-    writer.writeNode(ss, pDoc);
-
-    // 输出XML字符串。
-    cout << ss.str() << std::endl;
-    xmlData = ss.str();
-    xmlData = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" + xmlData;
-
-    std::string header = "XZCC";
-    std::string packetType = "ZT";
-    std::string dataToSend = header + packetType + xmlData;
-
-    _socket->sendBytes(dataToSend.c_str(), dataToSend.length());
-
-    // const element = pDoc.get()->getElementById
-    // element.innerHTML = "";
-
-    // 清除 pToken 的所有子节点
-    AutoPtr<NodeList> tokenChildNodes = pToken->childNodes();
-    while (tokenChildNodes->length() > 0)
-    {
-        pToken->removeChild(tokenChildNodes->item(0));
-    }
-    // 清除 pDeviceNo 的所有子节点
-    AutoPtr<NodeList> deviceNoChildNodes = pDeviceNo->childNodes();
-    while (deviceNoChildNodes->length() > 0)
-    {
-        pDeviceNo->removeChild(deviceNoChildNodes->item(0));
-    }
-    // 清除 pDevstatus 的所有子节点
-    AutoPtr<NodeList> devstatusChildNodes = pDevstatus->childNodes();
-    while (devstatusChildNodes->length() > 0)
-    {
-        pDevstatus->removeChild(devstatusChildNodes->item(0));
-    }
+    return newDateTime;
 }
 
 int DirectorLinkClient::convertToDLAlarmType(const json &data)
@@ -697,87 +540,39 @@ int DirectorLinkClient::convertCarCleanResR(const json &data)
     return -1;
 }
 
-void DirectorLinkClient::receiveAndParseMessage()
+ void DirectorLinkClient::receiveAndParseMessage()
 {
-    char buffer[1024];
-    std::string data;
-
     g_console_logger->info("dl client receiveAndParseMessage in...");
 
-    // 设置 socket 为阻塞模式
-    _socket->setBlocking(true); // Changed to blocking mode
+    while (true) { // 这里仍然使用无限循环，你需要根据实际情况添加退出条件
+        char buffer[BUFFER_SIZE];
+        memset(buffer, 0, BUFFER_SIZE);
 
-    int totalBytesReceived = 0;
-    int bytesReceived = 0;
-
-    // 不断尝试读取数据，直到没有数据可读或达到退出条件
-    while (true)
-    {
-        // 尝试读取数据
-        bytesReceived = _socket->receiveBytes(buffer, sizeof(buffer));
-
-        if (bytesReceived > 0)
+        // 使用阻塞式recv等待接收数据
+        int bytes_received = recv(socket_fd, buffer, BUFFER_SIZE - 1, 0);
+        
+        if (bytes_received > 0)
         {
-            totalBytesReceived += bytesReceived;
-            data.append(buffer, bytesReceived);
+            std::string str(buffer);
+            g_console_logger->info("Received message: {}", str);
+            // 在这里解析和处理接收到的消息
+        }
+        else if (bytes_received == 0)
+        {
+            // 连接已关闭
+            g_console_logger->info("Connection closed by peer");
+            break; // 或者继续，取决于你的连接关闭策略
         }
         else
         {
-            // 没有数据可读，退出循环
-            break;
+            // recv错误
+            g_console_logger->error("recv failed: {}", strerror(errno));
+            break; // 或者继续，取决于你的错误处理策略
         }
+        // 使用sleep模拟处理消息的过程
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        // 根据需要添加退出循环的条件
+        // 例如，检查某个标志位或者处理特定消息后退出
     }
-
-    // 如果有数据接收到
-    if (totalBytesReceived > 0)
-    {
-        g_console_logger->info("dl client receiveAndParseMessage out...{}", data.c_str());
-        g_file_logger->info("dl client receiveAndParseMessage out...{}", data.c_str());
-    }
-    else
-    {
-        // 没有数据接收到
-        // g_console_logger->error("dl client receiveAndParseMessage failed...");
-        // g_file_logger->error("dl client receiveAndParseMessage failed...");
-    }
-
-    data.clear();
-    memset(buffer, 0, sizeof(buffer)); // Clear the buffer
-    g_console_logger->info("dl client receiveAndParseMessage out...");
-}
-
-std::string DirectorLinkClient::formatDateTime(const std::string &dateTime)
-{
-    std::string formattedDateTime;
-    for (char c : dateTime)
-    {
-        if (c != '-' && c != ' ' && c != ':')
-        {
-            formattedDateTime += c;
-        }
-    }
-    return formattedDateTime;
-}
-std::string DirectorLinkClient::addSeconds(const std::string &dateTime, int secondsToAdd)
-{
-    int hours = std::stoi(dateTime.substr(11, 2));
-    int minutes = std::stoi(dateTime.substr(14, 2));
-    int seconds = std::stoi(dateTime.substr(17, 2));
-
-    seconds += secondsToAdd;
-
-    // 处理秒数溢出
-    minutes += seconds / 60;
-    seconds %= 60;
-    hours += minutes / 60;
-    minutes %= 60;
-    hours %= 24;
-
-    // 构造新的日期时间字符串
-    std::string newDateTime = dateTime.substr(0, 11) +
-                              (hours < 10 ? "0" : "") + std::to_string(hours) + ":" +
-                              (minutes < 10 ? "0" : "") + std::to_string(minutes) + ":" +
-                              (seconds < 10 ? "0" : "") + std::to_string(seconds);
-
-    return newDateTime;
 }

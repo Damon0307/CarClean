@@ -4,10 +4,7 @@
 #include "NetFoundation.h"
 #include "WashReport.h"
 #include "Timer.h"
-
-#include "Poco/Net/SocketAddress.h"
-#include "Poco/Net/StreamSocket.h"
-
+ 
 #include "DirectorLinkClient.h"
 
 #include "spdlog/spdlog.h"
@@ -21,14 +18,13 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version 1.19 直连+车辆进场处理+内存泄露修复A";
+const char *version_str = "Version 1.20 重构直连+车辆进场处理";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
-
-
+ 
 const std::string file_path_logger = "/userdata/LogFile.log";
-//const std::string file_path_logger = "CarCleanLogFile.log";
+//const std::string file_path_logger = "LogFile.log";
 
 using josn = nlohmann::json;
 
@@ -57,52 +53,56 @@ int main()
     // 开始记录日志
     g_console_logger->info("StartUp!!! {}", version_str); 
     g_file_logger->info("StartUp!!! {}", version_str);
- 
-    //g_file_logger->flush();
+  
   
   std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
 
     //直连模块接收服务端消息线程
 
-  // json  test_json = {
-  //   {"alarmType",3},
-  //   {"captureTime","2023-09-18 22:40:05"},
-  //   {"cleanRes",1},
-  //   {"dataType",1},
-  //   {"deviceNo","deviceNo_1"},
-  //   {"deviceSerial","nvr_serial_num_1"},
-  //   {"direction",1},
-  //   {"enterTime","2023-11-19 22:16:52"},
-  //   {"frontWheelWashTime",0},
-  //   {"hindWheelWashTime",0},
-  //   {"leaveTime","2023-11-19 22:17:28"},
-  //   {"leftclean",1},
-  //   {"leftphotoUrl",""},
-  //   {"localIndex","nvr_channel_1"},
-  //   {"picture","pic"},
-  //   {"rightclean",1},
-  //   {"rightphotoUrl",""},
-  //   {"vehicleType",1},
-  //   {"xmbh","XMBH00000003"},
-  //   {"ztcColor",3},
-  //  {"ztcCph","苏AXY377"}
-  // };
+  json  test_json = {
+    {"alarmType",3},
+    {"captureTime","2023-09-18 22:40:05"},
+    {"cleanRes",1},
+    {"dataType",1},
+    {"deviceNo","deviceNo_1"},
+    {"deviceSerial","nvr_serial_num_1"},
+    {"direction",1},
+    {"enterTime","2023-11-19 22:16:52"},
+    {"frontWheelWashTime",0},
+    {"hindWheelWashTime",0},
+    {"leaveTime","2023-11-19 22:17:28"},
+    {"leftclean",1},
+    {"leftphotoUrl",""},
+    {"localIndex","nvr_channel_1"},
+    {"picture","pic"},
+    {"rightclean",1},
+    {"rightphotoUrl",""},
+    {"vehicleType",1},
+    {"xmbh","XMBH00000003"},
+    {"ztcColor",3},
+   {"ztcCph","苏AXY377"}
+  };
  
- // while (1)
-//  {
-     //uni_dl_client.get()->ReportCarWashInfo(test_json,true);
-     // uni_dl_client.get()->ReportCarPass(test_json,true);
-    // this_thread::sleep_for(chrono::microseconds(100));
-    //  uni_dl_client.get()->ReportCarWashInfo(test_json,true);
-    //  this_thread::sleep_for(chrono::microseconds(100));
-    //  uni_dl_client.get()->ReportCarPass(test_json,false);
-    //  this_thread::sleep_for(chrono::microseconds(100));
-    //  uni_dl_client.get()->ReportStatus("test_json",true); 
-    //  this_thread::sleep_for(chrono::microseconds(100));   
- // }
-  
+  //   std::thread dl_client_thread([&uni_dl_client](){
+  //      uni_dl_client.get()->receiveAndParseMessage();  
+  // });
 
-      
+#if 0
+ while (1)
+ {
+    // uni_dl_client.get()->ReportCarWashInfo(test_json,true);
+    //  uni_dl_client.get()->ReportCarPass(test_json,true);
+    //  this_thread::sleep_for(chrono::microseconds(100));
+    uni_dl_client.get()->ReportCarWashInfo(test_json,false);
+    // this_thread::sleep_for(chrono::microseconds(100000));
+     // uni_dl_client.get()->ReportCarPass(test_json,true);
+    //  this_thread::sleep_for(chrono::microseconds(500));
+     // uni_dl_client.get()->ReportStatus("test_json",0); 
+      this_thread::sleep_for(chrono::microseconds(500000));   
+ }
+#endif
+  // dl_client_thread.join();
+   
 
 #if 1
  
@@ -151,14 +151,7 @@ int main()
   
   //直连模块接收服务端消息线程
   std::thread dl_client_thread([&uni_dl_client](){
-
-      while (1)
-      {
-       this_thread::sleep_for(chrono::seconds(1));
        uni_dl_client.get()->receiveAndParseMessage();  
-      }
-      
-
   });
   
   uni_ccr.get()->StartServer();
