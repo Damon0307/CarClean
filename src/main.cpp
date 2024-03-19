@@ -4,12 +4,12 @@
 #include "NetFoundation.h"
 #include "WashReport.h"
 #include "Timer.h"
- 
 #include "DirectorLinkClient.h"
-
+#include "config.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+
 // #include "UartMod.h"
 using namespace httplib;
 
@@ -23,8 +23,12 @@ const char *version_str = "Version 1.21 重构直连+车辆进场处理 + 闸机
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
  
+#if(ARM_FLAG==1)
 const std::string file_path_logger = "/userdata/LogFile.log";
-//const std::string file_path_logger = "LogFile.log";
+#else
+const std::string file_path_logger = "LogFile.log";
+#endif
+ 
 
 using josn = nlohmann::json;
 
