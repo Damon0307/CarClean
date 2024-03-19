@@ -211,7 +211,7 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
 {
     g_file_logger->info("dl clinet ReportCarWashInfo in...");
 
-      XMLDocument doc;
+    XMLDocument doc;
     // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
     XMLDeclaration* declaration = doc.NewDeclaration();
     //declaration->SetValue("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");

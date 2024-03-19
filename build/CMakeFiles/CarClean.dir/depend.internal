@@ -41,22 +41,22 @@ CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o
  ../src/spdlog/sinks/wincolor_sink.h
  ../src/spdlog/tweakme.h
  ../src/spdlog/version.h
- /opt/TestStartUp/CarClean/src/DirectorLinkClient.cpp
- /opt/TestStartUp/CarClean/src/DirectorLinkClient.h
- /opt/TestStartUp/CarClean/src/json.hpp
- /opt/TestStartUp/CarClean/src/spdlog/spdlog-inl.h
- /opt/TestStartUp/CarClean/src/spdlog/spdlog.h
- /opt/TestStartUp/CarClean/src/tinyxml2.h
+ /opt/WorkingRoom/CarClean/src/DirectorLinkClient.cpp
+ /opt/WorkingRoom/CarClean/src/DirectorLinkClient.h
+ /opt/WorkingRoom/CarClean/src/json.hpp
+ /opt/WorkingRoom/CarClean/src/spdlog/spdlog-inl.h
+ /opt/WorkingRoom/CarClean/src/spdlog/spdlog.h
+ /opt/WorkingRoom/CarClean/src/tinyxml2.h
 CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o
- /opt/TestStartUp/CarClean/src/NetFoundation.cpp
- /opt/TestStartUp/CarClean/src/NetFoundation.h
- /opt/TestStartUp/CarClean/src/httplib.h
- /opt/TestStartUp/CarClean/src/json.hpp
+ /opt/WorkingRoom/CarClean/src/NetFoundation.cpp
+ /opt/WorkingRoom/CarClean/src/NetFoundation.h
+ /opt/WorkingRoom/CarClean/src/httplib.h
+ /opt/WorkingRoom/CarClean/src/json.hpp
 CMakeFiles/CarClean.dir/src/UartMod.cpp.o
- /opt/TestStartUp/CarClean/src/UartMod.cpp
- /opt/TestStartUp/CarClean/src/UartMod.h
- /opt/TestStartUp/CarClean/src/json.hpp
- /opt/TestStartUp/CarClean/src/uart.h
+ /opt/WorkingRoom/CarClean/src/UartMod.cpp
+ /opt/WorkingRoom/CarClean/src/UartMod.h
+ /opt/WorkingRoom/CarClean/src/json.hpp
+ /opt/WorkingRoom/CarClean/src/uart.h
 CMakeFiles/CarClean.dir/src/WashReport.cpp.o
  ../src/spdlog/common-inl.h
  ../src/spdlog/common.h
@@ -97,16 +97,16 @@ CMakeFiles/CarClean.dir/src/WashReport.cpp.o
  ../src/spdlog/sinks/wincolor_sink.h
  ../src/spdlog/tweakme.h
  ../src/spdlog/version.h
- /opt/TestStartUp/CarClean/src/AIIPC.h
- /opt/TestStartUp/CarClean/src/Point.h
- /opt/TestStartUp/CarClean/src/Timer.h
- /opt/TestStartUp/CarClean/src/WashReport.cpp
- /opt/TestStartUp/CarClean/src/WashReport.h
- /opt/TestStartUp/CarClean/src/httplib.h
- /opt/TestStartUp/CarClean/src/json.hpp
- /opt/TestStartUp/CarClean/src/spdlog/spdlog-inl.h
- /opt/TestStartUp/CarClean/src/spdlog/spdlog.h
- /opt/TestStartUp/CarClean/src/uart.h
+ /opt/WorkingRoom/CarClean/src/AIIPC.h
+ /opt/WorkingRoom/CarClean/src/Point.h
+ /opt/WorkingRoom/CarClean/src/Timer.h
+ /opt/WorkingRoom/CarClean/src/WashReport.cpp
+ /opt/WorkingRoom/CarClean/src/WashReport.h
+ /opt/WorkingRoom/CarClean/src/httplib.h
+ /opt/WorkingRoom/CarClean/src/json.hpp
+ /opt/WorkingRoom/CarClean/src/spdlog/spdlog-inl.h
+ /opt/WorkingRoom/CarClean/src/spdlog/spdlog.h
+ /opt/WorkingRoom/CarClean/src/uart.h
 CMakeFiles/CarClean.dir/src/main.cpp.o
  ../src/spdlog/common-inl.h
  ../src/spdlog/common.h
@@ -151,26 +151,26 @@ CMakeFiles/CarClean.dir/src/main.cpp.o
  ../src/spdlog/sinks/wincolor_sink.h
  ../src/spdlog/tweakme.h
  ../src/spdlog/version.h
- /opt/TestStartUp/CarClean/src/AIIPC.h
- /opt/TestStartUp/CarClean/src/DirectorLinkClient.h
- /opt/TestStartUp/CarClean/src/NetFoundation.h
- /opt/TestStartUp/CarClean/src/Point.h
- /opt/TestStartUp/CarClean/src/Timer.h
- /opt/TestStartUp/CarClean/src/WashReport.h
- /opt/TestStartUp/CarClean/src/httplib.h
- /opt/TestStartUp/CarClean/src/json.hpp
- /opt/TestStartUp/CarClean/src/main.cpp
- /opt/TestStartUp/CarClean/src/spdlog/sinks/rotating_file_sink-inl.h
- /opt/TestStartUp/CarClean/src/spdlog/sinks/rotating_file_sink.h
- /opt/TestStartUp/CarClean/src/spdlog/sinks/stdout_color_sinks-inl.h
- /opt/TestStartUp/CarClean/src/spdlog/sinks/stdout_color_sinks.h
- /opt/TestStartUp/CarClean/src/spdlog/spdlog-inl.h
- /opt/TestStartUp/CarClean/src/spdlog/spdlog.h
- /opt/TestStartUp/CarClean/src/tinyxml2.h
- /opt/TestStartUp/CarClean/src/uart.h
+ /opt/WorkingRoom/CarClean/src/AIIPC.h
+ /opt/WorkingRoom/CarClean/src/DirectorLinkClient.h
+ /opt/WorkingRoom/CarClean/src/NetFoundation.h
+ /opt/WorkingRoom/CarClean/src/Point.h
+ /opt/WorkingRoom/CarClean/src/Timer.h
+ /opt/WorkingRoom/CarClean/src/WashReport.h
+ /opt/WorkingRoom/CarClean/src/httplib.h
+ /opt/WorkingRoom/CarClean/src/json.hpp
+ /opt/WorkingRoom/CarClean/src/main.cpp
+ /opt/WorkingRoom/CarClean/src/spdlog/sinks/rotating_file_sink-inl.h
+ /opt/WorkingRoom/CarClean/src/spdlog/sinks/rotating_file_sink.h
+ /opt/WorkingRoom/CarClean/src/spdlog/sinks/stdout_color_sinks-inl.h
+ /opt/WorkingRoom/CarClean/src/spdlog/sinks/stdout_color_sinks.h
+ /opt/WorkingRoom/CarClean/src/spdlog/spdlog-inl.h
+ /opt/WorkingRoom/CarClean/src/spdlog/spdlog.h
+ /opt/WorkingRoom/CarClean/src/tinyxml2.h
+ /opt/WorkingRoom/CarClean/src/uart.h
 CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o
- /opt/TestStartUp/CarClean/src/tinyxml2.cpp
- /opt/TestStartUp/CarClean/src/tinyxml2.h
+ /opt/WorkingRoom/CarClean/src/tinyxml2.cpp
+ /opt/WorkingRoom/CarClean/src/tinyxml2.h
 CMakeFiles/CarClean.dir/src/uart.cpp.o
- /opt/TestStartUp/CarClean/src/uart.cpp
- /opt/TestStartUp/CarClean/src/uart.h
+ /opt/WorkingRoom/CarClean/src/uart.cpp
+ /opt/WorkingRoom/CarClean/src/uart.h
