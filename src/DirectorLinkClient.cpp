@@ -79,8 +79,8 @@ int DirectorLinkClient::SendData(const std::string &data)
         std::cerr << "无效的套接字描述符 尝试重连\n";
        ConnectToserver();   
     }
-    g_console_logger->info("dl client SendData in...{}",data);
-    g_file_logger->info("dl client SendData in...{}",data);
+   // g_console_logger->info("dl client SendData in...{}",data);
+   // g_file_logger->info("dl client SendData in...{}",data);
 
     int bytes_sent = send(socket_fd, data.c_str(), data.length(), 0);
     if (bytes_sent < 0)
@@ -139,8 +139,6 @@ void DirectorLinkClient::ReportCarPass(const json &data, bool is_in)
       XMLDocument doc;
     // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
     XMLDeclaration* declaration = doc.NewDeclaration();
-    //declaration->SetValue("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
-   // declaration->SetValue("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
     declaration->SetValue("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
     doc.InsertFirstChild(declaration);
   
