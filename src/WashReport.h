@@ -15,6 +15,7 @@
 #include "AIIPC.h"
 #include "uart.h"
 #include "Timer.h"
+#include "BarrierGate.h"
 
 using json = nlohmann::json;
 using namespace httplib;
@@ -193,6 +194,10 @@ private:
     Timer mHeartBearTimer;
     Timer mDlReportStatusTimer;
     void StartHeartBeat();
+//闸机的控制
+   bool mBarrierGateNeed;
+   BarrierGate* mBarrierGate;
+
  
 };
 
