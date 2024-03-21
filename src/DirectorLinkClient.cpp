@@ -94,7 +94,7 @@ int DirectorLinkClient::SendData(const std::string &data)
 
 void DirectorLinkClient::ReportStatus(const std::string &device_no, int status)
 {
-    g_console_logger->info("dl clinet ReportStatus in...");
+    //g_console_logger->info("dl clinet ReportStatus in...");
     XMLDocument doc;
     // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
     XMLDeclaration* declaration = doc.NewDeclaration();
@@ -129,12 +129,12 @@ void DirectorLinkClient::ReportStatus(const std::string &device_no, int status)
         g_console_logger->error("Failed to send data");
         // 处理错误...
     }
-    g_console_logger->info("dl client ReportStatus out...{}",dataToSend);
+    g_console_logger->info("dl client ReportStatus ..",dataToSend);
 }
 
 void DirectorLinkClient::ReportCarPass(const json &data, bool is_in)
 {
-    g_console_logger->info("dl clinet ReportCarPass  in...");
+   // g_console_logger->info("dl clinet ReportCarPass  in...");
     // 创建XML文档并设置内容
       XMLDocument doc;
     // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
@@ -202,12 +202,13 @@ void DirectorLinkClient::ReportCarPass(const json &data, bool is_in)
         g_console_logger->error("Failed to send data");
         // 处理错误...
     }
-    g_console_logger->info("dl client ReportCarPass out...");
+    g_console_logger->info("dl client ReportCarPass out...{}",dataToSend);
+    g_file_logger->info("dl client ReportCarPass out...{}",dataToSend);
 }
 
 void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
 {
-    g_file_logger->info("dl clinet ReportCarWashInfo in...");
+   // g_file_logger->info("dl clinet ReportCarWashInfo in...");
 
     XMLDocument doc;
     // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
@@ -351,7 +352,8 @@ void DirectorLinkClient::ReportCarWashInfo(const json &data, bool is_detour)
         g_console_logger->error("Failed to send data");
         // 处理错误...
     }
-    g_file_logger->info("dl client ReportCarWashInfo out...");
+    g_console_logger->info("dl client ReportCarWashInfo ...{}",dataToSend);
+    g_file_logger->info("dl client ReportCarWashInfo ...{}",dataToSend);
 }
 
 std::string DirectorLinkClient::formatDateTime(const std::string &dateTime)
