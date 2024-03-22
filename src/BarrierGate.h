@@ -26,7 +26,7 @@ public:
 private:
     /* data */
 
-      struct gpiod_line *lineIO1;
+    struct gpiod_line *lineIO1;
 
     void InitIO();
 

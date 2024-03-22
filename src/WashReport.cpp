@@ -321,6 +321,11 @@ WashReport::WashReport(/* args */)
 
 WashReport::~WashReport()
 {
+    if (NULL != mBarrierGate)
+    {
+        delete mBarrierGate;
+        mBarrierGate = NULL;
+    }
 }
 
 void WashReport::InitSerialComm(const char *file_path)
@@ -354,6 +359,16 @@ void WashReport::InitDefInfo(const char *file_path)
     nvr_channel = data["nvr_channel"];
     nvr_serial_num = data["nvr_serial_num"];
     wash_alarm_time = data["wash_alarm_time"];
+
+    // 判断一下json中存不存在 BarrierGate字段，如果有是不是true
+    if (data.contains("BarrierGate") && data["BarrierGate"])
+    {
+        mBarrierGate = new BarrierGate();
+    }
+    else
+    {
+        mBarrierGate = NULL;
+    }
 
     g_console_logger->debug("wash alarm time set to {}", wash_alarm_time);
 
@@ -412,7 +427,7 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
         // printf("Report Detour %s    time %s \n",capture_res["ztcCph"].dump().c_str(),capture_res["captureTime"].dump().c_str()); // 输出车牌
         g_console_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
         g_file_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
-        dl_report_wash(capture_res,true); 
+        dl_report_wash(capture_res, true);
     }
     else
     {
@@ -428,26 +443,23 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
 
 void WashReport::DealCarInIPCData(const json &p_json, Response &res)
 {
-   json car_in_json =GetCarInJson();
-   car_in_json["captureTime"] = utc_to_string(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
-   car_in_json["ztcCph"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"];
+    json car_in_json = GetCarInJson();
+    car_in_json["captureTime"] = utc_to_string(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
+    car_in_json["ztcCph"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"];
     car_in_json["ztcColor"] = CarColorConvert(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]);
     car_in_json["vehicleType"] = CarTypeConvert(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
     car_in_json["picture"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
-   car_in_json["direction"] = 0;
-  
+    car_in_json["direction"] = 0;
+
     PostJsonToServer(car_in_json);
-    dl_report_car_pass(car_in_json,true);
+    dl_report_car_pass(car_in_json, true);
 
     g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
     g_file_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
 
-   
-    
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
 }
-
 
 // 处理两侧车轮冲洗干净程度的数据
 void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
@@ -610,7 +622,7 @@ json WashReport::GetCarInJson()
     res["vehicleType"];
     res["picture"] = "";
     res["dataType"] = 4;
-    res["direction"]=0;
+    res["direction"] = 0;
 }
 
 std::string WashReport::getTime(const std::string &format)
@@ -748,8 +760,8 @@ void WashReport::StartReportingProcess()
                 bool ai_all_res = false;
                 for (int i = 0; i < 10; i++)
                 {
-                     
-                    g_console_logger->debug("waiting for  ai ipc data...");  
+
+                    g_console_logger->debug("waiting for  ai ipc data...");
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
                     {
@@ -772,6 +784,15 @@ void WashReport::StartReportingProcess()
                     if (r_label == "clean" && l_label == "clean")
                     {
                         capture_res["cleanRes"] = 2;
+                        if (NULL != mBarrierGate)
+                        {
+                            mBarrierGate->BarrierGateCtrl(true);
+                        }
+                        // 异步操作 15S 以后关闭闸机
+                        auto fut = std::async(std::launch::async, [this](){
+                            std::this_thread::sleep_for(std::chrono::seconds(15));
+                            mBarrierGate->BarrierGateCtrl(false);
+                        });
                     }
                     else
                     {
@@ -800,7 +821,7 @@ void WashReport::StartReportingProcess()
                     g_console_logger->debug("Timeout occurred while waiting for ai ipc data");
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");
                 }
-                
+
                 PostJsonToServer(capture_res);
                 // NotificationsToUart
                 if (capture_res["cleanRes"] == 2)
@@ -811,8 +832,8 @@ void WashReport::StartReportingProcess()
                 {
                     NotificationsToUart(1);
                 }
-                 dl_report_wash(capture_res,false);
-                 dl_report_car_pass(capture_res,false);
+                dl_report_wash(capture_res, false);
+                dl_report_car_pass(capture_res, false);
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
@@ -971,10 +992,8 @@ void WashReport::StartHeartBeat()
                                 120 * 1000);
 
     mDlReportStatusTimer.setInterval([&]()
-                                     {
-                                        dl_report_status(deviceNo,0);
-                                     },
-                                    120* 1000);    //5 minutes
+                                     { dl_report_status(deviceNo, 0); },
+                                     120 * 1000); // 5 minutes
 }
 
 void WashReport::SetDLWashFunc(dl_report_wash_func_t func)
@@ -1000,8 +1019,8 @@ void WashReport::SetDLCarPassFunc(dl_report_car_pass_func_t func)
     }
 }
 
- void WashReport::SetDLStatusFunc(dl_report_status_func_t func)
- {
+void WashReport::SetDLStatusFunc(dl_report_status_func_t func)
+{
     if (func)
-        dl_report_status = func;    
- }
+        dl_report_status = func;
+}

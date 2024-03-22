@@ -120,7 +120,9 @@ BarrierGate::~BarrierGate()
 void BarrierGate::BarrierGateCtrl(bool ctrl_flag)
 {
     if(ctrl_flag)
-      GPIO_Write(&lineIO1, 1);
+    {
+         GPIO_Write(&lineIO1, 1);
+    }
     else 
     {
         GPIO_Write(&lineIO1, 0);
