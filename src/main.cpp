@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <iostream>
+#include <future>
 #include <memory>
 #include "NetFoundation.h"
 #include "WashReport.h"
@@ -87,10 +88,7 @@ int main()
    {"ztcCph","苏AXY377"}
   };
  
-  //   std::thread dl_client_thread([&uni_dl_client](){
-  //      uni_dl_client.get()->receiveAndParseMessage();  
-  // });
-
+  
 #if 0
  while (1)
  {
@@ -107,8 +105,28 @@ int main()
 #endif
   // dl_client_thread.join();
    
+  int flag = 0;
 
-#if 1
+ //使用c++ async 库 实现异步操作  5s 后 改变 flag的 值
+
+ 
+
+    std::future<void> resulslt = std::async(
+        std::launch::async,
+        [&flag]() {
+            std::cout << "Starting the thread..." << std::endl;
+            this_thread::sleep_for(chrono::seconds(5));
+            flag = 1;
+        }
+    );
+
+    std::cout << "Waiting for the thread to finish..." << std::endl;
+    result.get();
+    std::cout << "Flag value: " << flag << std::endl;
+ 
+
+  
+#if 0
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
