@@ -129,30 +129,6 @@ CarClean/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/build
 .PHONY : CarClean/fast
 
-src/BarrierGate.o: src/BarrierGate.cpp.o
-.PHONY : src/BarrierGate.o
-
-# target to build an object file
-src/BarrierGate.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o
-.PHONY : src/BarrierGate.cpp.o
-
-src/BarrierGate.i: src/BarrierGate.cpp.i
-.PHONY : src/BarrierGate.i
-
-# target to preprocess a source file
-src/BarrierGate.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/BarrierGate.cpp.i
-.PHONY : src/BarrierGate.cpp.i
-
-src/BarrierGate.s: src/BarrierGate.cpp.s
-.PHONY : src/BarrierGate.s
-
-# target to generate assembly for a file
-src/BarrierGate.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CarClean.dir/build.make CMakeFiles/CarClean.dir/src/BarrierGate.cpp.s
-.PHONY : src/BarrierGate.cpp.s
-
 src/DirectorLinkClient.o: src/DirectorLinkClient.cpp.o
 .PHONY : src/DirectorLinkClient.o
 
@@ -330,9 +306,6 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... CarClean"
-	@echo "... src/BarrierGate.o"
-	@echo "... src/BarrierGate.i"
-	@echo "... src/BarrierGate.s"
 	@echo "... src/DirectorLinkClient.o"
 	@echo "... src/DirectorLinkClient.i"
 	@echo "... src/DirectorLinkClient.s"

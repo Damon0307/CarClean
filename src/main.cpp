@@ -5,7 +5,6 @@
 #include "NetFoundation.h"
 #include "WashReport.h"
 #include "Timer.h"
-#include "DirectorLinkClient.h"
 #include "config.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"
@@ -14,11 +13,9 @@
 // #include "UartMod.h"
 using namespace httplib;
 
-const char *RS232_CFG_FILE = "rs232.json";
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
-const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
-
+ 
 const char *version_str = "Version Simple Remove AB Logic";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
@@ -58,10 +55,7 @@ int main()
     // 开始记录日志
     g_console_logger->info("StartUp!!! {}", version_str); 
     g_file_logger->info("StartUp!!! {}", version_str);
-  
-  
-  std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
-
+ 
     //直连模块接收服务端消息线程
 
   json  test_json = {
@@ -89,20 +83,6 @@ int main()
   };
  
   
-#if 0
- while (1)
- {
-    // uni_dl_client.get()->ReportCarWashInfo(test_json,true);
-    //  uni_dl_client.get()->ReportCarPass(test_json,true);
-    //  this_thread::sleep_for(chrono::microseconds(100));
-    uni_dl_client.get()->ReportCarWashInfo(test_json,false);
-    // this_thread::sleep_for(chrono::microseconds(100000));
-     // uni_dl_client.get()->ReportCarPass(test_json,true);
-    //  this_thread::sleep_for(chrono::microseconds(500));
-     // uni_dl_client.get()->ReportStatus("test_json",0); 
-      this_thread::sleep_for(chrono::microseconds(500000));   
- }
-#endif
   // dl_client_thread.join();
    
   int flag = 0;
@@ -111,18 +91,18 @@ int main()
 
  
 
-    std::future<void> resulslt = std::async(
-        std::launch::async,
-        [&flag]() {
-            std::cout << "Starting the thread..." << std::endl;
-            this_thread::sleep_for(chrono::seconds(5));
-            flag = 1;
-        }
-    );
+    // std::future<void> resulslt = std::async(
+    //     std::launch::async,
+    //     [&flag]() {
+    //         std::cout << "Starting the thread..." << std::endl;
+    //         this_thread::sleep_for(chrono::seconds(5));
+    //         flag = 1;
+    //     }
+    // );
 
-    std::cout << "Waiting for the thread to finish..." << std::endl;
-    result.get();
-    std::cout << "Flag value: " << flag << std::endl;
+    // std::cout << "Waiting for the thread to finish..." << std::endl;
+    // result.get();
+    // std::cout << "Flag value: " << flag << std::endl;
  
 
   
@@ -131,17 +111,13 @@ int main()
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
   
-  
-  auto dl_report_wash_func = std::bind(&DirectorLinkClient::ReportCarWashInfo, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2); 
-  auto dl_car_pass_func = std::bind(&DirectorLinkClient::ReportCarPass, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);
-  auto dl_report_status_func = std::bind(&DirectorLinkClient::ReportStatus, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);  
+   
   
   uni_wash_report.get()->SetDLWashFunc(dl_report_wash_func);
   uni_wash_report.get()->SetDLCarPassFunc(dl_car_pass_func);
   uni_wash_report.get()->SetDLStatusFunc(dl_report_status_func);  
 
   uni_wash_report.get()->InitDefInfo(DEF_CFG_FILE);
-  uni_wash_report.get()->InitSerialComm(RS232_CFG_FILE);
   uni_ccr.get()->InitNetCFG(NET_CFG_FILE);
   
 

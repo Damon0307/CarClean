@@ -69,24 +69,10 @@ include CMakeFiles/CarClean.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/CarClean.dir/flags.make
 
-CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o: CMakeFiles/CarClean.dir/flags.make
-CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o: ../src/BarrierGate.cpp
-CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o -MF CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o.d -o CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/BarrierGate.cpp
-
-CMakeFiles/CarClean.dir/src/BarrierGate.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CarClean.dir/src/BarrierGate.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/wjc/WorkingRoom/CarClean/src/BarrierGate.cpp > CMakeFiles/CarClean.dir/src/BarrierGate.cpp.i
-
-CMakeFiles/CarClean.dir/src/BarrierGate.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CarClean.dir/src/BarrierGate.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/wjc/WorkingRoom/CarClean/src/BarrierGate.cpp -o CMakeFiles/CarClean.dir/src/BarrierGate.cpp.s
-
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: CMakeFiles/CarClean.dir/flags.make
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: ../src/DirectorLinkClient.cpp
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o -MF CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o.d -o CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/DirectorLinkClient.cpp
 
 CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.i: cmake_force
@@ -100,7 +86,7 @@ CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.s: cmake_force
 CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o: CMakeFiles/CarClean.dir/flags.make
 CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o: ../src/NetFoundation.cpp
 CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o -MF CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o.d -o CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/NetFoundation.cpp
 
 CMakeFiles/CarClean.dir/src/NetFoundation.cpp.i: cmake_force
@@ -114,7 +100,7 @@ CMakeFiles/CarClean.dir/src/NetFoundation.cpp.s: cmake_force
 CMakeFiles/CarClean.dir/src/UartMod.cpp.o: CMakeFiles/CarClean.dir/flags.make
 CMakeFiles/CarClean.dir/src/UartMod.cpp.o: ../src/UartMod.cpp
 CMakeFiles/CarClean.dir/src/UartMod.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/CarClean.dir/src/UartMod.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/UartMod.cpp.o -MF CMakeFiles/CarClean.dir/src/UartMod.cpp.o.d -o CMakeFiles/CarClean.dir/src/UartMod.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/UartMod.cpp
 
 CMakeFiles/CarClean.dir/src/UartMod.cpp.i: cmake_force
@@ -128,7 +114,7 @@ CMakeFiles/CarClean.dir/src/UartMod.cpp.s: cmake_force
 CMakeFiles/CarClean.dir/src/WashReport.cpp.o: CMakeFiles/CarClean.dir/flags.make
 CMakeFiles/CarClean.dir/src/WashReport.cpp.o: ../src/WashReport.cpp
 CMakeFiles/CarClean.dir/src/WashReport.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/CarClean.dir/src/WashReport.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/WashReport.cpp.o -MF CMakeFiles/CarClean.dir/src/WashReport.cpp.o.d -o CMakeFiles/CarClean.dir/src/WashReport.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/WashReport.cpp
 
 CMakeFiles/CarClean.dir/src/WashReport.cpp.i: cmake_force
@@ -142,7 +128,7 @@ CMakeFiles/CarClean.dir/src/WashReport.cpp.s: cmake_force
 CMakeFiles/CarClean.dir/src/main.cpp.o: CMakeFiles/CarClean.dir/flags.make
 CMakeFiles/CarClean.dir/src/main.cpp.o: ../src/main.cpp
 CMakeFiles/CarClean.dir/src/main.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/CarClean.dir/src/main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/CarClean.dir/src/main.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/main.cpp.o -MF CMakeFiles/CarClean.dir/src/main.cpp.o.d -o CMakeFiles/CarClean.dir/src/main.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/main.cpp
 
 CMakeFiles/CarClean.dir/src/main.cpp.i: cmake_force
@@ -156,7 +142,7 @@ CMakeFiles/CarClean.dir/src/main.cpp.s: cmake_force
 CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o: CMakeFiles/CarClean.dir/flags.make
 CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o: ../src/tinyxml2.cpp
 CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o -MF CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o.d -o CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/tinyxml2.cpp
 
 CMakeFiles/CarClean.dir/src/tinyxml2.cpp.i: cmake_force
@@ -170,7 +156,7 @@ CMakeFiles/CarClean.dir/src/tinyxml2.cpp.s: cmake_force
 CMakeFiles/CarClean.dir/src/uart.cpp.o: CMakeFiles/CarClean.dir/flags.make
 CMakeFiles/CarClean.dir/src/uart.cpp.o: ../src/uart.cpp
 CMakeFiles/CarClean.dir/src/uart.cpp.o: CMakeFiles/CarClean.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/CarClean.dir/src/uart.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/CarClean.dir/src/uart.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CarClean.dir/src/uart.cpp.o -MF CMakeFiles/CarClean.dir/src/uart.cpp.o.d -o CMakeFiles/CarClean.dir/src/uart.cpp.o -c /home/wjc/WorkingRoom/CarClean/src/uart.cpp
 
 CMakeFiles/CarClean.dir/src/uart.cpp.i: cmake_force
@@ -183,7 +169,6 @@ CMakeFiles/CarClean.dir/src/uart.cpp.s: cmake_force
 
 # Object files for target CarClean
 CarClean_OBJECTS = \
-"CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o" \
 "CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o" \
 "CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o" \
 "CMakeFiles/CarClean.dir/src/UartMod.cpp.o" \
@@ -195,7 +180,6 @@ CarClean_OBJECTS = \
 # External object files for target CarClean
 CarClean_EXTERNAL_OBJECTS =
 
-CarClean: CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o
 CarClean: CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o
 CarClean: CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o
 CarClean: CMakeFiles/CarClean.dir/src/UartMod.cpp.o
@@ -205,7 +189,7 @@ CarClean: CMakeFiles/CarClean.dir/src/tinyxml2.cpp.o
 CarClean: CMakeFiles/CarClean.dir/src/uart.cpp.o
 CarClean: CMakeFiles/CarClean.dir/build.make
 CarClean: CMakeFiles/CarClean.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Linking CXX executable CarClean"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/wjc/WorkingRoom/CarClean/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable CarClean"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/CarClean.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

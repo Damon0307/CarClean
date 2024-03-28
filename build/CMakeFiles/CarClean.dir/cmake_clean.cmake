@@ -1,6 +1,4 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o"
-  "CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o.d"
   "CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o"
   "CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o.d"
   "CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o"

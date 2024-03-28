@@ -8,7 +8,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/wjc/WorkingRoom/CarClean/src/BarrierGate.cpp" "CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o" "gcc" "CMakeFiles/CarClean.dir/src/BarrierGate.cpp.o.d"
   "/home/wjc/WorkingRoom/CarClean/src/DirectorLinkClient.cpp" "CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o" "gcc" "CMakeFiles/CarClean.dir/src/DirectorLinkClient.cpp.o.d"
   "/home/wjc/WorkingRoom/CarClean/src/NetFoundation.cpp" "CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o" "gcc" "CMakeFiles/CarClean.dir/src/NetFoundation.cpp.o.d"
   "/home/wjc/WorkingRoom/CarClean/src/UartMod.cpp" "CMakeFiles/CarClean.dir/src/UartMod.cpp.o" "gcc" "CMakeFiles/CarClean.dir/src/UartMod.cpp.o.d"
