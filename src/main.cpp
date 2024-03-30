@@ -82,40 +82,14 @@ int main()
    {"ztcCph","苏AXY377"}
   };
  
-  
-  // dl_client_thread.join();
-   
-  int flag = 0;
-
- //使用c++ async 库 实现异步操作  5s 后 改变 flag的 值
-
  
-
-    // std::future<void> resulslt = std::async(
-    //     std::launch::async,
-    //     [&flag]() {
-    //         std::cout << "Starting the thread..." << std::endl;
-    //         this_thread::sleep_for(chrono::seconds(5));
-    //         flag = 1;
-    //     }
-    // );
-
-    // std::cout << "Waiting for the thread to finish..." << std::endl;
-    // result.get();
-    // std::cout << "Flag value: " << flag << std::endl;
- 
-
   
-#if 0
+#if 1
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
   
-   
-  
-  uni_wash_report.get()->SetDLWashFunc(dl_report_wash_func);
-  uni_wash_report.get()->SetDLCarPassFunc(dl_car_pass_func);
-  uni_wash_report.get()->SetDLStatusFunc(dl_report_status_func);  
+ 
 
   uni_wash_report.get()->InitDefInfo(DEF_CFG_FILE);
   uni_ccr.get()->InitNetCFG(NET_CFG_FILE);
@@ -130,8 +104,8 @@ int main()
   uni_ccr.get()->SetWashIPCDataHandleFunc(wash_ipc_hander);
 
   //绑定车辆进场场景 摄像头数据处理通道
-  auto car_in_ipc_hander=std::bind(&WashReport::DealCarInIPCData,uni_wash_report.get(),std::placeholders::_1,std::placeholders::_2);
-  uni_ccr.get()->SetCarInIPCDataHandleFunc(car_in_ipc_hander); 
+  // auto car_in_ipc_hander=std::bind(&WashReport::DealCarInIPCData,uni_wash_report.get(),std::placeholders::_1,std::placeholders::_2);
+  // uni_ccr.get()->SetCarInIPCDataHandleFunc(car_in_ipc_hander); 
 
  //绑定绕道场景的 摄像头数据处理通道
   auto detour_ipc_hander=std::bind(&WashReport::DealDetourIPCData,uni_wash_report.get(),std::placeholders::_1,std::placeholders::_2);
@@ -146,16 +120,12 @@ int main()
  
   //传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess,uni_wash_report.get());
-  
-  //直连模块接收服务端消息线程
-  std::thread dl_client_thread([&uni_dl_client](){
-       uni_dl_client.get()->receiveAndParseMessage();  
-  });
+ 
   
   uni_ccr.get()->StartServer();
  
   reporter_thread.join();
-  dl_client_thread.join();  
+  
  #endif 
   
   return 0;

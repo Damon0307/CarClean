@@ -52,9 +52,7 @@ WashReport::~WashReport()
  
 }
 
-void WashReport::InitSerialComm(const char *file_path)
-{
-}
+ 
 
 void WashReport::InitDefInfo(const char *file_path)
 {
@@ -65,9 +63,16 @@ void WashReport::InitDefInfo(const char *file_path)
     deviceNo = data["deviceNo"];
     nvr_channel = data["nvr_channel"];
     nvr_serial_num = data["nvr_serial_num"];
-    wash_alarm_time = data["wash_alarm_time"];
-
-    g_console_logger->debug("wash alarm time set to {}", wash_alarm_time);
+    ai_detect_time = data["ai_detect_time"];
+    //对ai_detect_time 做过大过小限制
+    if (ai_detect_time < 5){
+        ai_detect_time = 5;
+    }
+    else if (ai_detect_time > 100){
+        ai_detect_time = 100;
+    }
+ 
+    g_console_logger->debug("ai_detect_time time set to {}", ai_detect_time);
 
     f.close();
 }
@@ -79,6 +84,7 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
     // std::cout << p_json.dump() << std::endl;
     ipc.json_data = p_json;
     ipc.has_trigger = true;
+    ipc.working =true;
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
 
@@ -161,7 +167,7 @@ void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
 {
     if (p_json.contains("label"))
     {
-        if (ipc.has_trigger)
+        if (ipc.working)
         {
             l_ai_ipc.DealAIIPCData(p_json);
             g_console_logger->debug("Deal_L_AIIPCData {} ", p_json["label"].dump().c_str());
@@ -181,7 +187,7 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 
     if (p_json.contains("label"))
     {
-        if (ipc.has_trigger)
+        if (ipc.working)
         {
             r_ai_ipc.DealAIIPCData(p_json);
             g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
@@ -397,28 +403,30 @@ void WashReport::StartReportingProcess()
             capture_res["vehicleType"] = CarTypeConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
             // capture_res["enterTime"] = time_to_string(point_a.trigger_time);
             // capture_res["leaveTime"] = time_to_string(point_b.leave_time);
+            capture_res["enterTime"] = "";
+            capture_res["leaveTime"] ="";
             //capture_res["alarmType"] = GetAlarmTypeByPoint();
+
+          
+
             // 前后轮冲洗时间改为 0
-            // capture_res["frontWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
-            // capture_res["hindWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
+            capture_res["frontWheelWashTime"] =0;
+            capture_res["hindWheelWashTime"] = 0;
             capture_res["picture"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
             int ipc_dir = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
             capture_res["direction"] = GetDirByIPC(ipc_dir); // 通过IPC
 
             bool ai_all_res = false;
-            for (int i = 0; i < 10; i++)
-            {
 
-                g_console_logger->debug("waiting for  ai ipc data...");
-                ai_all_res = GetAIIPCDetectResult();
-                if (ai_all_res == true)
-                {
-                    g_console_logger->debug("Get AI ipc data");
-                    g_file_logger->debug("Get AI ipc data");
-                    break;
-                }
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-            }
+             //ai_detect_time
+            //等待 ai_detect_time 结束以后 获取AI摄像机的结果开始上报
+            g_console_logger->debug("===================Wait Ai Dectect Start===================");
+            g_file_logger->debug("===================Wait Ai Dectect Star===================");
+            std::this_thread::sleep_for(std::chrono::seconds(ai_detect_time));  
+ 
+            ai_all_res = GetAIIPCDetectResult();
+            g_console_logger->debug("===================Wait Ai Dectect End===================");
+            g_file_logger->debug("===================Wait Ai Dectect End===================");
             if (ai_all_res)
             {
                 //  获取AI摄像机数据
@@ -432,10 +440,12 @@ void WashReport::StartReportingProcess()
                 if (r_label == "clean" && l_label == "clean")
                 {
                     capture_res["cleanRes"] = 2;
+                      capture_res["alarmType"] = 5;
                 }
                 else
                 {
                     capture_res["cleanRes"] = 3;
+                      capture_res["alarmType"] = 3;
                 }
 
                 // 检查 "img_base64" 字段是否存在，如果不存在则默认为 ""
@@ -454,6 +464,7 @@ void WashReport::StartReportingProcess()
             else
             {
                 capture_res["cleanRes"] = 1;  // 超时，冲洗结果为未知
+                  capture_res["alarmType"] = 4;
                 capture_res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
                 capture_res["rightclean"] = 0;
                 // 超时处理  重置动作放在流程上报末尾统一触
@@ -463,7 +474,6 @@ void WashReport::StartReportingProcess()
 
             PostJsonToServer(capture_res);
 
-            // todo 检查推送结果以后再决定要不要重传？
             ResetAllSensor();
             g_console_logger->debug("===================Pass and reset===================");
             g_file_logger->debug("===================Pass and reset===================");
@@ -499,7 +509,6 @@ std::string WashReport::utc_to_string(long long utcSeconds)
 
 void WashReport::ResetAllSensor()
 {
-
     ipc.ResetStatus();
     l_ai_ipc.ResetStatus();
     r_ai_ipc.ResetStatus();

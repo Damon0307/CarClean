@@ -1,0 +1,13 @@
+prefix=/home/wjc/WorkingRoom/spdlog_lib/spdlog/build/_install
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: libspdlog
+Description: Fast C++ logging library.
+URL: https://github.com/gabime/spdlog
+Version: 2.0.0
+CFlags: -I${includedir} -DPKG_CONFIG_DEFINES-NOTFOUND
+Libs: -L${libdir} -lspdlog -pthread
+Requires: 
+

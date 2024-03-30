@@ -32,7 +32,7 @@ public:
     WashReport(/* args */);
     ~WashReport();
 
-    void InitSerialComm(const char* file_path);
+   
     void InitDefInfo(const char* file_path);
  
  //处理冲洗抓拍摄像头数据
@@ -59,7 +59,7 @@ public:
     int GetScore(float p);
 
 private:
- 
+    int ai_detect_time;
     bool has_report;
     bool has_triger;
     int  wash_alarm_time;
@@ -90,10 +90,12 @@ private:
         IPC(/* args */){};
         ~IPC(){};
         bool has_trigger;
+        bool working; //标志检测周期是否开始
         json json_data;
         void ResetStatus()
         {
             has_trigger=false;
+            working =false;
             json_data={""};
         }
     };
@@ -108,7 +110,7 @@ private:
    
     int GetDirByCompareTime(const Point &a, const Point &b); // 通过比较两个点的先后时间得到方向
 
-     int GetDirByIPC(int ipc_dir); // 通过IPC 
+    int GetDirByIPC(int ipc_dir); // 通过IPC 
 
     void NotificationsToUart(int event_num); //发送事件信息给串口方便其控制NVR
 
