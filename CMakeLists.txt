@@ -18,6 +18,7 @@ configure_file(config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/config.h @ONLY)
 
 file(GLOB_RECURSE SOURCES  src/*.cpp src/*.c  )
 
+ 
 include_directories(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/spdlog)
  
@@ -28,6 +29,8 @@ add_executable(${CMAKE_PROJECT_NAME}    ${SOURCES})
 target_link_libraries(${CMAKE_PROJECT_NAME}  -lpthread)
 #IO库
 #target_link_libraries( ${CMAKE_PROJECT_NAME} PRIVATE gpiod)
+
+ 
  
 
  

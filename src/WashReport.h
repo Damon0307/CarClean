@@ -95,7 +95,7 @@ private:
         void ResetStatus()
         {
             has_trigger=false;
-            working =false;
+            working = false;
             json_data={""};
         }
     };

@@ -175,9 +175,13 @@ void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
         }
         else
         {
-            g_console_logger->debug("Rejected handle cause no point a working");
-            g_file_logger->debug("Rejected handle cause no point a working");
+            g_console_logger->debug("Rejected handle cause ipc not working");
+            g_file_logger->debug("Rejected handle cause ipc not working");
         }
+    }else
+    {
+        g_console_logger->debug("Rejected handle cause no label");
+        g_file_logger->debug("Rejected handle cause no label");
     }
 
     res.set_content("OK", "text/plain");
@@ -198,6 +202,10 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
             g_console_logger->debug("Rejected handle cause no point a working");
             g_file_logger->debug("Rejected handle cause no point a working");
         }
+    }else
+    {
+        g_console_logger->debug("Rejected handle cause no label");
+        g_file_logger->debug("Rejected handle cause no label");
     }
 
     res.set_content("OK", "text/plain");
@@ -375,7 +383,6 @@ json WashReport::ResponseToIPC(int logic_type)
 unsigned short WashReport::do_crc_table(unsigned char *ptr, int len)
 {
     // unsigned short crc = 0xFFFF;
-
     // while (len--)
     // {
     //     crc = (crc >> 8) ^ crc_table[(crc ^ *ptr++) & 0xff];
@@ -440,12 +447,12 @@ void WashReport::StartReportingProcess()
                 if (r_label == "clean" && l_label == "clean")
                 {
                     capture_res["cleanRes"] = 2;
-                      capture_res["alarmType"] = 5;
+                    capture_res["alarmType"] = 5;
                 }
                 else
                 {
                     capture_res["cleanRes"] = 3;
-                      capture_res["alarmType"] = 3;
+                    capture_res["alarmType"] = 3;
                 }
 
                 // 检查 "img_base64" 字段是否存在，如果不存在则默认为 ""
@@ -464,7 +471,7 @@ void WashReport::StartReportingProcess()
             else
             {
                 capture_res["cleanRes"] = 1;  // 超时，冲洗结果为未知
-                  capture_res["alarmType"] = 4;
+                capture_res["alarmType"] = 4;
                 capture_res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
                 capture_res["rightclean"] = 0;
                 // 超时处理  重置动作放在流程上报末尾统一触

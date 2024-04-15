@@ -10,6 +10,9 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
+ 
+
+
 // #include "UartMod.h"
 using namespace httplib;
 
@@ -81,10 +84,10 @@ int main()
     {"ztcColor",3},
    {"ztcCph","苏AXY377"}
   };
- 
- 
   
-#if 1
+
+  
+#if 0
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
