@@ -136,7 +136,7 @@ void DirectorLinkClient::ReportCarPass(const json &data, bool is_in)
 {
     g_console_logger->info("dl clinet ReportCarPass  in...");
     // 创建XML文档并设置内容
-      XMLDocument doc;
+    XMLDocument doc;
     // 创建XML声明（可选，因为XMLDocument会自动添加默认声明）
     XMLDeclaration* declaration = doc.NewDeclaration();
     declaration->SetValue("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
