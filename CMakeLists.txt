@@ -5,7 +5,7 @@ project(CarClean)
 set(ARM_FLAG 1) # 这里只是一个例子，该变量可能来自其他地方
 
 if (ARM_FLAG)
-    include ($ENV{HOME}/configs/cross.cmake)
+    include (/opt/arm-rockchip830-linux-uclibcgnueabihf/cross.cmake)
 else ()
     set(CMAKE_BUILD_TYPE Debug)
 endif ()
