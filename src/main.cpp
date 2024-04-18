@@ -30,7 +30,7 @@ const std::string file_path_logger = "/userdata/LogFile.log";
 const std::string file_path_logger = "LogFile.log";
 #endif
  
-
+//准备替换一下json库，让他更简洁灵活
 using josn = nlohmann::json;
 
 int main() 
