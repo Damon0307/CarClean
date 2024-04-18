@@ -1,3 +1,0 @@
-/opt/TestStartUp/CarClean/build/CMakeFiles/rebuild_cache.dir
-/opt/TestStartUp/CarClean/build/CMakeFiles/edit_cache.dir
-/opt/TestStartUp/CarClean/build/CMakeFiles/CarClean.dir
