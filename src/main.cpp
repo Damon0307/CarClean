@@ -12,7 +12,6 @@
 
  
 
-
 // #include "UartMod.h"
 using namespace httplib;
 
@@ -32,6 +31,9 @@ const std::string file_path_logger = "LogFile.log";
  
 //准备替换一下json库，让他更简洁灵活
 using josn = nlohmann::json;
+
+//一个图片大概是0.3M
+
 
 int main() 
 {
@@ -85,9 +87,7 @@ int main()
    {"ztcCph","苏AXY377"}
   };
   
-
-  
-#if 0
+#if 1
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
