@@ -81,7 +81,6 @@ void WashReport::InitDefInfo(const char *file_path)
 void WashReport::DealWashIPCData(const json &p_json, Response &res)
 {
 
-    // std::cout << p_json.dump() << std::endl;
     ipc.json_data = p_json;
     ipc.has_trigger = true;
     ipc.working =true;
@@ -494,7 +493,6 @@ std::string WashReport::time_to_string(time_t t)
 {
     std::string result(20, '\0'); // 分配足够的空间来存储时间字符串
     std::strftime(&result[0], result.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
-    // std::cout << " time_to_string " << result << std::endl;
     result.resize(std::strlen(result.c_str())); // 调整字符串的长度以去除多余的空字符
     return result;
 }
