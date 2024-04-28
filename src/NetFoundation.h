@@ -86,6 +86,8 @@ private:
     std::string remote_server;
     int local_port;
     int remote_port;
+
+    void  ConfigRV1106IP(const std::string& ip);
    
 
 };

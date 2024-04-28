@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/sam/WorkingRoom/CarClean/src -I/home/sam/WorkingRoom/CarClean/src/spdlog
 
-CXX_FLAGS = -g -std=gnu++14
+CXX_FLAGS = -std=gnu++14
 
