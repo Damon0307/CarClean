@@ -18,7 +18,7 @@ using namespace httplib;
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
  
-const char *version_str = "Version Simple Remove AB Logic";
+const char *version_str = "RV1106 Simple Set Static IP";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;

@@ -1,3 +1,0 @@
-/home/sam/WorkingRoom/CarClean/build/CMakeFiles/CarClean.dir
-/home/sam/WorkingRoom/CarClean/build/CMakeFiles/edit_cache.dir
-/home/sam/WorkingRoom/CarClean/build/CMakeFiles/rebuild_cache.dir
