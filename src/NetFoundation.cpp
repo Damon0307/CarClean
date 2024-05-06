@@ -2,9 +2,6 @@
 #include <fstream>
 #include <string>
 #include <functional>
-#include "json.hpp"
-#include "NetFoundation.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,12 +10,23 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include <arpa/inet.h>
+#include <arpa/inet.h>  
 #include <net/route.h> // 包含 struct rtentry 和 RTF_GATEWAY 定义
+#include <thread>
+#include <chrono>
+#include "spdlog/spdlog.h"
+#include "json.hpp"
+#include "NetFoundation.h"
+
 
 using json = nlohmann::json;
 using namespace httplib;
 using namespace std;
+
+// extern logger obj
+extern std::shared_ptr<spdlog::logger> g_console_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
+
 
 NetFoundation::NetFoundation(/* args */)
 {
@@ -26,6 +34,7 @@ NetFoundation::NetFoundation(/* args */)
 
 NetFoundation::~NetFoundation()
 {
+  ip_check_thread.join(); 
 }
 
 void NetFoundation::InitNetCFG(const char *file_name)
@@ -41,6 +50,20 @@ void NetFoundation::InitNetCFG(const char *file_name)
   std::cout << "local_server : " << local_server << " local port :" << local_port << std::endl;
   std::cout << "remote_server : " << remote_server << " remote_port:" << remote_port << std::endl;
   ConfigRV1106IP(local_server);
+
+  ip_check_thread = std::thread([this]()
+                                {
+    while (true)
+    { 
+      std::string cur_ip = GetPhyIP("eth0");  
+      if(cur_ip!=this->local_server)
+      {
+        g_console_logger->info("IP change from {} to {}", this->local_server, cur_ip);
+        g_file_logger->info("IP change from {} to {}", this->local_server, cur_ip);
+        ConfigRV1106IP(this->local_server);
+      } 
+      this_thread::sleep_for(chrono::seconds(5));  
+    } });
 }
 
 // 之前考虑有光电模块触发，但是如果反向可能会拍不到车牌，所以决定直接配置IPC为推送模式，不需要comet轮询中加入业务处理
@@ -135,6 +158,7 @@ void NetFoundation::RightSideAIIPCDataHandler(const Request &req, Response &res)
 
 int set_static_ip(const char *iface_name, const char *ip_address, const char *netmask, const char *gateway)
 {
+  return 0;
 }
 
 void NetFoundation::ConfigRV1106IP(const std::string &ip)
@@ -230,4 +254,32 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   }
 
   close(route_sock);
+}
+
+std::string NetFoundation::GetPhyIP(const std::string &interface)
+{
+  int sock;
+  struct ifreq ifr;
+
+  if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+  {
+    perror("socket failed");
+    exit(EXIT_FAILURE);
+  }
+
+  strncpy(ifr.ifr_name, interface.c_str(), IFNAMSIZ - 1);
+
+  if (ioctl(sock, SIOCGIFADDR, &ifr) < 0)
+  {
+    perror("ioctl failed");
+    exit(EXIT_FAILURE);
+  }
+
+  char ip[INET_ADDRSTRLEN];
+  inet_ntop(AF_INET, &(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), ip, INET_ADDRSTRLEN);
+
+  printf("IP Address of %s: %s\n", interface, ip);
+
+  close(sock);
+  return std::string(ip);
 }

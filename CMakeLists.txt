@@ -16,10 +16,8 @@ set(CMAKE_CXX_STANDARD 14)
 # 将 ARM_FLAG 传递给配置文件
 configure_file(config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/config.h @ONLY)
 
-
 file(GLOB_RECURSE SOURCES  src/*.cpp src/*.c  )
 
- 
 include_directories(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/spdlog)
  

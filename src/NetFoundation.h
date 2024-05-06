@@ -65,6 +65,8 @@ public:
 
 //服务器开始监听
     void StartServer();
+    
+    void ConfigRV1106IP(const std::string& ip);
 
 private:
 // json参考链接  https://www.cnblogs.com/linuxAndMcu/p/14503341.html
@@ -86,9 +88,9 @@ private:
     std::string remote_server;
     int local_port;
     int remote_port;
+    std::string GetPhyIP(const std::string& interface);
 
-    void  ConfigRV1106IP(const std::string& ip);
-   
+    std::thread ip_check_thread;
 
 };
 
