@@ -198,8 +198,8 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
         }
         else
         {
-            g_console_logger->debug("Rejected handle cause no point a working");
-            g_file_logger->debug("Rejected handle cause no point a working");
+            g_console_logger->debug("Rejected handle cause no wash ipc working");
+            g_file_logger->debug("Rejected handle cause no wash ipc working");
         }
     }else
     {
