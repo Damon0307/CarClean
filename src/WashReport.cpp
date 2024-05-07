@@ -49,10 +49,7 @@ WashReport::WashReport(/* args */)
 
 WashReport::~WashReport()
 {
- 
 }
-
- 
 
 void WashReport::InitDefInfo(const char *file_path)
 {
@@ -64,14 +61,16 @@ void WashReport::InitDefInfo(const char *file_path)
     nvr_channel = data["nvr_channel"];
     nvr_serial_num = data["nvr_serial_num"];
     ai_detect_time = data["ai_detect_time"];
-    //对ai_detect_time 做过大过小限制
-    if (ai_detect_time < 5){
+    // 对ai_detect_time 做过大过小限制
+    if (ai_detect_time < 5)
+    {
         ai_detect_time = 5;
     }
-    else if (ai_detect_time > 100){
+    else if (ai_detect_time > 100)
+    {
         ai_detect_time = 100;
     }
- 
+
     g_console_logger->debug("ai_detect_time time set to {}", ai_detect_time);
 
     f.close();
@@ -83,7 +82,7 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
 
     ipc.json_data = p_json;
     ipc.has_trigger = true;
-    ipc.working =true;
+    ipc.working = true;
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
 
@@ -177,7 +176,8 @@ void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
             g_console_logger->debug("Rejected handle cause ipc not working");
             g_file_logger->debug("Rejected handle cause ipc not working");
         }
-    }else
+    }
+    else
     {
         g_console_logger->debug("Rejected handle cause no label");
         g_file_logger->debug("Rejected handle cause no label");
@@ -201,7 +201,8 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
             g_console_logger->debug("Rejected handle cause no point a working");
             g_file_logger->debug("Rejected handle cause no point a working");
         }
-    }else
+    }
+    else
     {
         g_console_logger->debug("Rejected handle cause no label");
         g_file_logger->debug("Rejected handle cause no label");
@@ -276,6 +277,47 @@ void WashReport::DealSerialData()
         }
     }
 #endif
+}
+
+void WashReport::DealSerialData(char *data, int len)
+{
+
+    // 读取数据
+    uint8_t buf[128] = {0};
+   
+#if 0
+    if (len > 0)
+    {
+        for (int i = 0; i < len; i++)
+        {
+            serial_data_queue.push_back(buf[i]);
+        }
+
+        if (serial_data_queue.size() >= 9) // 存在一包完整的数据
+        {
+            bool have_decode = false;
+
+            for (int i = 0; i < serial_data_queue.size(); i++)
+            {
+                if (serial_data_queue[i] = 0x55 && (i + 8) <= (serial_data_queue.size() - 1))
+                { // 寻找到帧头，且后续长度足够解
+                    have_decode = true;
+                    // 校验CRC16
+                    point_a.DealStatus(serial_data_queue[i + 1]);
+                    point_b.DealStatus(serial_data_queue[i + 2]);
+                    water_pump.DealStatus(serial_data_queue[i + 5]);
+                    break;
+                }
+            }
+            std::deque<char> zero;
+            serial_data_queue.swap(zero);
+        }
+    }
+    else
+    {
+        // 无数据
+    }
+    #endif
 }
 
 void WashReport::SetPassJsonFunc(std::function<void(json)> func)
@@ -410,13 +452,11 @@ void WashReport::StartReportingProcess()
             // capture_res["enterTime"] = time_to_string(point_a.trigger_time);
             // capture_res["leaveTime"] = time_to_string(point_b.leave_time);
             capture_res["enterTime"] = "";
-            capture_res["leaveTime"] ="";
-            //capture_res["alarmType"] = GetAlarmTypeByPoint();
-
-          
+            capture_res["leaveTime"] = "";
+            // capture_res["alarmType"] = GetAlarmTypeByPoint();
 
             // 前后轮冲洗时间改为 0
-            capture_res["frontWheelWashTime"] =0;
+            capture_res["frontWheelWashTime"] = 0;
             capture_res["hindWheelWashTime"] = 0;
             capture_res["picture"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
             int ipc_dir = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
@@ -424,12 +464,12 @@ void WashReport::StartReportingProcess()
 
             bool ai_all_res = false;
 
-             //ai_detect_time
-            //等待 ai_detect_time 结束以后 获取AI摄像机的结果开始上报
+            // ai_detect_time
+            // 等待 ai_detect_time 结束以后 获取AI摄像机的结果开始上报
             g_console_logger->debug("===================Wait Ai Dectect Start===================");
             g_file_logger->debug("===================Wait Ai Dectect Star===================");
-            std::this_thread::sleep_for(std::chrono::seconds(ai_detect_time));  
- 
+            std::this_thread::sleep_for(std::chrono::seconds(ai_detect_time));
+
             ai_all_res = GetAIIPCDetectResult();
             g_console_logger->debug("===================Wait Ai Dectect End===================");
             g_file_logger->debug("===================Wait Ai Dectect End===================");
@@ -469,7 +509,7 @@ void WashReport::StartReportingProcess()
             }
             else
             {
-                capture_res["cleanRes"] = 1;  // 超时，冲洗结果为未知
+                capture_res["cleanRes"] = 1; // 超时，冲洗结果为未知
                 capture_res["alarmType"] = 4;
                 capture_res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
                 capture_res["rightclean"] = 0;

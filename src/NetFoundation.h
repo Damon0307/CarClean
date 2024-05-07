@@ -31,8 +31,6 @@ public:
     void CarInIPCDataHandler(const Request& req, Response& res);
     void LeftSideAIIPCDataHandler(const Request& req, Response& res);
     void RightSideAIIPCDataHandler(const Request& req, Response& res);
-
-
  
     void PostDataToServer(json p_json);
     

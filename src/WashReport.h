@@ -46,6 +46,8 @@ public:
     void Deal_L_AIIPCData(const json &p_json, Response &res);
     void Deal_R_AIIPCData(const json &p_json, Response &res);
     void DealSerialData();
+    //WzSerialportPlus
+    void DealSerialData(char* data, int len);
     void StartReportingProcess();
     void SetPassJsonFunc(std::function<void(json)> func);
  
