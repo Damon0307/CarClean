@@ -14,7 +14,7 @@
 #include "Point.h"
 #include "AIIPC.h"
 #include "Timer.h"
- 
+#include  "WzSerialportPlus.h"
 
 using json = nlohmann::json;
 using namespace httplib;
@@ -32,7 +32,6 @@ public:
     WashReport(/* args */);
     ~WashReport();
 
-   
     void InitDefInfo(const char* file_path);
  
  //处理冲洗抓拍摄像头数据
@@ -45,7 +44,6 @@ public:
 //处理左右两侧AIIPC 冲洗干净程度数据
     void Deal_L_AIIPCData(const json &p_json, Response &res);
     void Deal_R_AIIPCData(const json &p_json, Response &res);
-    void DealSerialData();
     //WzSerialportPlus
     void DealSerialData(char* data, int len);
     void StartReportingProcess();
@@ -192,7 +190,8 @@ private:
     void StartHeartBeat();
 //闸机的控制
    bool mBarrierGateNeed;
- 
+
+    WzSerialportPlus wzSerialPort;
 
  
 };
