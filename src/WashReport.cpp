@@ -4,6 +4,7 @@
 // extern logger obj
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
+extern std::shared_ptr<spdlog::logger> g_ht_logger;
 
 // uart msg define
 const unsigned char event_normal[] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0xde, 0x31, 0xaa};
@@ -966,7 +967,8 @@ void WashReport::StartHeartBeat()
                                     json res = GetDeviceStatusJson();
                                     res["status"] = 1;
                                     res["updateTime"] = getTime(time_format);
-
+                    g_ht_logger->info("Send Heart Beat: {}",res.dump().c_str());    //log the json string   
+                    
                                     PostJsonToServer(res); },
                                 120 * 1000);
 

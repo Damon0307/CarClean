@@ -185,7 +185,7 @@ private:
     int GetAlarmTypeByPoint();//由于业务原因，需要改成由AB点的信号来确定水泵的冲洗时间够不够
     int GetDirByCompareTime(const Point &a, const Point &b); // 通过比较两个点的先后时间得到方向
 
-     int GetDirByIPC(int ipc_dir); // 通过IPC 
+    int GetDirByIPC(int ipc_dir); // 通过IPC 
 
     void NotificationsToUart(int event_num); //发送事件信息给串口方便其控制NVR
 

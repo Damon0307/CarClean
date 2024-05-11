@@ -18,10 +18,11 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version 1.21 直连+车辆进出场处理+日志优化 ";
+const char *version_str = "0511 DL+车辆进出场处理+单独心跳日志+自动重启";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
+std::shared_ptr<spdlog::logger> g_ht_logger;
  
 #if(ARM_FLAG==1)
 const std::string file_path_logger = "/userdata/LogFile.log";
@@ -29,8 +30,22 @@ const std::string file_path_logger = "/userdata/LogFile.log";
 const std::string file_path_logger = "LogFile.log";
 #endif
  
-
 using josn = nlohmann::json;
+
+bool isWithinExitWindow() {
+    // 获取当前时间
+    auto now = std::chrono::system_clock::now();
+    // 转换为当天的24小时制小时和分钟
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::tm tm_now = *std::localtime(&time_t_now);
+    
+    // 检查时间是否在晚上11:30到11:59之间
+    if (tm_now.tm_hour >= 23 && tm_now.tm_hour <= 23 && tm_now.tm_min >= 30 && tm_now.tm_min <= 59) {
+        return true;
+    }
+    return false;
+}
+
 
 int main() 
 {
@@ -39,7 +54,6 @@ int main()
      g_console_logger = spdlog::stdout_color_mt("console");
      g_console_logger->set_level(spdlog::level::debug); // 设置日志级别
     // 使用日志对象记录日志
- 
 
     auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
          file_path_logger,  // 日志文件名
@@ -57,6 +71,21 @@ int main()
     // 开始记录日志
     g_console_logger->info("StartUp!!! {} log path {}", version_str,file_path_logger); 
     g_file_logger->info("StartUp!!! {}, log path {}", version_str,file_path_logger);
+  
+
+  //用于记录心跳和网络信息
+      auto ht_rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+         "/userdata/LogHt.log",  // 日志文件名
+        20 * 1024 * 1024,       // 文件最大尺寸：20MB
+        3);                     // 保留的文件份数
+
+    g_ht_logger = std::make_shared<spdlog::logger>("ht_logger", ht_rotating_sink);
+
+    // 设置日志级别以及其他全局选项
+    g_ht_logger->set_level(spdlog::level::debug);
+    g_ht_logger->flush_on(spdlog::level::debug);//等于高于debug级别会被立刻刷新到磁盘
+    g_ht_logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");// 设置时间格式等
+    g_ht_logger->info("StartUp!!! {}", version_str);
   
   
   std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
@@ -153,6 +182,20 @@ int main()
   //传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess,uni_wash_report.get());
   
+  //每晚退出程序的检测线程
+  std::thread exit_check_thread([&](){
+    while(1){
+        if(isWithinExitWindow()){
+            g_console_logger->info("exit check thread exit!");
+            g_file_logger->info("exit check thread exit!");
+            g_file_logger->flush();
+            exit(0);  
+        }
+        this_thread::sleep_for(chrono::seconds(60));
+    }
+  }); 
+ 
+
   //直连模块接收服务端消息线程
   std::thread dl_client_thread([&uni_dl_client](){
        uni_dl_client.get()->receiveAndParseMessage();  
@@ -162,6 +205,8 @@ int main()
  
   reporter_thread.join();
   dl_client_thread.join();  
+  exit_check_thread.join();
+
  #endif 
   
   return 0;
