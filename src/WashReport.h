@@ -20,7 +20,11 @@ using json = nlohmann::json;
 using namespace httplib;
 
 using alarm_func_t = std::function<void(int)>;
- 
+
+using dl_report_wash_func_t = std::function<void(const json&,bool)>; 
+using dl_report_car_pass_func_t = std::function<void(const json&,bool)>;
+using dl_report_status_func_t = std::function<void(const std::string&,int)>;   
+
 class WashReport
 {
 
@@ -35,6 +39,8 @@ public:
     void DealWashIPCData(const json &p_json, Response &res);
 //处理绕道摄像头数据
     void DealDetourIPCData(const json &p_json, Response &res);
+//处理车辆进场数据
+    void DealCarInIPCData(const json &p_json, Response &res);
 
 //处理左右两侧AIIPC 冲洗干净程度数据
     void Deal_L_AIIPCData(const json &p_json, Response &res);
@@ -42,6 +48,11 @@ public:
     void DealSerialData();
     void StartReportingProcess();
     void SetPassJsonFunc(std::function<void(json)> func);
+
+    void SetDLWashFunc(dl_report_wash_func_t func);
+    void SetDLCarPassFunc(dl_report_car_pass_func_t func);  
+    void SetDLStatusFunc(dl_report_status_func_t func);
+
     void AlarmReport(int exceptionType); //需要加锁？
     // 其实是util
     std::string getTime(const std::string &format);
@@ -52,8 +63,7 @@ public:
     int GetScore(float p);
 
 private:
-    //todo 简单的日志实例,测试使用实际使用应该封装一下
-    
+ 
     bool has_report;
     bool has_triger;
     int  wash_alarm_time;
@@ -72,10 +82,16 @@ private:
     // 构建符合云端协议的json数据
     json GetCaptureJson();
     json GetDeviceStatusJson();
+    json GetCarInJson();  //进场时候上传给王工后台的消息
    
     bool GetAIIPCDetectResult();
     void ResetAllSensor();
     std::function<void(json)> PostJsonToServer;
+    dl_report_wash_func_t dl_report_wash;   
+    dl_report_car_pass_func_t dl_report_car_pass;   
+    dl_report_status_func_t dl_report_status;
+
+ 
     // 嵌套类 摄像头的抽象
     class IPC
     {
@@ -169,12 +185,13 @@ private:
     int GetAlarmTypeByPoint();//由于业务原因，需要改成由AB点的信号来确定水泵的冲洗时间够不够
     int GetDirByCompareTime(const Point &a, const Point &b); // 通过比较两个点的先后时间得到方向
 
-     int GetDirByIPC(int ipc_dir); // 通过IPC 
+    int GetDirByIPC(int ipc_dir); // 通过IPC 
 
     void NotificationsToUart(int event_num); //发送事件信息给串口方便其控制NVR
 
 //2分钟一次心跳
     Timer mHeartBearTimer;
+    Timer mDlReportStatusTimer;
     void StartHeartBeat();
  
 };

@@ -4,6 +4,7 @@
 // extern logger obj
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
+extern std::shared_ptr<spdlog::logger> g_ht_logger;
 
 // uart msg define
 const unsigned char event_normal[] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0xde, 0x31, 0xaa};
@@ -363,20 +364,22 @@ void WashReport::InitDefInfo(const char *file_path)
 // 接收到摄像头推送的抓拍数据
 void WashReport::DealWashIPCData(const json &p_json, Response &res)
 {
- 
+
     // std::cout << p_json.dump() << std::endl;
     ipc.json_data = p_json;
     ipc.has_trigger = true;
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
 
- if (p_json.contains("AlarmInfoPlate") && p_json["AlarmInfoPlate"].contains("result") && p_json["AlarmInfoPlate"]["result"].contains("PlateResult") && p_json["AlarmInfoPlate"]["result"]["PlateResult"].contains("license"))
+    if (p_json.contains("AlarmInfoPlate") && p_json["AlarmInfoPlate"].contains("result") && p_json["AlarmInfoPlate"]["result"].contains("PlateResult") && p_json["AlarmInfoPlate"]["result"]["PlateResult"].contains("license"))
     {
-     g_file_logger->debug("Got Wash IPC Data {} ",p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
-     g_console_logger->debug("Got Wash IPC Data {} ",p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
-    } else {
-     g_file_logger->debug("Got Wash IPC Data  NO  Licenses!!! ");
-     g_console_logger->debug("Got Wash IPC Data NO  Licenses!!!  "); 
+        g_file_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
+        g_console_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
+    }
+    else
+    {
+        g_file_logger->debug("Got Wash IPC Data  NO  Licenses!!! ");
+        g_console_logger->debug("Got Wash IPC Data NO  Licenses!!!  ");
     }
 }
 
@@ -399,11 +402,9 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
 
     capture_res.erase("rightclean");
     capture_res.erase("leftclean");
- 
 
     int ipc_dir = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
 
-   
     // 只有明确出场上报，左右摇摆的都不上报为绕道
     if (ipc_dir == 4) // 由远及近，对应车牌轨迹从上到下，方向是向下
     {
@@ -412,41 +413,81 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
         // printf("Report Detour %s    time %s \n",capture_res["ztcCph"].dump().c_str(),capture_res["captureTime"].dump().c_str()); // 输出车牌
         g_console_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
         g_file_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
+        dl_report_wash(capture_res,true); 
     }
     else
     {
         g_console_logger->warn("Not Report Detour with direction {} of  {}", ipc_dir, capture_res["ztcCph"].dump().c_str());
-        g_file_logger->warn("Not Report Detour with direction {} of  {}", ipc_dir, capture_res["ztcCph"].dump().c_str()); 
+        g_file_logger->warn("Not Report Detour with direction {} of  {}", ipc_dir, capture_res["ztcCph"].dump().c_str());
         // printf("Not Report Detour with direction %d \n",ipc_dir);
     }
 
     // ResetAllSensor(); 绕道未触发传感器
-
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
 }
 
+void WashReport::DealCarInIPCData(const json &p_json, Response &res)
+{
+   json car_in_json =GetCarInJson();
+   car_in_json["captureTime"] = utc_to_string(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
+   car_in_json["ztcCph"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"];
+    car_in_json["ztcColor"] = CarColorConvert(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]);
+    car_in_json["vehicleType"] = CarTypeConvert(p_json["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
+    car_in_json["picture"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
+   car_in_json["direction"] = 0;
+  
+    PostJsonToServer(car_in_json);
+    dl_report_car_pass(car_in_json,true);
+
+    g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
+    g_file_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
+
+   
+    
+    json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
+    res.set_content(response.dump(), "application/json");
+}
+
+
 // 处理两侧车轮冲洗干净程度的数据
 void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
 {
-     if(p_json.contains("label"))
+    if (p_json.contains("label"))
     {
-     g_console_logger->debug("Deal_L_AIIPCData {} ", p_json["label"].dump().c_str());
-     g_file_logger->debug("Deal_L_AIIPCData {}", p_json["label"].dump().c_str());
-    }   
+        if (point_a.is_working)
+        {
+            l_ai_ipc.DealAIIPCData(p_json);
+            g_console_logger->debug("Deal_L_AIIPCData {} ", p_json["label"].dump().c_str());
+            g_file_logger->debug("Deal_L_AIIPCData {}", p_json["label"].dump().c_str());
+        }
+        else
+        {
+            g_console_logger->debug("Rejected handle cause no point a working");
+            g_file_logger->debug("Rejected handle cause no point a working");
+        }
+    }
 
-    l_ai_ipc.DealAIIPCData(p_json);
     res.set_content("OK", "text/plain");
 }
 void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 {
 
-    if(p_json.contains("label"))
+    if (p_json.contains("label"))
     {
-     g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
-     g_file_logger->debug("Deal_R_AIIPCData {}", p_json["label"].dump().c_str());
-    }   
-    r_ai_ipc.DealAIIPCData(p_json);
+        if (point_a.is_working)
+        {
+            r_ai_ipc.DealAIIPCData(p_json);
+            g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
+            g_file_logger->debug("Deal_R_AIIPCData {}", p_json["label"].dump().c_str());
+        }
+        else
+        {
+            g_console_logger->debug("Rejected handle cause no point a working");
+            g_file_logger->debug("Rejected handle cause no point a working");
+        }
+    }
+
     res.set_content("OK", "text/plain");
 }
 
@@ -456,8 +497,8 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 void WashReport::DealSerialData()
 {
 
-    static int  pa_prev_value = -1;
-    static int  pb_prev_value = -1;
+    static int pa_prev_value = -1;
+    static int pb_prev_value = -1;
 
     fd_set readfds;
     FD_ZERO(&readfds);
@@ -497,12 +538,6 @@ void WashReport::DealSerialData()
                     {
                         if (serial_data_queue[i] = 0x55 && (i + 8) <= (serial_data_queue.size() - 1))
                         { // 寻找到帧头，且后续长度足够解
-                          //  printf(" PA  PB PC %d %d %d \n", serial_data_queue[i + 1], serial_data_queue[i + 2], serial_data_queue[i + 5]);
-                            // if((serial_data_queue[i+1] == 1) && (serial_data_queue[i+1]!=pa_prev_value))
-                            // {
-                            //     pa_prev_value = serial_data_queue[i+1];
-                            //     //通过ID记录似乎更简单
-                            // }
                             have_decode = true;
                             // 校验CRC16
                             point_a.DealStatus(serial_data_queue[i + 1]);
@@ -551,7 +586,7 @@ json WashReport::GetCaptureJson()
     res["leftphotoUrl"] = ""; // 车辆左侧抓拍图片
     res["rightphotoUrl"] = "";
     res["rightclean"] = 0;
-    res["leftclean"] = 0;     // 车辆左侧冲洗洁净 度数值
+    res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
 
     return res;
 }
@@ -563,6 +598,20 @@ json WashReport::GetDeviceStatusJson()
     res["status"];
     res["dataType"] = 2;
     return res;
+}
+
+json WashReport::GetCarInJson()
+{
+    json res;
+    res["xmbh"] = "XMBH00000003";
+    res["deviceNo"] = deviceNo;
+    res["captureTime"] = "";
+    res["ztcCph"] = "";
+    res["ztcColor"];
+    res["vehicleType"];
+    res["picture"] = "";
+    res["dataType"] = 4;
+    res["direction"]=0;
 }
 
 std::string WashReport::getTime(const std::string &format)
@@ -658,12 +707,10 @@ void WashReport::StartReportingProcess()
         if (point_a.is_working != last_point_a_working || point_a.cur_status != last_point_a_status)
         {
             // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
-            g_console_logger->debug("A Working  Status {}   {}",static_cast<int>(point_a.is_working),static_cast<int>(point_a.cur_status));
+            g_console_logger->debug("A Working  Status {}   {}", static_cast<int>(point_a.is_working), static_cast<int>(point_a.cur_status));
             last_point_a_working = point_a.is_working;
             last_point_a_status = point_a.cur_status;
         }
-
-        //   static_cast<int>
 
         if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
         {
@@ -675,11 +722,11 @@ void WashReport::StartReportingProcess()
         }
         // printf("B working  ,B status  B leaving  %d  %d  %d \n", point_b.is_working, point_b.cur_status, point_b.exit_car_leaving);
 
-        if ( (point_b.is_working) && (point_b.IsLeaving() == true)) // B点触发，且下降沿
+        if ((point_b.is_working) && (point_b.IsLeaving() == true)) // B点触发，且下降沿
         {
             if (ipc.has_trigger == true) // IPC已经有推送结果则开始处理
             {
-               
+
                 // 组符合后端服务器的JSON
                 json capture_res = GetCaptureJson(); // 已经包含默认信息
                 capture_res["captureTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
@@ -689,23 +736,26 @@ void WashReport::StartReportingProcess()
                 capture_res["enterTime"] = time_to_string(point_a.trigger_time);
                 capture_res["leaveTime"] = time_to_string(point_b.leave_time);
                 capture_res["alarmType"] = GetAlarmTypeByPoint();
-                //前后轮冲洗时间改为 0
+                // 前后轮冲洗时间改为 0
                 capture_res["frontWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
                 capture_res["hindWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
                 capture_res["picture"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
                 int ipc_dir = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
                 capture_res["direction"] = GetDirByIPC(ipc_dir); // 通过IPC
-            
-                g_console_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working),capture_res["ztcCph"].dump().c_str());
-                g_file_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working),capture_res["ztcCph"].dump().c_str());
+
+                g_console_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working), capture_res["ztcCph"].dump().c_str());
+                g_file_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working), capture_res["ztcCph"].dump().c_str());
 
                 bool ai_all_res = false;
                 for (int i = 0; i < 10; i++)
                 {
-                    printf("waiting for  ai ipc data... \n");
+                     
+                    g_console_logger->debug("waiting for  ai ipc data...");  
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
                     {
+                        g_console_logger->debug("Get AI ipc data");
+                        g_file_logger->debug("Get AI ipc data");
                         break;
                     }
                     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -739,18 +789,19 @@ void WashReport::StartReportingProcess()
                     // 检查 "score" 字段是否存在，如果不存在则默认为 0
                     float l_score = l_detect_json_data.contains("score") ? l_detect_json_data["score"].get<float>() : 0.0;
                     float r_score = r_detect_json_data.contains("score") ? r_detect_json_data["score"].get<float>() : 0.0;
-                    capture_res["leftclean"] = GetScore(l_score); // 车辆左侧冲洗洁净 度数值
-                    capture_res["rightclean"] = GetScore(r_score);
+                    capture_res["leftclean"] = l_score; // 车辆左侧冲洗洁净 度数值
+                    capture_res["rightclean"] = r_score;
                 }
                 else
                 {
                     capture_res["cleanRes"] = 1;  // 超时，冲洗结果为未知
-                    capture_res["leftclean"] = 1; // 车辆左侧冲洗洁净 度数值
-                    capture_res["rightclean"] = 1;
+                    capture_res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
+                    capture_res["rightclean"] = 0;
                     // 超时处理  重置动作放在流程上报末尾统一触
                     g_console_logger->debug("Timeout occurred while waiting for ai ipc data");
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");
                 }
+                
                 PostJsonToServer(capture_res);
                 // NotificationsToUart
                 if (capture_res["cleanRes"] == 2)
@@ -761,7 +812,8 @@ void WashReport::StartReportingProcess()
                 {
                     NotificationsToUart(1);
                 }
-
+                 dl_report_wash(capture_res,false);
+                 dl_report_car_pass(capture_res,false);
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
@@ -771,12 +823,10 @@ void WashReport::StartReportingProcess()
             {
                 g_console_logger->debug("Leaving without report no wash ipc data");
                 g_file_logger->debug("Leaving without report no wash ipc data");
-
-                // TODO b点出发了，但是没有捕捉到车牌需要重置传感器
                 ResetAllSensor();
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
@@ -917,7 +967,43 @@ void WashReport::StartHeartBeat()
                                     json res = GetDeviceStatusJson();
                                     res["status"] = 1;
                                     res["updateTime"] = getTime(time_format);
-
+                    g_ht_logger->info("Send Heart Beat: {}",res.dump().c_str());    //log the json string   
+                    
                                     PostJsonToServer(res); },
                                 120 * 1000);
+
+    mDlReportStatusTimer.setInterval([&]()
+                                     {
+                                        dl_report_status(deviceNo,0);
+                                     },
+                                    120* 1000);    //5 minutes
 }
+
+void WashReport::SetDLWashFunc(dl_report_wash_func_t func)
+{
+    if (func != NULL)
+    {
+        dl_report_wash = func;
+    }
+    else
+    {
+        throw invalid_argument("func is null");
+    }
+}
+void WashReport::SetDLCarPassFunc(dl_report_car_pass_func_t func)
+{
+    if (func != NULL)
+    {
+        dl_report_car_pass = func;
+    }
+    else
+    {
+        // TODO: throw exception
+    }
+}
+
+ void WashReport::SetDLStatusFunc(dl_report_status_func_t func)
+ {
+    if (func)
+        dl_report_status = func;    
+ }
