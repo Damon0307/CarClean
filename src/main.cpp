@@ -18,7 +18,7 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "0511 DL+车辆进出场处理+单独心跳日志+自动重启";
+const char *version_str = "0511 DL+车辆进出场处理（直连）+单独心跳日志+自动重启";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -85,58 +85,10 @@ int main()
     g_ht_logger->flush_on(spdlog::level::debug);//等于高于debug级别会被立刻刷新到磁盘
     g_ht_logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");// 设置时间格式等
     g_ht_logger->info("StartUp!!! {}", version_str);
-  
-  
-  std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
-
-    //直连模块接收服务端消息线程
-
-  json  test_json = {
-    {"alarmType",3},
-    {"captureTime","2023-09-18 22:40:05"},
-    {"cleanRes",1},
-    {"dataType",1},
-    {"deviceNo","deviceNo_1"},
-    {"deviceSerial","nvr_serial_num_1"},
-    {"direction",1},
-    {"enterTime","2023-11-19 22:16:52"},
-    {"frontWheelWashTime",0},
-    {"hindWheelWashTime",0},
-    {"leaveTime","2023-11-19 22:17:28"},
-    {"leftclean",1},
-    {"leftphotoUrl",""},
-    {"localIndex","nvr_channel_1"},
-    {"picture","pic"},
-    {"rightclean",1},
-    {"rightphotoUrl",""},
-    {"vehicleType",1},
-    {"xmbh","XMBH00000003"},
-    {"ztcColor",3},
-   {"ztcCph","苏AXY377"}
-  };
- 
-  //   std::thread dl_client_thread([&uni_dl_client](){
-  //      uni_dl_client.get()->receiveAndParseMessage();  
-  // });
-
-#if 0
- while (1)
- {
-    // uni_dl_client.get()->ReportCarWashInfo(test_json,true);
-    //  uni_dl_client.get()->ReportCarPass(test_json,true);
-    //  this_thread::sleep_for(chrono::microseconds(100));
-    uni_dl_client.get()->ReportCarWashInfo(test_json,false);
-    // this_thread::sleep_for(chrono::microseconds(100000));
-     // uni_dl_client.get()->ReportCarPass(test_json,true);
-    //  this_thread::sleep_for(chrono::microseconds(500));
-     // uni_dl_client.get()->ReportStatus("test_json",0); 
-      this_thread::sleep_for(chrono::microseconds(500000));   
- }
-#endif
-  // dl_client_thread.join();
    
-
 #if 1
+  std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
+ 
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
@@ -188,6 +140,8 @@ int main()
             g_console_logger->info("exit check thread exit!");
             g_file_logger->info("exit check thread exit!");
             g_file_logger->flush();
+            //当前线程休眠4分钟
+            this_thread::sleep_for(chrono::minutes(4));
             exit(0);  
         }
         this_thread::sleep_for(chrono::seconds(60));

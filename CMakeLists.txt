@@ -7,8 +7,6 @@ set(ARM_FLAG 1) # 这里只是一个例子，该变量可能来自其他地方
 if (ARM_FLAG)
     include ($ENV{HOME}/configs/cross.cmake)
     set(CMAKE_BUILD_TYPE Relase)
-else ()
-    set(CMAKE_BUILD_TYPE Debug)
 endif ()
  
 set(CMAKE_CXX_STANDARD 14)
