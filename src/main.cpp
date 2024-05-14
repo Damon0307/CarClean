@@ -39,11 +39,10 @@ bool isWithinExitWindow() {
     auto time_t_now = std::chrono::system_clock::to_time_t(now);
     std::tm tm_now = *std::localtime(&time_t_now);
     
-    // 检查时间是否在晚上11:30到11:59之间
-    if (tm_now.tm_hour >= 23 && tm_now.tm_hour <= 23 && tm_now.tm_min >= 30 && tm_now.tm_min <= 59) {
-        return true;
-    }
-    return false;
+    std::cout<<"now.tm_hour:"<<tm_now.tm_hour<<"now.tm_min:"<<tm_now.tm_min<<std::endl;
+    // 检查时间是否在23:25-23:28 之间
+    // 这里可以根据需要修改时间范围
+    return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
 }
 
 
