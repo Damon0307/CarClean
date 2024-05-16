@@ -87,6 +87,7 @@ private:
     bool GetAIIPCDetectResult();
     void ResetAllSensor();
     std::function<void(json)> PostJsonToServer;
+    
     dl_report_wash_func_t dl_report_wash;   
     dl_report_car_pass_func_t dl_report_car_pass;   
     dl_report_status_func_t dl_report_status;

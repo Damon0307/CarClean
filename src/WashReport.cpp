@@ -1,5 +1,10 @@
 #include "WashReport.h"
 #include <future>
+
+//直连功能是否启用
+#define  DIRECTOR_LINK_ENABLE    0
+
+
 #define NORMAL_REPLY_TO_IPC 1
 // extern logger obj
 extern std::shared_ptr<spdlog::logger> g_console_logger;
@@ -277,6 +282,8 @@ int CarColorConvert(int p)
     {
     case 0:
         return 3;
+    case 1:
+        return 1;
     case 2:
         return 2;
     case 6:
@@ -413,7 +420,10 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
         // printf("Report Detour %s    time %s \n",capture_res["ztcCph"].dump().c_str(),capture_res["captureTime"].dump().c_str()); // 输出车牌
         g_console_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
         g_file_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
-        dl_report_wash(capture_res,true); 
+#if(DIRECTORY_REPORT_ENABLE==1)
+        dl_report_wash(capture_res,true);   
+#endif
+
     }
     else
     {
@@ -438,7 +448,9 @@ void WashReport::DealCarInIPCData(const json &p_json, Response &res)
    car_in_json["direction"] = 0;
   
     PostJsonToServer(car_in_json);
+#if(DIRECTOR_LINK_ENABLE==1)
     dl_report_car_pass(car_in_json,true);
+#endif
 
     g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
     g_file_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
@@ -731,7 +743,13 @@ void WashReport::StartReportingProcess()
                 json capture_res = GetCaptureJson(); // 已经包含默认信息
                 capture_res["captureTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
                 capture_res["ztcCph"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["license"];
+
                 capture_res["ztcColor"] = CarColorConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]);
+                //打印车牌颜色
+                g_console_logger.get()->debug("Car Color get {}",ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]);
+ 
+                g_console_logger->debug("Car Color report {}", CarColorConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]));
+
                 capture_res["vehicleType"] = CarTypeConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
                 capture_res["enterTime"] = time_to_string(point_a.trigger_time);
                 capture_res["leaveTime"] = time_to_string(point_b.leave_time);
@@ -812,8 +830,10 @@ void WashReport::StartReportingProcess()
                 {
                     NotificationsToUart(1);
                 }
+#if(DIRECTOR_LINK_ENABLE==1)
                  dl_report_wash(capture_res,false);
                  dl_report_car_pass(capture_res,false);
+#endif
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
@@ -971,12 +991,13 @@ void WashReport::StartHeartBeat()
                     
                                     PostJsonToServer(res); },
                                 120 * 1000);
-
+#if(DIRECTOR_LINK_ENABLE==1)
     mDlReportStatusTimer.setInterval([&]()
                                      {
                                         dl_report_status(deviceNo,0);
                                      },
                                     120* 1000);    //5 minutes
+#endif
 }
 
 void WashReport::SetDLWashFunc(dl_report_wash_func_t func)
