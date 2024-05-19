@@ -73,33 +73,8 @@ int main()
     g_console_logger->info("StartUp!!! {}", version_str); 
     g_file_logger->info("StartUp!!! {}", version_str);
  
-    //直连模块接收服务端消息线程
-
-  json  test_json = {
-    {"alarmType",3},
-    {"captureTime","2023-09-18 22:40:05"},
-    {"cleanRes",1},
-    {"dataType",1},
-    {"deviceNo","deviceNo_1"},
-    {"deviceSerial","nvr_serial_num_1"},
-    {"direction",1},
-    {"enterTime","2023-11-19 22:16:52"},
-    {"frontWheelWashTime",0},
-    {"hindWheelWashTime",0},
-    {"leaveTime","2023-11-19 22:17:28"},
-    {"leftclean",1},
-    {"leftphotoUrl",""},
-    {"localIndex","nvr_channel_1"},
-    {"picture","pic"},
-    {"rightclean",1},
-    {"rightphotoUrl",""},
-    {"vehicleType",1},
-    {"xmbh","XMBH00000003"},
-    {"ztcColor",3},
-   {"ztcCph","苏AXY377"}
-  };
+ 
   
-
   
 #if 0
  
