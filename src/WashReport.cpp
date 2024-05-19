@@ -14,6 +14,8 @@ int CarColorConvert(int p)
     {
     case 0:
         return 3;
+    case 1:
+        return 1;
     case 2:
         return 2;
     case 6:
@@ -22,6 +24,7 @@ int CarColorConvert(int p)
         return 4;
     case 5:
         return 5;
+    
     default:
         break;
     }
