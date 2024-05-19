@@ -33,6 +33,20 @@ const std::string file_path_logger = "LogFile.log";
 
 using josn = nlohmann::json;
 
+ bool isWithinExitWindow() {
+    // 获取当前时间
+    auto now = std::chrono::system_clock::now();
+    // 转换为当天的24小时制小时和分钟
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::tm tm_now = *std::localtime(&time_t_now);
+    
+   // std::cout<<"now.tm_hour:"<<tm_now.tm_hour<<"now.tm_min:"<<tm_now.tm_min<<std::endl;
+    // 检查时间是否在23:25-23:28 之间
+    // 这里可以根据需要修改时间范围
+    return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
+}
+
+
 int main() 
 {
  
@@ -124,7 +138,23 @@ int main()
   //传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess,uni_wash_report.get());
  
+
+  //每晚退出程序的检测线程
+  std::thread exit_check_thread([&](){
+    while(1){
+        if(isWithinExitWindow()){
+            g_console_logger->info("exit check thread exit!");
+            g_file_logger->info("exit check thread exit!");
+            g_file_logger->flush();
+            //当前线程休眠4分钟
+            this_thread::sleep_for(chrono::minutes(4));
+            exit(0);  
+        }
+        this_thread::sleep_for(chrono::seconds(60));
+    }
+  }); 
   
+  exit_check_thread.join();
   uni_ccr.get()->StartServer();
  
   reporter_thread.join();
