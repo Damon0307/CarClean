@@ -11,8 +11,6 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 
  
-
-
 // #include "UartMod.h"
 using namespace httplib;
 
