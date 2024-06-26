@@ -1,5 +1,6 @@
 {
 "deviceNo":20000,
  "deviceSerial":"hello",
- "localIndex":"16000"
+ "localIndex":"16000",
+ "BarrierGate":true
 }

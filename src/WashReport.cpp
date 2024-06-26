@@ -1,5 +1,9 @@
 #include "WashReport.h"
 #include <future>
+
+// 直连功能是否启用
+#define DIRECTOR_LINK_ENABLE 0
+
 #define NORMAL_REPLY_TO_IPC 1
 // extern logger obj
 extern std::shared_ptr<spdlog::logger> g_console_logger;
@@ -276,6 +280,8 @@ int CarColorConvert(int p)
     {
     case 0:
         return 3;
+    case 1:
+        return 1;
     case 2:
         return 2;
     case 6:
@@ -427,7 +433,10 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
         // printf("Report Detour %s    time %s \n",capture_res["ztcCph"].dump().c_str(),capture_res["captureTime"].dump().c_str()); // 输出车牌
         g_console_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
         g_file_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
-        dl_report_wash(capture_res, true);
+      #if(DIRECTORY_REPORT_ENABLE==1)
+        dl_report_wash(capture_res,true);   
+#endif
+
     }
     else
     {
@@ -452,7 +461,9 @@ void WashReport::DealCarInIPCData(const json &p_json, Response &res)
     car_in_json["direction"] = 0;
 
     PostJsonToServer(car_in_json);
-    dl_report_car_pass(car_in_json, true);
+  #if(DIRECTOR_LINK_ENABLE==1)
+    dl_report_car_pass(car_in_json,true);
+#endif
 
     g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
     g_file_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
@@ -789,10 +800,10 @@ void WashReport::StartReportingProcess()
                             mBarrierGate->BarrierGateCtrl(true);
                         }
                         // 异步操作 15S 以后关闭闸机
-                        auto fut = std::async(std::launch::async, [this](){
+                        auto fut = std::async(std::launch::async, [this]()
+                                              {
                             std::this_thread::sleep_for(std::chrono::seconds(15));
-                            mBarrierGate->BarrierGateCtrl(false);
-                        });
+                            mBarrierGate->BarrierGateCtrl(false); });
                     }
                     else
                     {
@@ -832,8 +843,10 @@ void WashReport::StartReportingProcess()
                 {
                     NotificationsToUart(1);
                 }
-                dl_report_wash(capture_res, false);
-                dl_report_car_pass(capture_res, false);
+         #if(DIRECTOR_LINK_ENABLE==1)
+                 dl_report_wash(capture_res,false);
+                 dl_report_car_pass(capture_res,false);
+#endif
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
@@ -991,9 +1004,13 @@ void WashReport::StartHeartBeat()
                                     PostJsonToServer(res); },
                                 120 * 1000);
 
+#if(DIRECTOR_LINK_ENABLE==1)
     mDlReportStatusTimer.setInterval([&]()
-                                     { dl_report_status(deviceNo, 0); },
-                                     120 * 1000); // 5 minutes
+                                     {
+                                        dl_report_status(deviceNo,0);
+                                     },
+                                    120* 1000);    //5 minutes
+#endif
 }
 
 void WashReport::SetDLWashFunc(dl_report_wash_func_t func)

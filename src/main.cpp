@@ -18,7 +18,7 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version 1.21 直连 + 闸机联动";
+const char *version_str = "Version AI 闸机联动 +自动重启";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -31,6 +31,22 @@ const std::string file_path_logger = "LogFile.log";
  
 
 using josn = nlohmann::json;
+
+bool isWithinExitWindow() {
+    // 获取当前时间
+    auto now = std::chrono::system_clock::now();
+    // 转换为当天的24小时制小时和分钟
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::tm tm_now = *std::localtime(&time_t_now);
+    
+   // std::cout<<"now.tm_hour:"<<tm_now.tm_hour<<"now.tm_min:"<<tm_now.tm_min<<std::endl;
+    // 检查时间是否在23:25-23:28 之间
+    // 这里可以根据需要修改时间范围
+    return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
+}
+
+
+
 
 int main() 
 {
@@ -59,61 +75,16 @@ int main()
     g_file_logger->info("StartUp!!! {}", version_str);
   
   
-  std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
-
-    //直连模块接收服务端消息线程
-
-  json  test_json = {
-    {"alarmType",3},
-    {"captureTime","2023-09-18 22:40:05"},
-    {"cleanRes",1},
-    {"dataType",1},
-    {"deviceNo","deviceNo_1"},
-    {"deviceSerial","nvr_serial_num_1"},
-    {"direction",1},
-    {"enterTime","2023-11-19 22:16:52"},
-    {"frontWheelWashTime",0},
-    {"hindWheelWashTime",0},
-    {"leaveTime","2023-11-19 22:17:28"},
-    {"leftclean",1},
-    {"leftphotoUrl",""},
-    {"localIndex","nvr_channel_1"},
-    {"picture","pic"},
-    {"rightclean",1},
-    {"rightphotoUrl",""},
-    {"vehicleType",1},
-    {"xmbh","XMBH00000003"},
-    {"ztcColor",3},
-   {"ztcCph","苏AXY377"}
-  };
+ // std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
  
-  //   std::thread dl_client_thread([&uni_dl_client](){
-  //      uni_dl_client.get()->receiveAndParseMessage();  
-  // });
-
-#if 0
- while (1)
- {
-    // uni_dl_client.get()->ReportCarWashInfo(test_json,true);
-    //  uni_dl_client.get()->ReportCarPass(test_json,true);
-    //  this_thread::sleep_for(chrono::microseconds(100));
-    uni_dl_client.get()->ReportCarWashInfo(test_json,false);
-    // this_thread::sleep_for(chrono::microseconds(100000));
-     // uni_dl_client.get()->ReportCarPass(test_json,true);
-    //  this_thread::sleep_for(chrono::microseconds(500));
-     // uni_dl_client.get()->ReportStatus("test_json",0); 
-      this_thread::sleep_for(chrono::microseconds(500000));   
- }
-#endif
-  // dl_client_thread.join();
-   
-
 #if 1
  
   std::unique_ptr<NetFoundation> uni_ccr(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
   
   
+  #if(DIRECTOR_LINK_ENABLE==1)
+  std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
   auto dl_report_wash_func = std::bind(&DirectorLinkClient::ReportCarWashInfo, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2); 
   auto dl_car_pass_func = std::bind(&DirectorLinkClient::ReportCarPass, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);
   auto dl_report_status_func = std::bind(&DirectorLinkClient::ReportStatus, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);  
@@ -121,6 +92,8 @@ int main()
   uni_wash_report.get()->SetDLWashFunc(dl_report_wash_func);
   uni_wash_report.get()->SetDLCarPassFunc(dl_car_pass_func);
   uni_wash_report.get()->SetDLStatusFunc(dl_report_status_func);  
+  #endif
+
 
   uni_wash_report.get()->InitDefInfo(DEF_CFG_FILE);
   uni_wash_report.get()->InitSerialComm(RS232_CFG_FILE);
@@ -153,16 +126,39 @@ int main()
   //传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess,uni_wash_report.get());
   
+  //每晚退出程序的检测线程
+  std::thread exit_check_thread([&](){
+    while(1){
+        if(isWithinExitWindow()){
+            g_console_logger->info("exit check thread exit!");
+            g_file_logger->info("exit check thread exit!");
+            g_file_logger->flush();
+            //当前线程休眠4分钟
+            this_thread::sleep_for(chrono::minutes(4));
+            exit(0);  
+        }
+        this_thread::sleep_for(chrono::seconds(60));
+    }
+  }); 
+ 
+#if(DIRECTOR_LINK_ENABLE==1)
   //直连模块接收服务端消息线程
   std::thread dl_client_thread([&uni_dl_client](){
        uni_dl_client.get()->receiveAndParseMessage();  
   });
+#endif
   
   uni_ccr.get()->StartServer();
  
   reporter_thread.join();
   dl_client_thread.join();  
  #endif 
+ 
+ #if(DIRECTOR_LINK_ENABLE==1)
+  dl_client_thread.join();  
+#endif
+
+  exit_check_thread.join();
   
   return 0;
 }
