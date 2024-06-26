@@ -48,9 +48,6 @@ bool isWithinExitWindow() {
     return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
 }
 
-
-
-
 int main() 
 {
  
