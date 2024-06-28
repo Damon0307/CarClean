@@ -134,6 +134,7 @@ void BarrierGate::BarrierGateCtrl(bool ctrl_flag)
     
    GPIO_InitLine("gpiochip3" ,gpio_103_offset,&lineIO1);
  
-   GPIO_Set_Mode(&lineIO1,"IO1",0);
+   //GPIO_Set_Mode(&lineIO1,"IO1",0);
+   GPIO_Set_Mode(&lineIO1,"IO1",1);
  
  }
