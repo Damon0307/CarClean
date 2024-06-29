@@ -1,4 +1,3 @@
-
 #include "BarrierGate.h"
 #include <iostream>
 #include <errno.h>
