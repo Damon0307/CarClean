@@ -7,8 +7,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-unsigned int gpio_102_offset = 6;	// IO2
 unsigned int gpio_103_offset = 7;	// IO1
+
+unsigned int gpio_102_offset = 6;	// IO2
 
 int GPIO_InitLine(char *chipname ,unsigned int offset,struct gpiod_line **line_ptr)
 {
@@ -134,6 +135,8 @@ void BarrierGate::BarrierGateCtrl(bool ctrl_flag)
     
    GPIO_InitLine("gpiochip3" ,gpio_103_offset,&lineIO1);
  
-   GPIO_Set_Mode(&lineIO1,"IO1",0);
+   GPIO_Set_Mode(&lineIO1,"IO1",1);
+
+   GPIO_Write(&lineIO1, 0);
  
  }

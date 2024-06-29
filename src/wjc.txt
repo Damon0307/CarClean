@@ -1,7 +1,7 @@
 {
 	"deviceNo": "123456789",
-	"nvr_channel": "nvr_channel_1",
-	"nvr_serial_num": "nvr_serial_num_1",
+	"nvr_channel": 1,
+	"nvr_serial_num": "1234567890",
 	"wash_alarm_time": 15,
 	"BarrierGate": true,
 	"delay_time": 10,

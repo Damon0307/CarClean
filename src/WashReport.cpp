@@ -370,6 +370,12 @@ void WashReport::InitDefInfo(const char *file_path)
     if (data.contains("BarrierGate") && data["BarrierGate"])
     {
         mBarrierGate = new BarrierGate();
+
+        //初始化保持时间和延迟时间
+        this->mDelayTime = data["delay_time"];
+        this->mKeepTime = data["keep_time"];
+        mDelayTime*=1000;
+        mKeepTime*=1000;
     }
     else
     {
@@ -795,15 +801,21 @@ void WashReport::StartReportingProcess()
                     if (r_label == "clean" && l_label == "clean")
                     {
                         capture_res["cleanRes"] = 2;
-                        if (NULL != mBarrierGate)
+    
+                        //闸机控制,异步操作根据延迟时间和保持时间控制BarrierGateCtrl
+                        if(NULL!=mBarrierGate)
                         {
-                            mBarrierGate->BarrierGateCtrl(true);
-                        }
-                        // 异步操作 15S 以后关闭闸机
-                        auto fut = std::async(std::launch::async, [this]()
-                                              {
-                            std::this_thread::sleep_for(std::chrono::seconds(15));
-                            mBarrierGate->BarrierGateCtrl(false); });
+                             mBarrierGate->BarrierGateCtrl(false);
+
+                            mDelayTimer.setTimeout([this](){
+                                mBarrierGate->BarrierGateCtrl(true);
+                            },mDelayTime);
+
+                            mKeepTimer.setTimeout([this](){
+                                mBarrierGate->BarrierGateCtrl(false);
+                            },mDelayTime+mKeepTime);
+                        }   
+
                     }
                     else
                     {

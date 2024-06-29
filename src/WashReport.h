@@ -197,7 +197,13 @@ private:
 //闸机的控制
    bool mBarrierGateNeed;
    BarrierGate* mBarrierGate;
+   int mDelayTime;  // 延迟时间
+   int mKeepTime;   //保持时间
 
+   Timer mDelayTimer;
+   Timer mKeepTimer;
+ 
+   
  
 };
 
