@@ -805,8 +805,11 @@ void WashReport::StartReportingProcess()
                         //闸机控制,异步操作根据延迟时间和保持时间控制BarrierGateCtrl
                         if(NULL!=mBarrierGate)
                         {
-                             mBarrierGate->BarrierGateCtrl(false);
+                        
+                             g_console_logger->debug("Gate Will be open for {} in  {} seconds ",capture_res["ztcCph"].dump().c_str(),mDelayTime);
+                              g_file_logger->debug("Gate Will be open for {} in  {} seconds ",capture_res["ztcCph"].dump().c_str(),mDelayTime);
 
+                             mBarrierGate->BarrierGateCtrl(false);
                             mDelayTimer.setTimeout([this](){
                                 mBarrierGate->BarrierGateCtrl(true);
                             },mDelayTime);
