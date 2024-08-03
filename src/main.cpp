@@ -18,7 +18,7 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version AI 闸机联动(delay+keep) +自动重启";
+const char *version_str = "Version AI 20S 闸机联动(delay+keep) +自动重启";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -50,28 +50,6 @@ bool isWithinExitWindow() {
 
 int main() 
 {
-
-  //  BarrierGate* gate = new BarrierGate();
-    
-  //   Timer timer;
-  //   timer.setTimeout([&gate](){
-  //       gate->BarrierGateCtrl(1);
-  //       std::cout<<"open gate"<<std::endl;
-  //   }, 10000);
-
-  //   Timer close_timer;
-  //   close_timer.setTimeout([&gate](){
-  //       gate->BarrierGateCtrl(0);
-  //       std::cout<<"close gate"<<std::endl;
-  //   }, 20000);
-
-  //   while(1){
-  //       this_thread::sleep_for(chrono::seconds(1));
-  //   }
-     
-  //   return 0; 
-
-
 
 
 #if 1

@@ -371,11 +371,11 @@ void WashReport::InitDefInfo(const char *file_path)
     {
         mBarrierGate = new BarrierGate();
 
-        //初始化保持时间和延迟时间
+        // 初始化保持时间和延迟时间
         this->mDelayTime = data["delay_time"];
         this->mKeepTime = data["keep_time"];
-        mDelayTime*=1000;
-        mKeepTime*=1000;
+        mDelayTime *= 1000;
+        mKeepTime *= 1000;
     }
     else
     {
@@ -439,10 +439,9 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
         // printf("Report Detour %s    time %s \n",capture_res["ztcCph"].dump().c_str(),capture_res["captureTime"].dump().c_str()); // 输出车牌
         g_console_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
         g_file_logger->debug("Report Detour {} ", capture_res["ztcCph"].dump().c_str());
-      #if(DIRECTORY_REPORT_ENABLE==1)
-        dl_report_wash(capture_res,true);   
+#if (DIRECTORY_REPORT_ENABLE == 1)
+        dl_report_wash(capture_res, true);
 #endif
-
     }
     else
     {
@@ -467,8 +466,8 @@ void WashReport::DealCarInIPCData(const json &p_json, Response &res)
     car_in_json["direction"] = 0;
 
     PostJsonToServer(car_in_json);
-  #if(DIRECTOR_LINK_ENABLE==1)
-    dl_report_car_pass(car_in_json,true);
+#if (DIRECTOR_LINK_ENABLE == 1)
+    dl_report_car_pass(car_in_json, true);
 #endif
 
     g_console_logger->debug("Report Car in {} ", car_in_json["ztcCph"].dump().c_str());
@@ -486,13 +485,13 @@ void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
         if (point_a.is_working)
         {
             l_ai_ipc.DealAIIPCData(p_json);
-            g_console_logger->debug("Deal_L_AIIPCData {} ", p_json["label"].dump().c_str());
-            g_file_logger->debug("Deal_L_AIIPCData {}", p_json["label"].dump().c_str());
+            g_console_logger->debug("Deal_L_AIIPCData clean res {}  ", p_json["label"].dump().c_str());
+            g_file_logger->debug("Deal_L_AIIPCData clean res {} ", p_json["label"].dump().c_str());
         }
         else
         {
-            g_console_logger->debug("Rejected handle cause no point a working");
-            g_file_logger->debug("Rejected handle cause no point a working");
+            g_console_logger->debug("Rejected handle Left AIIPC cause no point a working");
+            g_file_logger->debug("Rejected handle Left AIIPC cause no point a working");
         }
     }
 
@@ -506,13 +505,13 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
         if (point_a.is_working)
         {
             r_ai_ipc.DealAIIPCData(p_json);
-            g_console_logger->debug("Deal_R_AIIPCData {} ", p_json["label"].dump().c_str());
-            g_file_logger->debug("Deal_R_AIIPCData {}", p_json["label"].dump().c_str());
+            g_console_logger->debug("Deal_R_AIIPCData clean res {} ", p_json["label"].dump().c_str());
+            g_file_logger->debug("Deal_R_AIIPCData clean res {}", p_json["label"].dump().c_str());
         }
         else
         {
-            g_console_logger->debug("Rejected handle cause no point a working");
-            g_file_logger->debug("Rejected handle cause no point a working");
+            g_console_logger->debug("Rejected handle Right AIIPC cause no point a working");
+            g_file_logger->debug("Rejected handle  Right AIIPC cause no point a working");
         }
     }
 
@@ -775,19 +774,22 @@ void WashReport::StartReportingProcess()
                 g_file_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working), capture_res["ztcCph"].dump().c_str());
 
                 bool ai_all_res = false;
-                for (int i = 0; i < 10; i++)
-                {
 
-                    g_console_logger->debug("waiting for  ai ipc data...");
+                for (int i = 0; i < 20; i++)
+                {
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
                     {
-                        g_console_logger->debug("Get AI ipc data");
-                        g_file_logger->debug("Get AI ipc data");
-                        break;
+                        g_console_logger->debug("Get AI ipc data success in {} times", i);
+                      
                     }
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    else
+                    {
+                        g_console_logger->debug("Get AI ipc data failed in {} times", i);
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); 
                 }
+
                 if (ai_all_res)
                 {
                     //  获取AI摄像机数据
@@ -801,28 +803,30 @@ void WashReport::StartReportingProcess()
                     if (r_label == "clean" && l_label == "clean")
                     {
                         capture_res["cleanRes"] = 2;
-    
-                        //闸机控制,异步操作根据延迟时间和保持时间控制BarrierGateCtrl
-                        if(NULL!=mBarrierGate)
+
+                        g_console_logger->debug("All clean {}", capture_res["ztcCph"].dump().c_str());
+                        g_file_logger->debug("All clean {}", capture_res["ztcCph"].dump().c_str()); 
+
+                        // 闸机控制,异步操作根据延迟时间和保持时间控制BarrierGateCtrl
+                        if (NULL != mBarrierGate)
                         {
-                        
-                             g_console_logger->debug("Gate Will be open for {} in  {} seconds ",capture_res["ztcCph"].dump().c_str(),mDelayTime);
-                              g_file_logger->debug("Gate Will be open for {} in  {} seconds ",capture_res["ztcCph"].dump().c_str(),mDelayTime);
 
-                             mBarrierGate->BarrierGateCtrl(false);
-                            mDelayTimer.setTimeout([this](){
-                                mBarrierGate->BarrierGateCtrl(true);
-                            },mDelayTime);
+                            g_console_logger->debug("Gate Will be open for {} in  {} seconds ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
+                            g_file_logger->debug("Gate Will be open for {} in  {} seconds ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
 
-                            mKeepTimer.setTimeout([this](){
-                                mBarrierGate->BarrierGateCtrl(false);
-                            },mDelayTime+mKeepTime);
-                        }   
+                            mBarrierGate->BarrierGateCtrl(false);
+                            mDelayTimer.setTimeout([this]()
+                                                   { mBarrierGate->BarrierGateCtrl(true); }, mDelayTime);
 
+                            mKeepTimer.setTimeout([this]()
+                                                  { mBarrierGate->BarrierGateCtrl(false); }, mDelayTime + mKeepTime);
+                        }
                     }
                     else
                     {
                         capture_res["cleanRes"] = 3;
+                        g_console_logger->debug("With dirty {}", capture_res["ztcCph"].dump().c_str());
+                        g_file_logger->debug("With dirty  {}", capture_res["ztcCph"].dump().c_str());    
                     }
 
                     // 检查 "img_base64" 字段是否存在，如果不存在则默认为 ""
@@ -858,9 +862,9 @@ void WashReport::StartReportingProcess()
                 {
                     NotificationsToUart(1);
                 }
-         #if(DIRECTOR_LINK_ENABLE==1)
-                 dl_report_wash(capture_res,false);
-                 dl_report_car_pass(capture_res,false);
+#if (DIRECTOR_LINK_ENABLE == 1)
+                dl_report_wash(capture_res, false);
+                dl_report_car_pass(capture_res, false);
 #endif
                 // todo 检查推送结果以后再决定要不要重传？
                 ResetAllSensor();
@@ -973,14 +977,21 @@ void WashReport::AlarmReport(int exceptionType)
     // 异常以后复位该模块 但不复位其他模块
     if (exceptionType == 1)
     {
+        // 记录异常
+        g_console_logger->debug("Point A alarm ");
+        g_file_logger->debug("Point A alarm ");
         point_a.ResetStatus();
     }
     else if (exceptionType == 2)
     {
+        g_console_logger->debug("Water_pump  alarm ");
+        g_file_logger->debug("Water_pump  alarm ");
         water_pump.ResetStatus();
     }
     else if (exceptionType == 3)
     {
+        g_console_logger->debug("Point B alarm ");
+        g_file_logger->debug("Point B alarm ");
         point_b.ResetStatus();
     }
 }
@@ -1019,12 +1030,10 @@ void WashReport::StartHeartBeat()
                                     PostJsonToServer(res); },
                                 120 * 1000);
 
-#if(DIRECTOR_LINK_ENABLE==1)
+#if (DIRECTOR_LINK_ENABLE == 1)
     mDlReportStatusTimer.setInterval([&]()
-                                     {
-                                        dl_report_status(deviceNo,0);
-                                     },
-                                    120* 1000);    //5 minutes
+                                     { dl_report_status(deviceNo, 0); },
+                                     120 * 1000); // 5 minutes
 #endif
 }
 

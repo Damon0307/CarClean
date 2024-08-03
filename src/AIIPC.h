@@ -80,6 +80,8 @@ public:
             {
                 detect_json["label"] = "dirty";
                 detect_json["img_base64"] = cur_dirty_img;  
+                g_console_logger->debug("update the detect_json img to dirty");
+                g_file_logger->debug("update the detect_json img to dirty");    
             }
         }
         return detect_json;
