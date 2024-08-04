@@ -43,6 +43,7 @@ public:
     bool is_working;    // 光电模块此次已经触发,需要整个流程结束才能被重置
     bool is_exit;           // 表明该点是否为出口
     bool exit_car_leaving;  // 出口点是否有车离开
+ 
     
     Timer alarm_timer; //雷达异常告警
 

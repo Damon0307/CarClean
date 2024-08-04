@@ -9,6 +9,8 @@
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
+const int ai_deal_delay_time = 5; // B点结束以后还继续接收AI相机数据的时间
+
 // uart msg define
 const unsigned char event_normal[] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0xde, 0x31, 0xaa};
 const unsigned char event_dirty[] = {0x55, 0x00, 0x01, 0x00, 0x00, 0x00, 0xe2, 0x0d, 0xaa};
@@ -482,7 +484,7 @@ void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
 {
     if (p_json.contains("label"))
     {
-        if (point_a.is_working)
+        if (point_b.is_working)
         {
             l_ai_ipc.DealAIIPCData(p_json);
             g_console_logger->debug("Deal_L_AIIPCData clean res {}  ", p_json["label"].dump().c_str());
@@ -490,8 +492,20 @@ void WashReport::Deal_L_AIIPCData(const json &p_json, Response &res)
         }
         else
         {
-            g_console_logger->debug("Rejected handle Left AIIPC cause no point a working");
-            g_file_logger->debug("Rejected handle Left AIIPC cause no point a working");
+            // 如果当前时间与 point_b的leave_time相差  ai_deal_delay_time 以内则处理
+            time_t cur_time;
+            time(&cur_time);
+            if (difftime(cur_time, point_b.leave_time) <= ai_deal_delay_time)
+            {
+                l_ai_ipc.DealAIIPCData(p_json);
+                g_console_logger->debug("Deal_L_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
+                g_file_logger->debug("Deal_L_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
+            }
+            else
+            {
+                g_console_logger->debug("Rejected handle Left AIIPC cause no point b working");
+                g_file_logger->debug("Rejected handle Left AIIPC cause no point b working");
+            }
         }
     }
 
@@ -502,7 +516,7 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
 
     if (p_json.contains("label"))
     {
-        if (point_a.is_working)
+        if (point_b.is_working)
         {
             r_ai_ipc.DealAIIPCData(p_json);
             g_console_logger->debug("Deal_R_AIIPCData clean res {} ", p_json["label"].dump().c_str());
@@ -510,8 +524,22 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
         }
         else
         {
-            g_console_logger->debug("Rejected handle Right AIIPC cause no point a working");
-            g_file_logger->debug("Rejected handle  Right AIIPC cause no point a working");
+
+
+             // 如果当前时间与 point_b的leave_time相差  ai_deal_delay_time 以内则处理
+            time_t cur_time;
+            time(&cur_time);
+            if (difftime(cur_time, point_b.leave_time) <= ai_deal_delay_time)
+            {
+                l_ai_ipc.DealAIIPCData(p_json);
+                g_console_logger->debug("Deal_L_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
+                g_file_logger->debug("Deal_L_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
+            }
+            else
+            {
+                g_console_logger->debug("Rejected handle Left AIIPC cause no point b working");
+                g_file_logger->debug("Rejected handle Left AIIPC cause no point b working");
+            }
         }
     }
 
@@ -775,19 +803,18 @@ void WashReport::StartReportingProcess()
 
                 bool ai_all_res = false;
 
-                for (int i = 0; i < 20; i++)
+                for (int i = 0; i < 5; i++)
                 {
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
                     {
                         g_console_logger->debug("Get AI ipc data success in {} times", i);
-                      
                     }
                     else
                     {
                         g_console_logger->debug("Get AI ipc data failed in {} times", i);
                     }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); 
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 }
 
                 if (ai_all_res)
@@ -805,7 +832,7 @@ void WashReport::StartReportingProcess()
                         capture_res["cleanRes"] = 2;
 
                         g_console_logger->debug("All clean {}", capture_res["ztcCph"].dump().c_str());
-                        g_file_logger->debug("All clean {}", capture_res["ztcCph"].dump().c_str()); 
+                        g_file_logger->debug("All clean {}", capture_res["ztcCph"].dump().c_str());
 
                         // 闸机控制,异步操作根据延迟时间和保持时间控制BarrierGateCtrl
                         if (NULL != mBarrierGate)
@@ -826,7 +853,7 @@ void WashReport::StartReportingProcess()
                     {
                         capture_res["cleanRes"] = 3;
                         g_console_logger->debug("With dirty {}", capture_res["ztcCph"].dump().c_str());
-                        g_file_logger->debug("With dirty  {}", capture_res["ztcCph"].dump().c_str());    
+                        g_file_logger->debug("With dirty  {}", capture_res["ztcCph"].dump().c_str());
                     }
 
                     // 检查 "img_base64" 字段是否存在，如果不存在则默认为 ""
