@@ -803,7 +803,7 @@ void WashReport::StartReportingProcess()
 
                 bool ai_all_res = false;
 
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < ai_deal_delay_time; i++)
                 {
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
