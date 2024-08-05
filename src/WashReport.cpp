@@ -313,16 +313,13 @@ int CarTypeConvert(int p)
 
 WashReport::WashReport(/* args */)
 {
-    point_a.ResetStatus();
     point_b.ResetStatus();
     point_b.SetPonintExit(true); // 设置B点为出口点
-    point_a.SetPointID("A");
     point_b.SetPointID("B");
     water_pump.ResetStatus();
     ipc.ResetStatus();
     serial_data_queue.clear();
     // need lock?
-    point_a.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
     point_b.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
     water_pump.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
 }
@@ -525,8 +522,7 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
         else
         {
 
-
-             // 如果当前时间与 point_b的leave_time相差  ai_deal_delay_time 以内则处理
+            // 如果当前时间与 point_b的leave_time相差  ai_deal_delay_time 以内则处理
             time_t cur_time;
             time(&cur_time);
             if (difftime(cur_time, point_b.leave_time) <= ai_deal_delay_time)
@@ -595,7 +591,7 @@ void WashReport::DealSerialData()
                         { // 寻找到帧头，且后续长度足够解
                             have_decode = true;
                             // 校验CRC16
-                            point_a.DealStatus(serial_data_queue[i + 1]);
+                            // point_a.DealStatus(serial_data_queue[i + 1]);
                             point_b.DealStatus(serial_data_queue[i + 2]);
                             water_pump.DealStatus(serial_data_queue[i + 5]);
                             break;
@@ -713,24 +709,6 @@ json WashReport::ResponseToIPC(int logic_type)
     return res;
 }
 
-int WashReport::GetDirByCompareTime(const Point &a, const Point &b) // 通过比较两个点的先后时间得到方向
-{
-    int res = 0;
-    if (a.trigger_time == 0 || b.trigger_time == 0) // 如果a,b 中存在一个点为0，说明该流程至少有一点没有触发，即流程未结束，或压根没开始
-    {
-        res = 0;
-    }
-    else if (a.trigger_time < b.trigger_time)
-    {
-        res = 1;
-    }
-    else if (a.trigger_time > b.trigger_time)
-    {
-        res = 2;
-    }
-    return res;
-}
-
 // 查表法计算crc  https://blog.csdn.net/whik1194/article/details/108518336
 unsigned short WashReport::do_crc_table(unsigned char *ptr, int len)
 {
@@ -747,10 +725,10 @@ unsigned short WashReport::do_crc_table(unsigned char *ptr, int len)
 // 处理数据
 void WashReport::StartReportingProcess()
 {
-    printf("WashReporter StartReportingProcess...\n");
+    printf("WashReporter StartReportingProcess With Single Radar...\n");
     StartHeartBeat();
-    bool last_point_a_working = true;
-    bool last_point_a_status = true;
+    bool wash_ipc_working = true;
+
     bool last_point_b_status = true;
     bool last_point_b_working = true;
     bool exit_car_leaving = true;
@@ -758,48 +736,35 @@ void WashReport::StartReportingProcess()
     while (1)
     {
         DealSerialData();
+        if (ipc.has_trigger == true)
+        { // ipc 有数据时候整个流程才会开启
 
-        if (point_a.is_working != last_point_a_working || point_a.cur_status != last_point_a_status)
-        {
-            // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
-            g_console_logger->debug("A Working  Status {}   {}", static_cast<int>(point_a.is_working), static_cast<int>(point_a.cur_status));
-            last_point_a_working = point_a.is_working;
-            last_point_a_status = point_a.cur_status;
-        }
-
-        if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
-        {
-            // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
-            g_console_logger->debug("B Working  Status  Leaving {}  {}  {} ", static_cast<int>(point_b.is_working), static_cast<int>(point_b.cur_status), static_cast<int>(point_b.exit_car_leaving));
-            last_point_b_working = point_b.is_working;
-            last_point_b_status = point_b.cur_status;
-            exit_car_leaving = point_b.exit_car_leaving;
-        }
-        // printf("B working  ,B status  B leaving  %d  %d  %d \n", point_b.is_working, point_b.cur_status, point_b.exit_car_leaving);
-
-        if ((point_b.is_working) && (point_b.IsLeaving() == true)) // B点触发，且下降沿
-        {
-            if (ipc.has_trigger == true) // IPC已经有推送结果则开始处理
+            if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
             {
-
+                // printf("A working  ,A status %d  %d \n", point_a.is_working, point_a.cur_status);
+                g_console_logger->debug("B Working  Status  Leaving {}  {}  {} ", static_cast<int>(point_b.is_working), static_cast<int>(point_b.cur_status), static_cast<int>(point_b.exit_car_leaving));
+                last_point_b_working = point_b.is_working;
+                last_point_b_status = point_b.cur_status;
+                exit_car_leaving = point_b.exit_car_leaving;
+            }
+            if ((point_b.is_working) && (point_b.IsLeaving() == true)) // B点触发，且下降沿
+            {
                 // 组符合后端服务器的JSON
                 json capture_res = GetCaptureJson(); // 已经包含默认信息
                 capture_res["captureTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
                 capture_res["ztcCph"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["license"];
                 capture_res["ztcColor"] = CarColorConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]);
                 capture_res["vehicleType"] = CarTypeConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
-                capture_res["enterTime"] = time_to_string(point_a.trigger_time);
+                //*进入时间就是抓拍时间
+                capture_res["enterTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
                 capture_res["leaveTime"] = time_to_string(point_b.leave_time);
-                capture_res["alarmType"] = GetAlarmTypeByPoint();
+                capture_res["alarmType"] = GetAlarmByWaterPump();
                 // 前后轮冲洗时间改为 0
-                capture_res["frontWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
-                capture_res["hindWheelWashTime"] = water_pump.finish_time - water_pump.begin_time;
+                capture_res["frontWheelWashTime"] = 0;
+                capture_res["hindWheelWashTime"] = 0;
                 capture_res["picture"] = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
                 int ipc_dir = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
                 capture_res["direction"] = GetDirByIPC(ipc_dir); // 通过IPC
-
-                g_console_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working), capture_res["ztcCph"].dump().c_str());
-                g_file_logger->debug("Leaving with Report A Working {} {}", static_cast<int>(point_a.is_working), capture_res["ztcCph"].dump().c_str());
 
                 bool ai_all_res = false;
 
@@ -898,15 +863,11 @@ void WashReport::StartReportingProcess()
                 g_console_logger->debug("===================Pass and reset===================");
                 g_file_logger->debug("===================Pass and reset===================");
             }
-            else
-            {
-                g_console_logger->debug("Leaving without report no wash ipc data");
-                g_file_logger->debug("Leaving without report no wash ipc data");
-                ResetAllSensor();
-            }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+
+    // todo  ResetAllSensor();
 }
 
 void WashReport::NotificationsToUart(int event_num)
@@ -949,7 +910,6 @@ std::string WashReport::utc_to_string(long long utcSeconds)
 
 void WashReport::ResetAllSensor()
 {
-    point_a.ResetStatus();
     point_b.ResetStatus();
     water_pump.ResetStatus();
     ipc.ResetStatus();
@@ -958,19 +918,53 @@ void WashReport::ResetAllSensor()
 }
 
 // todo  其他未定义，绕道未处理
-int WashReport::GetAlarmTypeByPoint()
+// int WashReport::GetAlarmTypeByPoint()
+// {
+//     // 水泵未工作
+//     if (water_pump.is_working == false)
+//     {
+//
+//     }
+//     // 冲洗时间不足  wash_alarm_time S
+//     if (point_b.leave_time - point_a.trigger_time < wash_alarm_time)
+//     {
+//         return 2;
+//     }
+//     return 5;
+// }
+
+int WashReport::GetAlarmByWaterPump()
 {
-    // 水泵未工作
-    if (water_pump.is_working == false)
+
+    if (water_pump.begin_time == 0) // 水泵未工作
     {
         return 3;
     }
-    // 冲洗时间不足  wash_alarm_time S
-    if (point_b.leave_time - point_a.trigger_time < wash_alarm_time)
+    if (water_pump.begin_time != 0 && water_pump.finish_time == 0) // 水泵工作中
     {
-        return 2;
+        // 从B点离开时间减去水泵开始时间看看大不大于设定的冲洗时间
+        if (difftime(point_b.leave_time, water_pump.begin_time) > wash_alarm_time)
+        {
+            return 1; //! 正常冲洗
+        }
+        else
+        {
+            return 0; //! 冲洗时间不够
+        }
     }
-    return 5;
+
+    if (water_pump.begin_time != 0 && water_pump.finish_time != 0) // 水泵工作结束
+    {
+        // 完全从水泵的finish_time 减去begin_time 大不大于wash_alarm_time
+        if (difftime(water_pump.finish_time, water_pump.begin_time) > wash_alarm_time)
+        {
+            return 1; //! 正常冲洗
+        }
+        else
+        {
+            return 0; //! 冲洗时间不够
+        }
+    }
 }
 
 int WashReport::GetDirByIPC(int ipc_dir)
@@ -1007,7 +1001,6 @@ void WashReport::AlarmReport(int exceptionType)
         // 记录异常
         g_console_logger->debug("Point A alarm ");
         g_file_logger->debug("Point A alarm ");
-        point_a.ResetStatus();
     }
     else if (exceptionType == 2)
     {

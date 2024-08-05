@@ -58,7 +58,6 @@ int main()
      g_console_logger = spdlog::stdout_color_mt("console");
      g_console_logger->set_level(spdlog::level::debug); // 设置日志级别
     // 使用日志对象记录日志
- 
 
     auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
          file_path_logger,  // 日志文件名

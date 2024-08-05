@@ -172,7 +172,7 @@ private:
         }
     };
     // a b点位置的光电模块 ，水泵,两侧AI摄像机
-    Point point_a;
+    //Point point_a; //现在去除a点
     Point point_b;
     WaterPump water_pump;
     IPC ipc;
@@ -182,11 +182,9 @@ private:
     //两个重要的时间
     //B点触发下降的时间，  用作AI摄像机的超时使用
     time_t   b_exit_time;
-  
-    int GetAlarmTypeByPoint();//由于业务原因，需要改成由AB点的信号来确定水泵的冲洗时间够不够
-    int GetDirByCompareTime(const Point &a, const Point &b); // 通过比较两个点的先后时间得到方向
 
-     int GetDirByIPC(int ipc_dir); // 通过IPC 
+    int GetAlarmByWaterPump();//通过水泵的工作时间判断是否超时
+    int GetDirByIPC(int ipc_dir); // 通过IPC 
 
     void NotificationsToUart(int event_num); //发送事件信息给串口方便其控制NVR
 
