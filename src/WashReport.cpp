@@ -945,11 +945,11 @@ int WashReport::GetAlarmByWaterPump()
         // 从B点离开时间减去水泵开始时间看看大不大于设定的冲洗时间
         if (difftime(point_b.leave_time, water_pump.begin_time) > wash_alarm_time)
         {
-            return 1; //! 正常冲洗
+            return 5; //! 正常冲洗
         }
         else
         {
-            return 0; //! 冲洗时间不够
+            return 2; //! 冲洗时间不够
         }
     }
 
@@ -958,11 +958,11 @@ int WashReport::GetAlarmByWaterPump()
         // 完全从水泵的finish_time 减去begin_time 大不大于wash_alarm_time
         if (difftime(water_pump.finish_time, water_pump.begin_time) > wash_alarm_time)
         {
-            return 1; //! 正常冲洗
+            return 5; //! 正常冲洗
         }
         else
         {
-            return 0; //! 冲洗时间不够
+            return 2; //! 冲洗时间不够
         }
     }
 }

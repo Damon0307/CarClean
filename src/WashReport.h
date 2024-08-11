@@ -17,6 +17,11 @@
 #include "Timer.h"
 #include "BarrierGate.h"
 
+
+// extern logger obj
+extern std::shared_ptr<spdlog::logger> g_console_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
+
 using json = nlohmann::json;
 using namespace httplib;
 
@@ -136,7 +141,10 @@ private:
                     {
                         time(&finish_time); // 水泵停止工作记录停止时间等待上报,
                         // 且只有被 ResetStatus 以后才会更新最后的停止时间
-                        // 防止时间漂移
+                        //记录停止时间
+                        g_console_logger->debug("Water Pump finish time {}",time_to_string(finish_time));
+                        g_file_logger->debug("Water Pump finish time {}",time_to_string(finish_time));
+                        
                     }
                 }
             }
@@ -149,6 +157,8 @@ private:
                     alarm_timer.setTimeout([&](){
                             alarm_func(2); //水泵的告警ID是2
                     },600*1000);
+                     g_console_logger->debug("Water Pump start time {}",time_to_string(finish_time));
+                     g_file_logger->debug("Water Pump finish time {}",time_to_string(finish_time));
                 }
                 else
                 {

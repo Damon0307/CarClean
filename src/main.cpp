@@ -18,7 +18,7 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version  单雷达  AI 5s 闸机联动(delay+keep time)";
+const char *version_str = "Version  单雷达  AI 5s 闸机联动(delay+keep time) debug water pump";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -75,9 +75,7 @@ int main()
     // 开始记录日志
     g_console_logger->info("StartUp!!! {}", version_str); 
     g_file_logger->info("StartUp!!! {}", version_str);
-  
-  
- // std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
+ 
  
 #if 1
  
