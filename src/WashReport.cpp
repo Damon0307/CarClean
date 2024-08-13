@@ -533,8 +533,8 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
             }
             else
             {
-                g_console_logger->debug("Rejected handle Left AIIPC cause no point b working");
-                g_file_logger->debug("Rejected handle Left AIIPC cause no point b working");
+                g_console_logger->debug("Rejected handle Right AIIPC cause no point b working");
+                g_file_logger->debug("Rejected handle Right AIIPC cause no point b working");
             }
         }
     }
