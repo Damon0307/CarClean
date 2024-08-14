@@ -803,8 +803,8 @@ void WashReport::StartReportingProcess()
                         if (NULL != mBarrierGate)
                         {
 
-                            g_console_logger->debug("Gate Will be open for {} in  {} seconds ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
-                            g_file_logger->debug("Gate Will be open for {} in  {} seconds ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
+                            g_console_logger->debug("Gate Will be open for {} in  {} ms ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
+                            g_file_logger->debug("Gate Will be open for {} in  {} ms ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
 
                             mBarrierGate->BarrierGateCtrl(false);
                             mDelayTimer.setTimeout([this]()
@@ -935,7 +935,9 @@ void WashReport::ResetAllSensor()
 
 int WashReport::GetAlarmByWaterPump()
 {
-
+    //定义一个1970年的默认时间
+    const time_t def_time = 0;  
+  
     if (water_pump.begin_time == 0) // 水泵未工作
     {
         return 3;
@@ -953,7 +955,7 @@ int WashReport::GetAlarmByWaterPump()
         }
     }
 
-    if (water_pump.begin_time != 0 && water_pump.finish_time != 0) // 水泵工作结束
+    if (water_pump.begin_time != def_time && water_pump.finish_time != def_time) // 水泵工作结束
     {
         // 完全从水泵的finish_time 减去begin_time 大不大于wash_alarm_time
         if (difftime(water_pump.finish_time, water_pump.begin_time) > wash_alarm_time)
@@ -965,6 +967,7 @@ int WashReport::GetAlarmByWaterPump()
             return 2; //! 冲洗时间不够
         }
     }
+    return 0;   
 }
 
 int WashReport::GetDirByIPC(int ipc_dir)
