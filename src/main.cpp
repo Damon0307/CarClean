@@ -18,7 +18,7 @@ const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
 const char *DIRECT_LINK_CFG_FILE = "direct_link.json";
 
-const char *version_str = "Version  单雷达  AI 5s 闸机联动(delay+keep time) debug water pump";
+const char *version_str = "Version  单雷达  AI 5s relay 闸机联动(delay+keep time) debug water pump";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -44,6 +44,7 @@ bool isWithinExitWindow() {
     // 这里可以根据需要修改时间范围
     return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
 }
+
 
 
 
