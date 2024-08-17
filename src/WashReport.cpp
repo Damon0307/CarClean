@@ -9,7 +9,7 @@
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
-const int ai_deal_delay_time = 5; // B点结束以后还继续接收AI相机数据的时间
+const int ai_deal_delay_time = 1; // B点结束以后还继续接收AI相机数据的时间
 
 // uart msg define
 const unsigned char event_normal[] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0xde, 0x31, 0xaa};
@@ -400,12 +400,18 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
     {
         g_file_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
         g_console_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
+
+        // 清空左右两侧AI摄像头的数据
+             r_ai_ipc.ResetStatus();
+             l_ai_ipc.ResetStatus(); 
+             g_console_logger->debug("Both sides AI IPC status have been reset");   
     }
     else
     {
         g_file_logger->debug("Got Wash IPC Data  NO  Licenses!!! ");
         g_console_logger->debug("Got Wash IPC Data NO  Licenses!!!  ");
     }
+
 }
 
 // todo 接收到绕道摄像头推送的数据
@@ -768,7 +774,7 @@ void WashReport::StartReportingProcess()
 
                 bool ai_all_res = false;
 
-                for (int i = 0; i < ai_deal_delay_time; i++)
+                for (int i = 0; i <= ai_deal_delay_time; i++)
                 {
                     ai_all_res = GetAIIPCDetectResult();
                     if (ai_all_res == true)
@@ -812,6 +818,7 @@ void WashReport::StartReportingProcess()
 
                             mKeepTimer.setTimeout([this]()
                                                   { mBarrierGate->BarrierGateCtrl(false); }, mDelayTime + mKeepTime);
+                            //实际上闸机的关闭是自己控制的现在
                         }
                     }
                     else
