@@ -313,14 +313,11 @@ int CarTypeConvert(int p)
 
 WashReport::WashReport(/* args */)
 {
-    point_b.ResetStatus();
-    point_b.SetPonintExit(true); // 设置B点为出口点
-    point_b.SetPointID("B");
+
     water_pump.ResetStatus();
     ipc.ResetStatus();
     serial_data_queue.clear();
     // need lock?
-    point_b.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
     water_pump.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
 }
 
@@ -1006,24 +1003,13 @@ void WashReport::AlarmReport(int exceptionType)
     PostJsonToServer(res);
 
     // 异常以后复位该模块 但不复位其他模块
-    if (exceptionType == 1)
-    {
-        // 记录异常
-        g_console_logger->debug("Point A alarm ");
-        g_file_logger->debug("Point A alarm ");
-    }
-    else if (exceptionType == 2)
+   if (exceptionType == 2)
     {
         g_console_logger->debug("Water_pump  alarm ");
         g_file_logger->debug("Water_pump  alarm ");
         water_pump.ResetStatus();
     }
-    else if (exceptionType == 3)
-    {
-        g_console_logger->debug("Point B alarm ");
-        g_file_logger->debug("Point B alarm ");
-        point_b.ResetStatus();
-    }
+
 }
 
 int WashReport::GetScore(float p)

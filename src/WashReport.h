@@ -11,7 +11,7 @@
 #include "spdlog/spdlog.h"
 #include "json.hpp"
 #include "httplib.h"
-#include "Point.h"
+//#include "Point.h"
 #include "AIIPC.h"
 #include "uart.h"
 #include "Timer.h"
@@ -181,9 +181,8 @@ private:
             finish_time = 0;
         }
     };
-    // a b点位置的光电模块 ，水泵,两侧AI摄像机
-    //Point point_a; //现在去除a点
-    Point point_b;
+    //水泵,两侧AI摄像机
+ 
     WaterPump water_pump;
     IPC ipc;
     AIIPC l_ai_ipc;
