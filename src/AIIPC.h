@@ -3,21 +3,32 @@
 
 /**
  * AI 摄像头模块抽象
+ * 现在改成纯AI方案， 从冲洗摄像头被触发以后，拿取固定时长内的AI摄像头数据进行处理
+ * 如果当中存在脏则判断为不干净，如果没有脏，则认为干净的标志
+ * 保存数据的上限为 50个
  */
-
+ 
 #include <iostream>
 #include <string>
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include <deque>
 #include "json.hpp"
+#include "time.h"
 
 // extern logger obj
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
-
 using json = nlohmann::json;
+
+struct AIIPC_Data
+{
+    time_t timestamp; // 记录时间戳
+    json res_json;    // AI IPC 数据    
+};
+
 using namespace std;
 
 class AIIPC
@@ -35,57 +46,15 @@ public:
     {
         has_res = false;
         detect_json = {};
-        std::deque<std::string> empty_queue = {};
-        res_queue.swap(empty_queue);
         cur_dirty_img="";
+
+        std::lock_guard<std::mutex> lock(mutex_aiipc_data); 
+        //使用swap 进行清空容器
+        std::deque<AIIPC_Data>().swap(aiipc_data_list);
+
     }
-
-    void DealAIIPCData(const json &pjson)
-    {   
-       // g_file_logger->debug("AI IPC data: {}", pjson.dump());   // 记录AI IPC数据
-        if (pjson.contains("label"))
-        {
-            res_queue.push_back(pjson["label"]);
-        }
-
-        if (pjson.contains("label"))
-            detect_json["label"] = pjson["label"];
-        if (pjson.contains("img_base64") ==true)    
-        {//记录当前第一次dirty的照片
-            if(cur_dirty_img=="" && pjson["label"]!="clean")
-            {
-                cur_dirty_img = pjson["img_base64"];
-            }
-            detect_json["img_base64"] = pjson["img_base64"];
-        }
-        if (pjson.contains("device_id"))
-            detect_json["device_id"] = pjson["device_id"];
-        if (pjson.contains("device_version"))
-            detect_json["device_version"] = pjson["device_version"];
-        if (pjson.contains("date"))
-            detect_json["date"] = pjson["date"];
-        if (pjson.contains("timestamp"))
-            detect_json["timestamp"] = pjson["timestamp"];
-        if (pjson.contains("extend") && pjson["extend"].contains("alarm_objs") && pjson["extend"]["alarm_objs"].size() > 0 && pjson["extend"]["alarm_objs"][0].contains("score"))
-            detect_json["score"] = pjson["extend"]["alarm_objs"][0]["score"];
-
-        has_res = true;
-    }
-
-    json GetDetectRes()
-    {
-        for (auto &i : res_queue)
-        {
-            if (i != "clean")
-            {
-                detect_json["label"] = "dirty";
-                detect_json["img_base64"] = cur_dirty_img;  
-                g_console_logger->debug("update the detect_json img to dirty");
-                g_file_logger->debug("update the detect_json img to dirty");    
-            }
-        }
-        return detect_json;
-    }
+    void DealAIIPCData(const json &pjson);
+    json GetDetectRes(int time_interval=10);
 
     bool GetResult()
     {
@@ -93,9 +62,10 @@ public:
     }
 
 private:
+    std::mutex mutex_aiipc_data;
     bool has_res;
     json detect_json;
-    std::deque<std::string> res_queue;
+    std::deque<AIIPC_Data> aiipc_data_list;
     std::string cur_dirty_img;
 };
 

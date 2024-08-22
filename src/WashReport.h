@@ -69,7 +69,7 @@ public:
     int GetScore(float p);
 
 private:
- 
+    int ai_interval;    //往前推 ai 摄像头的工作 
     bool has_report;
     bool has_triger;
     int  wash_alarm_time;
@@ -191,8 +191,7 @@ private:
     //两个重要的时间
     //B点触发下降的时间，  用作AI摄像机的超时使用
     time_t   b_exit_time;
-
-    int GetAlarmByWaterPump();//通过水泵的工作时间判断是否超时
+ 
     int GetDirByIPC(int ipc_dir); // 通过IPC 
 
     void NotificationsToUart(int event_num); //发送事件信息给串口方便其控制NVR
