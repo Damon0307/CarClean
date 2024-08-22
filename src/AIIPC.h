@@ -16,6 +16,7 @@
 #include <deque>
 #include "json.hpp"
 #include "time.h"
+#include "spdlog/spdlog.h"  //导入日志
 
 // extern logger obj
 extern std::shared_ptr<spdlog::logger> g_console_logger;

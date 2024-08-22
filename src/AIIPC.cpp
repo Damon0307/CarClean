@@ -2,6 +2,12 @@
 
 #define MAX_AIIPC_DATA_SIZE 50 
 
+// extern logger obj
+extern std::shared_ptr<spdlog::logger> g_console_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
+
+
+
 void AIIPC::DealAIIPCData(const json &pjson)
 {
     std::lock_guard<std::mutex> lock(mutex_aiipc_data);

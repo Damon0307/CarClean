@@ -4,6 +4,7 @@
 #include <functional>
 #include "json.hpp"
 #include "NetFoundation.h"
+#include "config.h"
 
 using json = nlohmann::json;
 using namespace httplib;
@@ -19,7 +20,7 @@ NetFoundation::~NetFoundation()
 
 void NetFoundation::InitNetCFG(const char *file_name)
 {
-
+#if(ARM_FLAG==1)
   std::ifstream f(file_name);
   json data = json::parse(f);
 
@@ -29,6 +30,7 @@ void NetFoundation::InitNetCFG(const char *file_name)
   remote_port = data["remote_port"];
   std::cout << "local_server : " << local_server << " local port :" << local_port << std::endl;
   std::cout << "remote_server : " << remote_server << " remote_port:" << remote_port << std::endl;
+#endif
 }
 
 // 之前考虑有光电模块触发，但是如果反向可能会拍不到车牌，所以决定直接配置IPC为推送模式，不需要comet轮询中加入业务处理

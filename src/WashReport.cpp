@@ -1,4 +1,5 @@
 #include "WashReport.h"
+#include "config.h"
 #include <future>
 
 // 直连功能是否启用
@@ -332,6 +333,7 @@ WashReport::~WashReport()
 
 void WashReport::InitSerialComm(const char *file_path)
 {
+#if(ARM_FLAG==1)
     std::ifstream f(file_path);
     json data = json::parse(f);
 
@@ -349,6 +351,7 @@ void WashReport::InitSerialComm(const char *file_path)
     }
     printf("Set Port Exactly!\n");
     sleep(1);
+#endif  
 }
 
 void WashReport::InitDefInfo(const char *file_path)
@@ -688,7 +691,7 @@ unsigned short WashReport::do_crc_table(unsigned char *ptr, int len)
 // 处理数据
 void WashReport::StartReportingProcess()
 {
-    printf("WashReporter StartReportingProcess With Single Radar...\n");
+    printf("WashReporter StartReportingProcess With No Radar...\n");
     StartHeartBeat();
     bool wash_ipc_working = true;
 
@@ -705,7 +708,9 @@ void WashReport::StartReportingProcess()
                 capture_res["ztcColor"] = CarColorConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["colorType"]);
                 capture_res["vehicleType"] = CarTypeConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
                 //*进入时间就是抓拍时间
-                capture_res["enterTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]-ai_interval);
+                long long enterTime= ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"];
+                enterTime -= ai_interval;
+                capture_res["enterTime"] = utc_to_string(enterTime);    
                 capture_res["leaveTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
               
                 // 前后轮冲洗时间改为 0
@@ -786,15 +791,15 @@ void WashReport::StartReportingProcess()
                 if(water_pump.begin_time==0)
                 {
                         capture_res["alarmType"] =3; //未冲洗
-                }else if(water_pump.begin_time!=0 && capture_res["cleanRes"] = 3)
+                }else if(water_pump.begin_time!=0 && capture_res["cleanRes"] == 3)
                 { //水泵工作了但是不干净
 
                       capture_res["alarmType"] =2; //冲洗时间不足,但车身脏污
                 }   
-                else if(water_pump.begin_time!=0 && capture_res["cleanRes"] = 2)
+                else if(water_pump.begin_time!=0 && capture_res["cleanRes"] == 2)
                 {   //水泵工作，且干净
                     capture_res["alarmType"] =5;//正常,冲洗干净 
-                }else if(water_pump.begin_time!=0 && capture_res["cleanRes"] = 1)
+                }else if(water_pump.begin_time!=0 && capture_res["cleanRes"] == 1)
                 {
                        capture_res["alarmType"] =4; //冲洗，但是没有AI数据
                 }   
@@ -918,7 +923,7 @@ int WashReport::GetScore(float p)
 
 void WashReport::StartHeartBeat()
 {
-
+    g_console_logger->warn("Heart beat enabled for device {}", deviceNo);   
     mHeartBearTimer.setInterval([&]()
                                 {
                                     json res = GetDeviceStatusJson();
