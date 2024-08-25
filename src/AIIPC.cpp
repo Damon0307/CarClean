@@ -60,7 +60,7 @@ void AIIPC::DealAIIPCData(const json &pjson)
 json AIIPC::GetDetectRes(int time_interval)
 {
     std::lock_guard<std::mutex> lock(mutex_aiipc_data);
-    
+  
     time_t cur_time = time(NULL);
     std::deque<AIIPC_Data> tmp_data_list;
     for (auto it = aiipc_data_list.begin(); it != aiipc_data_list.end(); ++it)
@@ -68,6 +68,11 @@ json AIIPC::GetDetectRes(int time_interval)
         if (difftime(cur_time, it->timestamp) < time_interval)
             tmp_data_list.push_back(*it);
     }
+    //打印一共从多少条数据中找到符合时间要求的数据
+    g_console_logger->info("AIIPC has {} data in the last {} seconds", tmp_data_list.size(), time_interval);
+    g_file_logger->info("AIIPC has {} data in the last {} seconds", tmp_data_list.size(), time_interval);   
+
+
     // 检查该时间段的JSON中是不是都是干净
     for (auto i : tmp_data_list)
     {

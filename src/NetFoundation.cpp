@@ -5,6 +5,13 @@
 #include "json.hpp"
 #include "NetFoundation.h"
 #include "config.h"
+#include "spdlog/spdlog.h"
+
+
+// extern logger obj
+extern std::shared_ptr<spdlog::logger> g_console_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
+
 
 using json = nlohmann::json;
 using namespace httplib;
@@ -74,11 +81,19 @@ void NetFoundation::PostDataToServer(json p_json)
   {
     std::cout << "Got res from remote server"<<std::endl;
     std::cout << res->body << std::endl;
+    g_console_logger->info("post data to http server success body {}", res->body);
+    g_file_logger->info("post data to http server success body {}", res->body); 
   }
   else
   {
-    std::cout << "Error sending data\n";
+    std::cout<<"post data to http server error"<<std::endl;
+    //g_console_logger->error("post data to http server error: {}", res->status); 
+   // g_file_logger->error("post data to http server error: {}", res->status);  
+    // std::cout<<"post data to http server error "<<res.error()<<std::endl;
+    // g_console_logger->error("post data to http server error {}",res.error() );  
+    // g_file_logger->error("pos data to http server error {}",res.error()); 
   }
+ 
 }
 
 void NetFoundation::StartServer()

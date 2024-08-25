@@ -400,11 +400,6 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
     {
         g_file_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
         g_console_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
-
-        // 清空左右两侧AI摄像头的数据
-             r_ai_ipc.ResetStatus();
-             l_ai_ipc.ResetStatus(); 
-             g_console_logger->debug("Both sides AI IPC status have been reset");   
     }
     else
     {
@@ -644,6 +639,10 @@ bool WashReport::GetAIIPCDetectResult()
 {
     bool l_res = l_ai_ipc.GetResult();
     bool r_res = r_ai_ipc.GetResult();
+
+   g_console_logger->debug("WashReport::GetAIIPCDetectResult(): l_res={}, r_res={}",l_res, r_res);
+   g_file_logger->debug("WashReport::GetAIIPCDetectResult(): l_res={}, r_res={}",l_res, r_res);    
+ 
     if (l_res && r_res)
     {
         return true;
@@ -762,12 +761,14 @@ void WashReport::StartReportingProcess()
                         g_console_logger->debug("With dirty {}", capture_res["ztcCph"].dump().c_str());
                         g_file_logger->debug("With dirty  {}", capture_res["ztcCph"].dump().c_str());
                     }
-                    //水泵结合AI摄像头的判断结果来确定告警类型
-                   //!TODO capture_res["alarmType"] = GetAlarmByWaterPump();
-
+                   
+                   
                     // 检查 "img_base64" 字段是否存在，如果不存在则默认为 ""
                     std::string l_photo_url = l_detect_json_data.contains("img_base64") ? l_detect_json_data["img_base64"] : "";
                     std::string r_photo_url = r_detect_json_data.contains("img_base64") ? r_detect_json_data["img_base64"] : "";
+
+                    //g_console_logger->debug("=========={} {}", l_photo_url, r_photo_url);
+                    //g_file_logger->debug("=========={} {}", l_photo_url, r_photo_url);  
 
                     capture_res["leftphotoUrl"] = l_photo_url; // 车辆左侧抓拍图片
                     capture_res["rightphotoUrl"] = r_photo_url;
@@ -788,6 +789,7 @@ void WashReport::StartReportingProcess()
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");
                 }
 
+            //水泵结合AI摄像头的判断结果来确定告警类型
                 if(water_pump.begin_time==0)
                 {
                         capture_res["alarmType"] =3; //未冲洗
@@ -803,7 +805,6 @@ void WashReport::StartReportingProcess()
                 {
                        capture_res["alarmType"] =4; //冲洗，但是没有AI数据
                 }   
-
                 PostJsonToServer(capture_res);
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
@@ -929,8 +930,10 @@ void WashReport::StartHeartBeat()
                                     json res = GetDeviceStatusJson();
                                     res["status"] = 1;
                                     res["updateTime"] = getTime(time_format);
-
-                                    PostJsonToServer(res); },
+  g_console_logger->warn("Going to Send Heart beat {}",res.dump());
+  g_file_logger->warn("Going to Send Heart beat {}",res.dump());    
+                                    PostJsonToServer(res); 
+                                    },
                                 120 * 1000);
 
 #if (DIRECTOR_LINK_ENABLE == 1)
