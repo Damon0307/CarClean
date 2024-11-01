@@ -9,7 +9,7 @@
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
-const int ai_deal_delay_time = 1; // B点结束以后还继续接收AI相机数据的时间
+
 
 // uart msg define
 const unsigned char event_normal[] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0xde, 0x31, 0xaa};
@@ -380,6 +380,13 @@ void WashReport::InitDefInfo(const char *file_path)
     {
         mBarrierGate = NULL;
     }
+
+    //判断存不存在 time_after_b 字段，如果存在赋值给ai_deal_delay_time
+    if (data.contains("time_after_b"))
+    {
+        ai_deal_delay_time = data["time_after_b"];  
+    }
+
 
     g_console_logger->debug("wash alarm time set to {}", wash_alarm_time);
 
