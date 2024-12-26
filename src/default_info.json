@@ -1,5 +1,9 @@
 {
-"deviceNo":20000,
- "deviceSerial":"hello",
- "localIndex":"16000"
+	"deviceNo": "123456789",
+	"nvr_channel": "nvr_channel_1",
+	"nvr_serial_num": "nvr_serial_num_1",
+	"wash_alarm_time": 15,
+	"BarrierGate": true,
+	"delay_time": 10,
+	"keep_time": 10
 }

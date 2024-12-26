@@ -13,8 +13,14 @@
 #include "httplib.h"
 #include "Point.h"
 #include "AIIPC.h"
+#include "uart.h"
 #include "Timer.h"
- 
+#include "BarrierGate.h"
+
+
+// extern logger obj
+extern std::shared_ptr<spdlog::logger> g_console_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
 
 using json = nlohmann::json;
 using namespace httplib;
@@ -32,7 +38,7 @@ public:
     WashReport(/* args */);
     ~WashReport();
 
-   
+    void InitSerialComm(const char* file_path);
     void InitDefInfo(const char* file_path);
  
  //处理冲洗抓拍摄像头数据
@@ -48,7 +54,11 @@ public:
     void DealSerialData();
     void StartReportingProcess();
     void SetPassJsonFunc(std::function<void(json)> func);
- 
+
+    void SetDLWashFunc(dl_report_wash_func_t func);
+    void SetDLCarPassFunc(dl_report_car_pass_func_t func);  
+    void SetDLStatusFunc(dl_report_status_func_t func);
+
     void AlarmReport(int exceptionType); //需要加锁？
     // 其实是util
     std::string getTime(const std::string &format);
@@ -59,7 +69,7 @@ public:
     int GetScore(float p);
 
 private:
-    int ai_detect_time;
+ 
     bool has_report;
     bool has_triger;
     int  wash_alarm_time;
@@ -67,7 +77,10 @@ private:
     std::string deviceNo;
     std::string nvr_channel;
     std::string nvr_serial_num;
-  
+
+    int serial_fd;
+    std::string port_name;
+    std::deque<char> serial_data_queue; // 目前看只需要保存一帧数据即可
     std::mutex  sensor_data_mutex;       // 配合他的mutex
 
     json ResponseToIPC(int logic_type);
@@ -80,7 +93,9 @@ private:
     bool GetAIIPCDetectResult();
     void ResetAllSensor();
     std::function<void(json)> PostJsonToServer;
-   
+    dl_report_wash_func_t dl_report_wash;   
+    dl_report_car_pass_func_t dl_report_car_pass;   
+    dl_report_status_func_t dl_report_status;
 
  
     // 嵌套类 摄像头的抽象
@@ -90,38 +105,113 @@ private:
         IPC(/* args */){};
         ~IPC(){};
         bool has_trigger;
-        bool working; //标志检测周期是否开始
         json json_data;
         void ResetStatus()
         {
             has_trigger=false;
-            working = false;
             json_data={""};
         }
     };
- 
+    // 嵌套类，冲洗水泵的抽象
+    class WaterPump
+    {
+    public:
+        WaterPump(){
+            alarm_timer.stop();
+        };
+        ~WaterPump(){};
+         alarm_func_t alarm_func;
+        //工作超时报警定时器
+        Timer alarm_timer;
+
+        time_t begin_time;
+        time_t finish_time;
+        bool is_working;
+        void DealStatus(char status) // 处理开关量的状态
+        {
+            if (is_working == true)
+            {
+                if (status == 0x01)
+                {
+                    // 水泵仍在工作
+                }
+                else
+                {
+                    if (finish_time == 0)
+                    {
+                        time(&finish_time); // 水泵停止工作记录停止时间等待上报,
+                        // 且只有被 ResetStatus 以后才会更新最后的停止时间
+                        //记录停止时间
+                        g_console_logger->debug("Water Pump finish time {}",time_to_string(finish_time));
+                        g_file_logger->debug("Water Pump finish time {}",time_to_string(finish_time));
+                        
+                    }
+                }
+            }
+            else if (is_working == false)
+            {
+                if (status == 0x01)
+                {
+                    is_working = true;
+                    time(&begin_time); // 流程开始，记录开始时间
+                    alarm_timer.setTimeout([&](){
+                            alarm_func(2); //水泵的告警ID是2
+                    },600*1000);
+                     g_console_logger->debug("Water Pump start time {}",time_to_string(finish_time));
+                     g_file_logger->debug("Water Pump finish time {}",time_to_string(finish_time));
+                }
+                else
+                {
+                    ResetStatus(); // 未工作，且无信号
+                }
+            }
+        }
+        bool IsEnoughTime() // 水泵的工作时间是否足够
+        {
+            if ((finish_time - begin_time) > 30)
+            {
+                return true;
+            }
+            return false;
+        }
+        void ResetStatus() // 重置工作状态
+        {
+            is_working = false;
+            begin_time = 0;
+            finish_time = 0;
+        }
+    };
+    // a b点位置的光电模块 ，水泵,两侧AI摄像机
+    //Point point_a; //现在去除a点
+    Point point_b;
+    WaterPump water_pump;
     IPC ipc;
     AIIPC l_ai_ipc;
     AIIPC r_ai_ipc;
- 
+   int ai_deal_delay_time = 1; // B点结束以后还继续接收AI相机数据的时间
     //两个重要的时间
     //B点触发下降的时间，  用作AI摄像机的超时使用
     time_t   b_exit_time;
-   
-    int GetDirByCompareTime(const Point &a, const Point &b); // 通过比较两个点的先后时间得到方向
 
+    int GetAlarmByWaterPump();//通过水泵的工作时间判断是否超时
     int GetDirByIPC(int ipc_dir); // 通过IPC 
 
     void NotificationsToUart(int event_num); //发送事件信息给串口方便其控制NVR
 
 //2分钟一次心跳
     Timer mHeartBearTimer;
- 
+    Timer mDlReportStatusTimer;
     void StartHeartBeat();
 //闸机的控制
    bool mBarrierGateNeed;
- 
+   BarrierGate* mBarrierGate;
+   int mDelayTime;  // 延迟时间
+   int mKeepTime;   //保持时间
 
+   Timer mDelayTimer;
+   Timer mKeepTimer;
+ 
+   
  
 };
 
