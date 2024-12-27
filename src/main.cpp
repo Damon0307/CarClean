@@ -44,11 +44,7 @@ bool isWithinExitWindow() {
     // 这里可以根据需要修改时间范围
     return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
 }
-
-
-
-
-
+ 
 int main() 
 {
 
