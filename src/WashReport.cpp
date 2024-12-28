@@ -335,13 +335,18 @@ WashReport::~WashReport()
 
 void WashReport::InitSerialComm(const char *file_path)
 {
-    std::ifstream f(file_path);
-    json data = json::parse(f);
+    // std::ifstream f(file_path);
+    // json data = json::parse(f);
 
+    // serial_fd = -1;
+    // port_name = data["port"];
+
+    // std::cout << "Going to open port " << port_name << std::endl;
+
+    //固定打开/dev/ttyS3 串口
     serial_fd = -1;
-    port_name = data["port"];
+    port_name = "/dev/ttyS3";
 
-    std::cout << "Going to open port " << port_name << std::endl;
     serial_fd = UART_Open(serial_fd, (char *)port_name.c_str()); // 打开串口，返回文件描述符
 
     // 设置串口数据帧格式
@@ -583,12 +588,15 @@ void WashReport::DealSerialData()
         // 有数据可读
         if (FD_ISSET(serial_fd, &readfds))
         {
+            
             // 读取数据
             uint8_t buf[128] = {0};
             int buf_len = read(serial_fd, buf, sizeof(buf));
 
             if (buf_len > 0)
             {
+               // printf("Read %d bytes from serial port\n", buf_len);
+
                 for (int i = 0; i < buf_len; i++)
                 {
                     serial_data_queue.push_back(buf[i]);
@@ -932,22 +940,7 @@ void WashReport::ResetAllSensor()
     r_ai_ipc.ResetStatus();
 }
 
-// todo  其他未定义，绕道未处理
-// int WashReport::GetAlarmTypeByPoint()
-// {
-//     // 水泵未工作
-//     if (water_pump.is_working == false)
-//     {
-//
-//     }
-//     // 冲洗时间不足  wash_alarm_time S
-//     if (point_b.leave_time - point_a.trigger_time < wash_alarm_time)
-//     {
-//         return 2;
-//     }
-//     return 5;
-// }
-
+ 
 int WashReport::GetAlarmByWaterPump()
 {
     //定义一个1970年的默认时间

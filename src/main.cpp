@@ -18,7 +18,7 @@ const char *RS232_CFG_FILE = "rs232.json";
 const char *NET_CFG_FILE = "net_cfg.json";
 const char *DEF_CFG_FILE = "default_info.json";
  
-const char *version_str = "RV1106 Simple Set Static IP with ip check thread";
+const char *version_str = "RV1106 Ultra Simple Set Static IP,ip check,exit,25-01-05";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;

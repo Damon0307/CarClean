@@ -10,8 +10,8 @@ set(CMAKE_C_COMPILER "arm-rockchip830-linux-uclibcgnueabihf-gcc")
 set(CMAKE_CXX_COMPILER "arm-rockchip830-linux-uclibcgnueabihf-g++")
 
 # 设置sysroot路径
-#set(CMAKE_SYSROOT "/home/wjc/luckfox-pico/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-rockchip830-linux-uclibcgnueabihf/sysroot")
-set(CMAKE_SYSROOT "/home/wjc/LuckFox/luckfox-pico/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-rockchip830-linux-uclibcgnueabihf/sysroot")
+set(CMAKE_SYSROOT "/home/wjc/luckfox-pico/sysdrv/source/buildroot/buildroot-2023.02.6/output/host/arm-buildroot-linux-uclibcgnueabihf/sysroot")
+#set(CMAKE_SYSROOT "/home/wjc/LuckFox/luckfox-pico/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-rockchip830-linux-uclibcgnueabihf/sysroot")
 
 # 设置CMake寻找库文件和头文件时的搜索路径
 set(CMAKE_FIND_ROOT_PATH "${CMAKE_SYSROOT}")

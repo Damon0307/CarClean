@@ -12,8 +12,7 @@
 
 #include <iostream>
 #include <string>
-#include "gpiod.h"
-//#include <gpiod.h>
+//#include "gpiod.h"
 
 class BarrierGate
 {
@@ -29,7 +28,7 @@ private:
 
     struct gpiod_line *lineIO1;
 
-    void InitIO();
+    int InitIO();
 
 };
 
