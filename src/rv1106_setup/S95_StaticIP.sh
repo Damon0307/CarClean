@@ -14,20 +14,5 @@ setup_static_ip() {
   echo "Static IP configuration complete."
 }
 
-case $1 in
-        start)
-                echo "Starting static IP configuration..."
-                setup_static_ip
-                ;;
-        stop)
-                echo "Stopping static IP configuration is not applicable."
-                ;;
-        *)
-                echo "Usage: $0 {start}"
-                exit 1
-                ;;
-esac
-
-
-
-
+# 直接调用 setup_static_ip 函数
+setup_static_ip

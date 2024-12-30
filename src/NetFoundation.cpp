@@ -169,15 +169,16 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   //     const char *gw = "192.168.1.1"; // 默认网关
 
   const char *iface_name = "eth0";
-  const char *ip_address = ip.c_str();
+  //const char *ip_address = ip.c_str();
+   const char *ip_address = "192.168.2.200";
   const char *netmask = "255.255.255.0";
-  const char *gateway = "192.168.1.1"; // 默认网关
+  const char *gateway = "192.168.2.1"; // 默认网关
 
   int sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (sock < 0)
   {
     perror("socket");
-    exit(-1);
+    
   }
 
   struct ifreq ifr;
@@ -192,7 +193,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   {
     perror("inet_aton");
     close(sock);
-    exit(-1);
+    
   }
 
   // Set IP address
@@ -200,7 +201,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   {
     perror("SIOCSIFADDR");
     close(sock);
-    exit(-1);
+    
   }
 
   // Convert netmask from string to binary form
@@ -208,7 +209,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   {
     perror("inet_aton");
     close(sock);
-    exit(-1);
+    
   }
 
   // Set netmask
@@ -216,7 +217,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   {
     perror("SIOCSIFNETMASK");
     close(sock);
-    exit(-1);
+    
   }
 
   close(sock);
@@ -226,7 +227,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   if (route_sock < 0)
   {
     perror("socket");
-    exit(-1);
+    
   }
 
   struct rtentry rt;
@@ -239,7 +240,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   {
     perror("inet_aton");
     close(route_sock);
-    exit(-1);
+    
   }
 
   sin = (struct sockaddr_in *)&rt.rt_dst;
@@ -250,7 +251,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   {
     perror("SIOCADDRT");
     close(route_sock);
-    exit(-1);
+    
   }
 
   close(route_sock);
@@ -278,7 +279,7 @@ std::string NetFoundation::GetPhyIP(const std::string &interface)
   char ip[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), ip, INET_ADDRSTRLEN);
 
-  printf("IP Address of %s: %s\n", interface, ip);
+  //printf("IP Address of %s: %s\n", interface, ip);
 
   close(sock);
   return std::string(ip);

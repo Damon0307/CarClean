@@ -2,7 +2,7 @@
 
 # Function to check network connectivity
 check_network() {
-  local host="www.baidu.com"
+  local host="www.bing.com"
   ping -c1 "$host" > /dev/null 2>&1
   return $?
 }
