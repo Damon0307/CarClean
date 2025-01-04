@@ -10,14 +10,48 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include <arpa/inet.h>  
+#include <arpa/inet.h>
 #include <net/route.h> // 包含 struct rtentry 和 RTF_GATEWAY 定义
 #include <thread>
 #include <chrono>
+#include <cstring>
+#include <fcntl.h>
+#include <errno.h>
+#include <ctime>
+#include <sys/time.h>
+
 #include "spdlog/spdlog.h"
 #include "json.hpp"
 #include "NetFoundation.h"
 
+// NTP时间戳是从1900年1月1日开始的秒数
+#define NTP_TIMESTAMP_DELTA 2208988800ull
+
+// NTP服务器地址
+#define NTP_SERVER "36.156.67.46"
+
+// NTP端口
+#define NTP_PORT 123
+
+// NTP消息结构
+struct ntp_packet
+{
+  uint8_t li_vn_mode;       // Leap indicator, version and mode
+  uint8_t stratum;          // Stratum level
+  uint8_t poll;             // Poll interval
+  uint8_t precision;        // Precision
+  uint32_t root_delay;      // Root delay
+  uint32_t root_dispersion; // Root dispersion
+  uint32_t ref_id;          // Reference ID
+  uint32_t ref_t_sec;       // Reference time-stamp seconds
+  uint32_t ref_t_frac;      // Reference time-stamp fraction
+  uint32_t orig_t_sec;      // Originate time-stamp seconds
+  uint32_t orig_t_frac;     // Originate time-stamp fraction
+  uint32_t rx_t_sec;        // Received time-stamp seconds
+  uint32_t rx_t_frac;       // Received time-stamp fraction
+  uint32_t tx_t_sec;        // Transmit time-stamp seconds
+  uint32_t tx_t_frac;       // Transmit time-stamp fraction
+};
 
 using json = nlohmann::json;
 using namespace httplib;
@@ -27,14 +61,13 @@ using namespace std;
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
-
 NetFoundation::NetFoundation(/* args */)
 {
 }
 
 NetFoundation::~NetFoundation()
 {
-  ip_check_thread.join(); 
+  ip_check_thread.join();
 }
 
 void NetFoundation::InitNetCFG(const char *file_name)
@@ -167,12 +200,13 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   //     const char *ip = "192.168.1.200"; // 静态IP地址
   //     const char *netmask = "255.255.255.0"; // 子网掩码
   //     const char *gw = "192.168.1.1"; // 默认网关
-
+#if 0
   const char *iface_name = "eth0";
-  //const char *ip_address = ip.c_str();
-   const char *ip_address = "192.168.2.200";
+  const char *ip_address = ip.c_str();
+ 
   const char *netmask = "255.255.255.0";
   const char *gateway = "192.168.2.1"; // 默认网关
+  const char* dns_server = "8.8.8.8"; //默认DNSserver
 
   int sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (sock < 0)
@@ -255,6 +289,41 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   }
 
   close(route_sock);
+
+  //设置DNSserver 
+      // 设置 DNS
+    std::ofstream resolv_conf("/etc/resolv.conf");
+    if (resolv_conf.is_open()) {
+        resolv_conf << "nameserver " << dns_server << std::endl;
+        resolv_conf.close();
+    } else {
+        // 错误处理
+    }
+#endif
+
+  const char *eth_interface = "eth0";
+  const char *static_ip = "192.168.1.200";
+  const char *subnet_mask = "255.255.255.0";
+  const char *gateway = "192.168.1.1";
+  const char *dns_server = "8.8.8.8";
+
+  // 设置 IP 地址
+  system(("ifconfig " + std::string(eth_interface) + " " + std::string(static_ip) + " netmask " + std::string(subnet_mask)).c_str());
+
+  // 添加默认网关
+  system(("route add default gw " + std::string(gateway)).c_str());
+
+  // 设置 DNS
+  std::ofstream resolv_conf("/etc/resolv.conf");
+  if (resolv_conf.is_open())
+  {
+    resolv_conf << "nameserver " << dns_server << std::endl;
+    resolv_conf.close();
+  }
+  else
+  {
+    // 错误处理
+  }
 }
 
 std::string NetFoundation::GetPhyIP(const std::string &interface)
@@ -279,8 +348,100 @@ std::string NetFoundation::GetPhyIP(const std::string &interface)
   char ip[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), ip, INET_ADDRSTRLEN);
 
-  //printf("IP Address of %s: %s\n", interface, ip);
+  // printf("IP Address of %s: %s\n", interface, ip);
 
   close(sock);
   return std::string(ip);
+}
+
+// ntp时间同步
+void NetFoundation::SyncTimeWithNTP()
+{
+
+  std::thread([&]()
+              {
+                while (true)
+                {
+
+                    int sockfd;
+  struct sockaddr_in serv_addr;
+  ntp_packet packet;
+  socklen_t len = sizeof(serv_addr);
+  struct timeval timeout;
+
+  // 创建UDP套接字
+  sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sockfd < 0)
+  {
+    std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
+    close(sockfd);
+    continue;
+  }
+
+  // 设置接收超时
+  timeout.tv_sec = 5; // 5秒超时
+  timeout.tv_usec = 0;
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+  {
+    std::cerr << "Error setting socket timeout: " << strerror(errno) << std::endl;
+    close(sockfd);
+    continue;
+  }
+
+  // 初始化NTP请求包
+  memset(&packet, 0, sizeof(ntp_packet));
+  packet.li_vn_mode = 0x1B; // LI = 0 (no warning), VN = 3 (IPv4 only), Mode = 3 (Client Mode)
+
+  // 设置NTP服务器地址
+  memset(&serv_addr, 0, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = inet_addr(NTP_SERVER);
+  serv_addr.sin_port = htons(NTP_PORT);
+
+                  struct timeval new_time;
+                  // 发送NTP请求
+                  if (sendto(sockfd, (char *)&packet, sizeof(ntp_packet), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+                  {
+                    std::cerr << "Error sending packet: " << strerror(errno) << std::endl;
+                    close(sockfd);
+                    continue;
+                  }
+                  // 接收NTP响应
+                  if (recvfrom(sockfd, (char *)&packet, sizeof(ntp_packet), 0, (struct sockaddr *)&serv_addr, &len) < 0)
+                  {
+                    if (errno == EWOULDBLOCK)
+                    {
+                      std::cerr << "NTP request timed out." << std::endl;
+                    }
+                    else
+                    {
+                      std::cerr << "Error receiving packet: " << strerror(errno) << std::endl;
+                    }
+                    close(sockfd);
+                    continue;
+                  }
+
+                  // 转换时间戳并打印
+                   // 转换时间戳
+    time_t tx_time = ntohl(packet.tx_t_sec) - NTP_TIMESTAMP_DELTA;
+    new_time.tv_sec = tx_time;
+    new_time.tv_usec = 0; // NTP timestamp does not include sub-second precision
+
+    // 设置系统时间 时区+8 
+
+    new_time.tv_sec += 8 * 3600; 
+    new_time.tv_usec += 0;
+    if (settimeofday(&new_time, NULL) < 0) {
+        std::cerr << "Error setting system time: " << strerror(errno) << std::endl;
+        close(sockfd);
+        continue;
+    }
+
+    // 打印新的系统时间
+    std::cout << " NTP System time set to: " << ctime(&new_time.tv_sec) << std::endl;
+    close(sockfd);
+                  // 每隔5分钟同步一次  
+                  std::this_thread::sleep_for(std::chrono::minutes(5));
+                } })
+      .detach();
 }

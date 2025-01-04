@@ -68,6 +68,9 @@ public:
     
     void ConfigRV1106IP(const std::string& ip);
 
+    //ntp时间同步
+    void SyncTimeWithNTP();
+
 private:
 // json参考链接  https://www.cnblogs.com/linuxAndMcu/p/14503341.html
     
