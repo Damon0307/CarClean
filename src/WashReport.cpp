@@ -335,27 +335,29 @@ WashReport::~WashReport()
 
 void WashReport::InitSerialComm(const char *file_path)
 {
-    // std::ifstream f(file_path);
-    // json data = json::parse(f);
-
-    // serial_fd = -1;
-    // port_name = data["port"];
-
-    // std::cout << "Going to open port " << port_name << std::endl;
-
-    //固定打开/dev/ttyS3 串口
     serial_fd = -1;
     port_name = "/dev/ttyS3";
-
-    serial_fd = UART_Open(serial_fd, (char *)port_name.c_str()); // 打开串口，返回文件描述符
-
-    // 设置串口数据帧格式
-    if (UART_Set(serial_fd, 115200, 0, 8, 1, 'N') == FALSE)
-    {
-        printf("serial set err\n");
-        exit(-1);
+    serial_fd = open(port_name.c_str(), O_RDWR | O_NOCTTY);
+    if (serial_fd == -1) {
+        perror("Failed to open serial port");
+        
     }
-    printf("Set Port Exactly!\n");
+    //进行115200 8 0 1 N 的串口设置
+    struct termios options;
+    //定义 BAUDRATE
+
+    tcgetattr(serial_fd, &options);
+    bzero(&options, sizeof(options));
+    options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;
+    options.c_iflag = IGNPAR;
+    options.c_oflag = 0;
+    options.c_lflag = 0;
+    tcflush(serial_fd, TCIFLUSH);
+    tcsetattr(serial_fd, TCSANOW, &options);
+    cfsetospeed(&options, B115200);
+    cfsetispeed(&options, B115200);
+    tcsetattr(serial_fd, TCSANOW, &options);
+
     sleep(1);
 }
 
@@ -402,7 +404,7 @@ void WashReport::InitDefInfo(const char *file_path)
 void WashReport::DealWashIPCData(const json &p_json, Response &res)
 {
 
-    // std::cout << p_json.dump() << std::endl;
+    std::cout << p_json.dump() << std::endl;
     ipc.json_data = p_json;
     ipc.has_trigger = true;
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
@@ -595,8 +597,6 @@ void WashReport::DealSerialData()
 
             if (buf_len > 0)
             {
-               // printf("Read %d bytes from serial port\n", buf_len);
-
                 for (int i = 0; i < buf_len; i++)
                 {
                     serial_data_queue.push_back(buf[i]);
@@ -608,16 +608,24 @@ void WashReport::DealSerialData()
 
                     for (int i = 0; i < serial_data_queue.size(); i++)
                     {
-                        if (serial_data_queue[i] = 0x55 && (i + 8) <= (serial_data_queue.size() - 1))
+                        if (serial_data_queue[i] == 0x55 && (i + 8) <= (serial_data_queue.size() - 1))
                         { // 寻找到帧头，且后续长度足够解
                             have_decode = true;
                             // 校验CRC16
                             // point_a.DealStatus(serial_data_queue[i + 1]);
                             point_b.DealStatus(serial_data_queue[i + 2]);
-                            water_pump.DealStatus(serial_data_queue[i + 5]);
+                            water_pump.DealStatus(serial_data_queue[i + 5]);    
                             break;
                         }
                     }
+
+                    //占位符十六进制打印serial_data_queue的数据
+                    for(int i = 0; i < serial_data_queue.size(); i++)
+                    {
+                        printf("serial i-> %d, value-> %02x\n", i, serial_data_queue[i]); 
+                    }
+                    printf("\n");
+
                     std::deque<char> zero;
                     serial_data_queue.swap(zero);
                 }

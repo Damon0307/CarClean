@@ -101,7 +101,7 @@ void UartMod::InitComm(const char *uart_cfg_file_path)
 
     rs232_fd = UART_Open(rs232_fd, (char*)port_str.c_str()); // 打开串口，返回文件描述符
 
-    UART_Init(rs232_fd, 115200, 0, 8, 1, 'N');
+   // UART_Init(rs232_fd, 115200, 0, 8, 1, 'N');
     printf("Set Port Exactly!\n");
     sleep(1);
    // UART_Send(rs232_fd, "hello", 6);

@@ -45,7 +45,7 @@ bool isWithinExitWindow() {
     // 这里可以根据需要修改时间范围
     return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
 }
-#if 1
+#if 0
 
 int main()
 {
@@ -102,7 +102,7 @@ int main()
 }
 #endif 
 
-#if 0
+#if 1
 
  
 int main() 
@@ -136,18 +136,6 @@ int main()
   std::unique_ptr<NetFoundation> uni_net(new NetFoundation());  //IPC数据接收与数据上传后台处理模块
   std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
   
-  
-  #if(DIRECTOR_LINK_ENABLE==1)
-  std::unique_ptr<DirectorLinkClient> uni_dl_client(new DirectorLinkClient(DIRECT_LINK_CFG_FILE));
-  auto dl_report_wash_func = std::bind(&DirectorLinkClient::ReportCarWashInfo, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2); 
-  auto dl_car_pass_func = std::bind(&DirectorLinkClient::ReportCarPass, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);
-  auto dl_report_status_func = std::bind(&DirectorLinkClient::ReportStatus, uni_dl_client.get(), std::placeholders::_1,std::placeholders::_2);  
-  
-  uni_wash_report.get()->SetDLWashFunc(dl_report_wash_func);
-  uni_wash_report.get()->SetDLCarPassFunc(dl_car_pass_func);
-  uni_wash_report.get()->SetDLStatusFunc(dl_report_status_func);  
-  #endif
-
 
   uni_wash_report.get()->InitDefInfo(DEF_CFG_FILE);
   uni_wash_report.get()->InitSerialComm(RS232_CFG_FILE);
@@ -195,21 +183,10 @@ int main()
     }
   }); 
  
-#if(DIRECTOR_LINK_ENABLE==1)
-  //直连模块接收服务端消息线程
-  std::thread dl_client_thread([&uni_dl_client](){
-       uni_dl_client.get()->receiveAndParseMessage();  
-  });
-#endif
-  
   uni_net.get()->StartServer();
  
   reporter_thread.join();
  
- 
- #if(DIRECTOR_LINK_ENABLE==1)
-  dl_client_thread.join();  
-#endif
 
   exit_check_thread.join();
   
