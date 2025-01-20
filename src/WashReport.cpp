@@ -620,11 +620,11 @@ void WashReport::DealSerialData()
                     }
 
                     //占位符十六进制打印serial_data_queue的数据
-                    for(int i = 0; i < serial_data_queue.size(); i++)
-                    {
-                        printf("serial i-> %d, value-> %02x\n", i, serial_data_queue[i]); 
-                    }
-                    printf("\n");
+                    // for(int i = 0; i < serial_data_queue.size(); i++)
+                    // {
+                    //     printf("serial i-> %d, value-> %02x\n", i, serial_data_queue[i]); 
+                    // }
+                    // printf("\n");
 
                     std::deque<char> zero;
                     serial_data_queue.swap(zero);
@@ -888,7 +888,7 @@ void WashReport::StartReportingProcess()
                 dl_report_wash(capture_res, false);
                 dl_report_car_pass(capture_res, false);
 #endif
-                // todo 检查推送结果以后再决定要不要重传？
+           
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
                 g_file_logger->debug("===================Pass and reset===================");
