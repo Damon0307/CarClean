@@ -440,6 +440,8 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
     capture_res["picture"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
     capture_res["enterTime"] = "";
     capture_res["leaveTime"] = "";
+ 
+
     // 绕道也许没有传感器所以直接填写告警编码号
     capture_res["alarmType"] = 1;
     capture_res["frontWheelWashTime"] = 0;
@@ -924,20 +926,51 @@ std::string WashReport::time_to_string(time_t t)
     return result;
 }
 
+
+
+
+
 std::string WashReport::utc_to_string(long long utcSeconds)
 {
-    // 获取UTC时间
-    std::time_t utcTime(utcSeconds);
-    // 转换为本地时间
-    std::tm *localTime = std::localtime(&utcTime);
-    // 设置时区为北京时间 (+8小时)
-    // localTime->tm_hour += 8;
-    // 转换为字符串
-    std::ostringstream oss;
-    oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+   // 模拟日志记录
+        std::cout << "utc_to_string(utcSeconds=" << utcSeconds << ")\n";
 
-    return oss.str();
+        // 将传入的UTC秒数转换成time_t类型
+        std::time_t timeT = static_cast<std::time_t>(utcSeconds);
+
+        // 使用gmtime得到UTC时间的tm结构体
+        std::tm* gmtm = std::gmtime(&timeT); 
+
+        if (gmtm == nullptr) {
+            // 处理错误，例如可以返回空字符串或者抛出异常
+            return "";
+        }
+
+        // 将tm结构体转换为北京时间
+        gmtm->tm_hour += 8; // 加上8小时
+        if (gmtm->tm_hour >= 24) {
+            gmtm->tm_hour -= 24;
+            // 如果小时数加上8后超过24，则日期加一天
+            // 注意：这里没有处理月份和年份的变化，如果日期是月底，需要进一步处理
+            gmtm->tm_mday += 1;
+        }
+
+        // 创建一个输出流，并设置所需的格式
+        std::ostringstream oss;
+        // 格式化输出
+        oss << std::put_time(gmtm, "%Y-%m-%d %H:%M:%S");
+
+        // 模拟日志记录
+        std::cout << "oss=" << oss.str() << "\n";
+
+        return oss.str();
 }
+ 
+/**
+ * decday":21,"dechour":22,"decmin":35,"decmon":1,"decsec":29,"decyear":2025,"sec":1737470129,"usec":373555}}
+ * 1737470129
+ */
+ 
 
 void WashReport::ResetAllSensor()
 {

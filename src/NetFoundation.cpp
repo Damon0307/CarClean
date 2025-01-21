@@ -354,94 +354,83 @@ std::string NetFoundation::GetPhyIP(const std::string &interface)
   return std::string(ip);
 }
 
-// ntp时间同步
+// ntp时间同步 
 void NetFoundation::SyncTimeWithNTP()
 {
+    std::atomic<bool> running(true);
+    
+    std::thread([&]() {
+        while (running) {
+            int sockfd;
+            struct sockaddr_in serv_addr;
+            ntp_packet packet;
+            socklen_t len = sizeof(serv_addr);
+            struct timeval timeout;
 
-  std::thread([&]()
-              {
-                while (true)
-                {
+            // 创建UDP套接字
+            sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            if (sockfd < 0) {
+                std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
+                continue;
+            }
 
-                    int sockfd;
-  struct sockaddr_in serv_addr;
-  ntp_packet packet;
-  socklen_t len = sizeof(serv_addr);
-  struct timeval timeout;
+            // 设置接收超时
+            timeout.tv_sec = 5; // 5秒超时
+            timeout.tv_usec = 0;
+            if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+                std::cerr << "Error setting socket timeout: " << strerror(errno) << std::endl;
+                close(sockfd);
+                continue;
+            }
 
-  // 创建UDP套接字
-  sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (sockfd < 0)
-  {
-    std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
-    close(sockfd);
-    continue;
-  }
+            // 初始化NTP请求包
+            memset(&packet, 0, sizeof(ntp_packet));
+            packet.li_vn_mode = 0x1B; // LI = 0 (no warning), VN = 3 (IPv4 only), Mode = 3 (Client Mode)
 
-  // 设置接收超时
-  timeout.tv_sec = 5; // 5秒超时
-  timeout.tv_usec = 0;
-  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
-  {
-    std::cerr << "Error setting socket timeout: " << strerror(errno) << std::endl;
-    close(sockfd);
-    continue;
-  }
+            // 设置NTP服务器地址
+            memset(&serv_addr, 0, sizeof(serv_addr));
+            serv_addr.sin_family = AF_INET;
+            serv_addr.sin_addr.s_addr = inet_addr(NTP_SERVER);
+            serv_addr.sin_port = htons(NTP_PORT);
 
-  // 初始化NTP请求包
-  memset(&packet, 0, sizeof(ntp_packet));
-  packet.li_vn_mode = 0x1B; // LI = 0 (no warning), VN = 3 (IPv4 only), Mode = 3 (Client Mode)
+            // 发送NTP请求
+            if (sendto(sockfd, (char *)&packet, sizeof(ntp_packet), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+                std::cerr << "Error sending packet: " << strerror(errno) << std::endl;
+                close(sockfd);
+                continue;
+            }
 
-  // 设置NTP服务器地址
-  memset(&serv_addr, 0, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_addr.s_addr = inet_addr(NTP_SERVER);
-  serv_addr.sin_port = htons(NTP_PORT);
+            // 接收NTP响应
+            if (recvfrom(sockfd, (char *)&packet, sizeof(ntp_packet), 0, (struct sockaddr *)&serv_addr, &len) < 0) {
+                if (errno == EWOULDBLOCK) {
+                    std::cerr << "NTP request timed out." << std::endl;
+                } else {
+                    std::cerr << "Error receiving packet: " << strerror(errno) << std::endl;
+                }
+                close(sockfd);
+                continue;
+            }
 
-                  struct timeval new_time;
-                  // 发送NTP请求
-                  if (sendto(sockfd, (char *)&packet, sizeof(ntp_packet), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-                  {
-                    std::cerr << "Error sending packet: " << strerror(errno) << std::endl;
-                    close(sockfd);
-                    continue;
-                  }
-                  // 接收NTP响应
-                  if (recvfrom(sockfd, (char *)&packet, sizeof(ntp_packet), 0, (struct sockaddr *)&serv_addr, &len) < 0)
-                  {
-                    if (errno == EWOULDBLOCK)
-                    {
-                      std::cerr << "NTP request timed out." << std::endl;
-                    }
-                    else
-                    {
-                      std::cerr << "Error receiving packet: " << strerror(errno) << std::endl;
-                    }
-                    close(sockfd);
-                    continue;
-                  }
+            // 转换时间戳并打印
+            time_t tx_time = ntohl(packet.tx_t_sec) - NTP_TIMESTAMP_DELTA;
+            struct timeval new_time;
+            new_time.tv_sec = tx_time;  
+            new_time.tv_usec = 0; // NTP时间戳不包含亚秒精度
 
-                  // 转换时间戳并打印
-                   // 转换时间戳
-    time_t tx_time = ntohl(packet.tx_t_sec) - NTP_TIMESTAMP_DELTA;
-    new_time.tv_sec = tx_time;
-    new_time.tv_usec = 0; // NTP timestamp does not include sub-second precision
+            if (settimeofday(&new_time, NULL) < 0) {
+                std::cerr << "Error setting system time: " << strerror(errno) << std::endl;
+                close(sockfd);
+                continue;
+            }
 
-    // 设置系统时间 时区+8 
+            // 打印新的系统时间
+            std::cout << "NTP System time set to: " << ctime(&new_time.tv_sec) << std::endl;
+            close(sockfd);
+            g_console_logger->info("NTP System time set to: {}", ctime(&new_time.tv_sec));  
+            g_file_logger->info("NTP System time set to: {}", ctime(&new_time.tv_sec));
 
-    new_time.tv_sec += 8 * 3600; 
-    new_time.tv_usec += 0;
-    if (settimeofday(&new_time, NULL) < 0) {
-        std::cerr << "Error setting system time: " << strerror(errno) << std::endl;
-        close(sockfd);
-        continue;
-    }
-
-    // 打印新的系统时间
-    std::cout << " NTP System time set to: " << ctime(&new_time.tv_sec) << std::endl;
-    close(sockfd);
-                  // 每隔5分钟同步一次  
-                  std::this_thread::sleep_for(std::chrono::minutes(5));
-                } })
-      .detach();
+            // 每隔1分钟同步一次
+            std::this_thread::sleep_for(std::chrono::minutes(1));
+        }
+    }).detach();
 }
