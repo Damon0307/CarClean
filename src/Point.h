@@ -98,6 +98,9 @@ public:
                     {
                         exit_car_leaving = true;
                         time(&leave_time);
+                        g_console_logger->debug("Point B Exit Car Leaving time {}",leave_time);
+                        
+                        cur_status = status; // 更新状态
                         // 表明出口有下降沿信号
                     }
 

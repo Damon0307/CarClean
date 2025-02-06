@@ -411,11 +411,25 @@ void NetFoundation::SyncTimeWithNTP()
                 continue;
             }
 
-            // 转换时间戳并打印
+            // // 转换时间戳并打印
             time_t tx_time = ntohl(packet.tx_t_sec) - NTP_TIMESTAMP_DELTA;
             struct timeval new_time;
             new_time.tv_sec = tx_time;  
             new_time.tv_usec = 0; // NTP时间戳不包含亚秒精度
+
+
+
+//   // 转换时间戳并打印
+// time_t tx_time = ntohl(packet.tx_t_sec) - NTP_TIMESTAMP_DELTA;
+// // 加上8小时（8小时 * 60分钟 * 60秒）
+// tx_time += 8 * 60 * 60;
+
+// // 不需要特别处理24小时进制，因为time_t会自动处理日期的进位
+// struct timeval new_time;
+// new_time.tv_sec = tx_time;  
+// new_time.tv_usec = 0; // NTP时间戳不包含亚秒精度
+
+
 
             if (settimeofday(&new_time, NULL) < 0) {
                 std::cerr << "Error setting system time: " << strerror(errno) << std::endl;
@@ -429,8 +443,8 @@ void NetFoundation::SyncTimeWithNTP()
             g_console_logger->info("NTP System time set to: {}", ctime(&new_time.tv_sec));  
             g_file_logger->info("NTP System time set to: {}", ctime(&new_time.tv_sec));
 
-            // 每隔1分钟同步一次
-            std::this_thread::sleep_for(std::chrono::minutes(1));
+            // 每隔5分钟同步一次
+            std::this_thread::sleep_for(std::chrono::minutes(5));
         }
     }).detach();
 }

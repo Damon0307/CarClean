@@ -917,22 +917,40 @@ void WashReport::NotificationsToUart(int event_num)
     }
 }
 
+
+//! 要么在这里加，要么在NTP服务时候加8小时
+
 std::string WashReport::time_to_string(time_t t)
 {
+    // std::string result(20, '\0'); // 分配足够的空间来存储时间字符串
+    // std::strftime(&result[0], result.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
+    // // std::cout << " time_to_string " << result << std::endl;
+    // result.resize(std::strlen(result.c_str())); // 调整字符串的长度以去除多余的空字符
+    // return result;
+ 
+     // 将时间加上8小时（8 * 60 * 60秒）
+    t += 8 * 60 * 60;
+
+    // 将时间转换为本地时间并格式化为字符串
     std::string result(20, '\0'); // 分配足够的空间来存储时间字符串
     std::strftime(&result[0], result.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
-    // std::cout << " time_to_string " << result << std::endl;
-    result.resize(std::strlen(result.c_str())); // 调整字符串的长度以去除多余的空字符
+ 
+    // 调整字符串的长度以去除多余的空字符
+    result.resize(std::strlen(result.c_str()));
+
+
+    g_console_logger->debug(" time_to_string result {}", result);
+
     return result;
+
+
 }
 
-
-
-
+ 
 
 std::string WashReport::utc_to_string(long long utcSeconds)
 {
-   // 模拟日志记录
+ // 模拟日志记录
         std::cout << "utc_to_string(utcSeconds=" << utcSeconds << ")\n";
 
         // 将传入的UTC秒数转换成time_t类型
@@ -950,9 +968,13 @@ std::string WashReport::utc_to_string(long long utcSeconds)
         gmtm->tm_hour += 8; // 加上8小时
         if (gmtm->tm_hour >= 24) {
             gmtm->tm_hour -= 24;
-            // 如果小时数加上8后超过24，则日期加一天
-            // 注意：这里没有处理月份和年份的变化，如果日期是月底，需要进一步处理
-            gmtm->tm_mday += 1;
+            // 使用mktime来处理日期和月份的变化
+            timeT = mktime(gmtm);
+            gmtm = std::gmtime(&timeT);
+            if (gmtm == nullptr) {
+                // 处理错误，例如可以返回空字符串或者抛出异常
+                return "";
+            }
         }
 
         // 创建一个输出流，并设置所需的格式

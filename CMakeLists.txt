@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1.0)
 
 project(CarClean)
  
-set(ARM_FLAG 0) # 这里只是一个例子，该变量可能来自其他地方
+set(ARM_FLAG 1) # 这里只是一个例子，该变量可能来自其他地方
 
 if (ARM_FLAG)
     include (luck_cross.cmake)
