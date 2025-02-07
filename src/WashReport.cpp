@@ -9,8 +9,6 @@
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
-
-
 // uart msg define
 const unsigned char event_normal[] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0xde, 0x31, 0xaa};
 const unsigned char event_dirty[] = {0x55, 0x00, 0x01, 0x00, 0x00, 0x00, 0xe2, 0x0d, 0xaa};
@@ -338,13 +336,13 @@ void WashReport::InitSerialComm(const char *file_path)
     serial_fd = -1;
     port_name = "/dev/ttyS3";
     serial_fd = open(port_name.c_str(), O_RDWR | O_NOCTTY);
-    if (serial_fd == -1) {
+    if (serial_fd == -1)
+    {
         perror("Failed to open serial port");
-        
     }
-    //进行115200 8 0 1 N 的串口设置
+    // 进行115200 8 0 1 N 的串口设置
     struct termios options;
-    //定义 BAUDRATE
+    // 定义 BAUDRATE
 
     tcgetattr(serial_fd, &options);
     bzero(&options, sizeof(options));
@@ -388,12 +386,11 @@ void WashReport::InitDefInfo(const char *file_path)
         mBarrierGate = NULL;
     }
 
-    //判断存不存在 time_after_b 字段，如果存在赋值给ai_deal_delay_time
+    // 判断存不存在 time_after_b 字段，如果存在赋值给ai_deal_delay_time
     if (data.contains("time_after_b"))
     {
-        ai_deal_delay_time = data["time_after_b"];  
+        ai_deal_delay_time = data["time_after_b"];
     }
-
 
     g_console_logger->debug("wash alarm time set to {}", wash_alarm_time);
 
@@ -416,16 +413,16 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
         g_console_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
 
         // 清空左右两侧AI摄像头的数据
-             r_ai_ipc.ResetStatus();
-             l_ai_ipc.ResetStatus(); 
-             g_console_logger->debug("Both sides AI IPC status have been reset");   
+        r_ai_ipc.ResetStatus();
+        l_ai_ipc.ResetStatus();
+        g_console_logger->debug("Both sides AI IPC status have been reset");
+        time(&car_active_time); // 流程开始，记录开始时间
     }
     else
     {
         g_file_logger->debug("Got Wash IPC Data  NO  Licenses!!! ");
         g_console_logger->debug("Got Wash IPC Data NO  Licenses!!!  ");
     }
-
 }
 
 // todo 接收到绕道摄像头推送的数据
@@ -440,7 +437,6 @@ void WashReport::DealDetourIPCData(const json &p_json, Response &res)
     capture_res["picture"] = p_json["AlarmInfoPlate"]["result"]["PlateResult"]["imageFile"];
     capture_res["enterTime"] = "";
     capture_res["leaveTime"] = "";
- 
 
     // 绕道也许没有传感器所以直接填写告警编码号
     capture_res["alarmType"] = 1;
@@ -592,7 +588,7 @@ void WashReport::DealSerialData()
         // 有数据可读
         if (FD_ISSET(serial_fd, &readfds))
         {
-            
+
             // 读取数据
             uint8_t buf[128] = {0};
             int buf_len = read(serial_fd, buf, sizeof(buf));
@@ -616,18 +612,10 @@ void WashReport::DealSerialData()
                             // 校验CRC16
                             // point_a.DealStatus(serial_data_queue[i + 1]);
                             point_b.DealStatus(serial_data_queue[i + 2]);
-                            water_pump.DealStatus(serial_data_queue[i + 5]);    
+                            water_pump.DealStatus(serial_data_queue[i + 5]);
                             break;
                         }
                     }
-
-                    //占位符十六进制打印serial_data_queue的数据
-                    // for(int i = 0; i < serial_data_queue.size(); i++)
-                    // {
-                    //     printf("serial i-> %d, value-> %02x\n", i, serial_data_queue[i]); 
-                    // }
-                    // printf("\n");
-
                     std::deque<char> zero;
                     serial_data_queue.swap(zero);
                 }
@@ -788,7 +776,18 @@ void WashReport::StartReportingProcess()
                 capture_res["vehicleType"] = CarTypeConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
                 //*进入时间就是抓拍时间
                 capture_res["enterTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
-                capture_res["leaveTime"] = time_to_string(point_b.leave_time);
+                // capture_res["leaveTime"] = time_to_string(point_b.leave_time);
+                // 另一种方案计算leaveTime是采用摄像机的抓拍时间+ (point_b.leave_time - car_active_time)
+                //  假设utc_to_string函数定义正确且能处理传入的参数
+                double diff_seconds = difftime(point_b.leave_time, car_active_time);
+                long long time_interval = static_cast<long long>(diff_seconds); // 如果需要整数部分
+
+                // 假设已经检查过JSON路径的有效性
+                long long base_time = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"].get<long long>();
+                long long final_leave_time = base_time + time_interval;
+
+                capture_res["leaveTime"] = utc_to_string(final_leave_time);
+
                 capture_res["alarmType"] = GetAlarmByWaterPump();
                 // 前后轮冲洗时间改为 0
                 capture_res["frontWheelWashTime"] = 0;
@@ -843,7 +842,7 @@ void WashReport::StartReportingProcess()
 
                             mKeepTimer.setTimeout([this]()
                                                   { mBarrierGate->BarrierGateCtrl(false); }, mDelayTime + mKeepTime);
-                            //实际上闸机的关闭是自己控制的现在
+                            // 实际上闸机的关闭是自己控制的现在
                         }
                     }
                     else
@@ -890,7 +889,7 @@ void WashReport::StartReportingProcess()
                 dl_report_wash(capture_res, false);
                 dl_report_car_pass(capture_res, false);
 #endif
-           
+
                 ResetAllSensor();
                 g_console_logger->debug("===================Pass and reset===================");
                 g_file_logger->debug("===================Pass and reset===================");
@@ -917,7 +916,6 @@ void WashReport::NotificationsToUart(int event_num)
     }
 }
 
-
 //! 要么在这里加，要么在NTP服务时候加8小时
 
 std::string WashReport::time_to_string(time_t t)
@@ -927,72 +925,69 @@ std::string WashReport::time_to_string(time_t t)
     // // std::cout << " time_to_string " << result << std::endl;
     // result.resize(std::strlen(result.c_str())); // 调整字符串的长度以去除多余的空字符
     // return result;
- 
-     // 将时间加上8小时（8 * 60 * 60秒）
+
+    // 将时间加上8小时（8 * 60 * 60秒）
     t += 8 * 60 * 60;
 
     // 将时间转换为本地时间并格式化为字符串
     std::string result(20, '\0'); // 分配足够的空间来存储时间字符串
     std::strftime(&result[0], result.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
- 
+
     // 调整字符串的长度以去除多余的空字符
     result.resize(std::strlen(result.c_str()));
-
 
     g_console_logger->debug(" time_to_string result {}", result);
 
     return result;
-
-
 }
-
- 
 
 std::string WashReport::utc_to_string(long long utcSeconds)
 {
- // 模拟日志记录
-        std::cout << "utc_to_string(utcSeconds=" << utcSeconds << ")\n";
+    // 模拟日志记录
+    std::cout << "utc_to_string(utcSeconds=" << utcSeconds << ")\n";
 
-        // 将传入的UTC秒数转换成time_t类型
-        std::time_t timeT = static_cast<std::time_t>(utcSeconds);
+    // 将传入的UTC秒数转换成time_t类型
+    std::time_t timeT = static_cast<std::time_t>(utcSeconds);
 
-        // 使用gmtime得到UTC时间的tm结构体
-        std::tm* gmtm = std::gmtime(&timeT); 
+    // 使用gmtime得到UTC时间的tm结构体
+    std::tm *gmtm = std::gmtime(&timeT);
 
-        if (gmtm == nullptr) {
+    if (gmtm == nullptr)
+    {
+        // 处理错误，例如可以返回空字符串或者抛出异常
+        return "";
+    }
+
+    // 将tm结构体转换为北京时间
+    gmtm->tm_hour += 8; // 加上8小时
+    if (gmtm->tm_hour >= 24)
+    {
+        gmtm->tm_hour -= 24;
+        // 使用mktime来处理日期和月份的变化
+        timeT = mktime(gmtm);
+        gmtm = std::gmtime(&timeT);
+        if (gmtm == nullptr)
+        {
             // 处理错误，例如可以返回空字符串或者抛出异常
             return "";
         }
+    }
 
-        // 将tm结构体转换为北京时间
-        gmtm->tm_hour += 8; // 加上8小时
-        if (gmtm->tm_hour >= 24) {
-            gmtm->tm_hour -= 24;
-            // 使用mktime来处理日期和月份的变化
-            timeT = mktime(gmtm);
-            gmtm = std::gmtime(&timeT);
-            if (gmtm == nullptr) {
-                // 处理错误，例如可以返回空字符串或者抛出异常
-                return "";
-            }
-        }
+    // 创建一个输出流，并设置所需的格式
+    std::ostringstream oss;
+    // 格式化输出
+    oss << std::put_time(gmtm, "%Y-%m-%d %H:%M:%S");
 
-        // 创建一个输出流，并设置所需的格式
-        std::ostringstream oss;
-        // 格式化输出
-        oss << std::put_time(gmtm, "%Y-%m-%d %H:%M:%S");
+    // 模拟日志记录
+    std::cout << "oss=" << oss.str() << "\n";
 
-        // 模拟日志记录
-        std::cout << "oss=" << oss.str() << "\n";
-
-        return oss.str();
+    return oss.str();
 }
- 
+
 /**
  * decday":21,"dechour":22,"decmin":35,"decmon":1,"decsec":29,"decyear":2025,"sec":1737470129,"usec":373555}}
  * 1737470129
  */
- 
 
 void WashReport::ResetAllSensor()
 {
@@ -1003,12 +998,11 @@ void WashReport::ResetAllSensor()
     r_ai_ipc.ResetStatus();
 }
 
- 
 int WashReport::GetAlarmByWaterPump()
 {
-    //定义一个1970年的默认时间
-    const time_t def_time = 0;  
-  
+    // 定义一个1970年的默认时间
+    const time_t def_time = 0;
+
     if (water_pump.begin_time == 0) // 水泵未工作
     {
         return 3;
@@ -1038,7 +1032,7 @@ int WashReport::GetAlarmByWaterPump()
             return 2; //! 冲洗时间不够
         }
     }
-    return 0;   
+    return 0;
 }
 
 int WashReport::GetDirByIPC(int ipc_dir)

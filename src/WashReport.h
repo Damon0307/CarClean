@@ -182,7 +182,10 @@ private:
         }
     };
     // a b点位置的光电模块 ，水泵,两侧AI摄像机
-    //Point point_a; //现在去除a点
+
+     time_t car_active_time; // 车辆在A点进入以后到B点离开的时间
+
+
     Point point_b;
     WaterPump water_pump;
     IPC ipc;
