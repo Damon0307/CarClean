@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 Ultra Simple Set Static IP,ip check,exit,25-01-20";
+const char *version_str = "RV1106 time refact Ultra Simple Set Static IP,ip check,exit,25-01-20";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;
@@ -119,7 +119,7 @@ int main()
   uni_net.get()->InitNetCFG(NET_CFG_FILE);
 
   // 同步系统时间
-  uni_net.get()->SyncTimeWithNTP();
+  //uni_net.get()->SyncTimeWithNTP();
 
   // 绑定冲洗场景的 上传服务器通道
   auto g_post_to_ser_func = std::bind(&NetFoundation::PostDataToServer, uni_net.get(), std::placeholders::_1);

@@ -401,7 +401,7 @@ void WashReport::InitDefInfo(const char *file_path)
 void WashReport::DealWashIPCData(const json &p_json, Response &res)
 {
 
-    std::cout << p_json.dump() << std::endl;
+  //  std::cout << p_json.dump() << std::endl;
     ipc.json_data = p_json;
     ipc.has_trigger = true;
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
@@ -411,12 +411,12 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
     {
         g_file_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
         g_console_logger->debug("Got Wash IPC Data {} ", p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump().c_str());
-
         // 清空左右两侧AI摄像头的数据
         r_ai_ipc.ResetStatus();
         l_ai_ipc.ResetStatus();
         g_console_logger->debug("Both sides AI IPC status have been reset");
         time(&car_active_time); // 流程开始，记录开始时间
+        std::cout<<"Got Car license : "<<p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump()<<std::endl;    
     }
     else
     {
@@ -788,6 +788,10 @@ void WashReport::StartReportingProcess()
 
                 capture_res["leaveTime"] = utc_to_string(final_leave_time);
 
+                //打印enterTime 和 leaveTime
+                std::cout<<"enter time: "<<capture_res["enterTime"]<<std::endl;
+                std::cout<<"leave time: "<<capture_res["leaveTime"]<<std::endl;
+
                 capture_res["alarmType"] = GetAlarmByWaterPump();
                 // 前后轮冲洗时间改为 0
                 capture_res["frontWheelWashTime"] = 0;
@@ -876,22 +880,12 @@ void WashReport::StartReportingProcess()
                 }
 
                 PostJsonToServer(capture_res);
-                // NotificationsToUart
-                if (capture_res["cleanRes"] == 2)
-                {
-                    NotificationsToUart(2);
-                }
-                else
-                {
-                    NotificationsToUart(1);
-                }
-#if (DIRECTOR_LINK_ENABLE == 1)
-                dl_report_wash(capture_res, false);
-                dl_report_car_pass(capture_res, false);
-#endif
 
                 ResetAllSensor();
-                g_console_logger->debug("===================Pass and reset===================");
+
+                std::cout<<"===================Pass and reset==================="<<std::endl;
+
+            
                 g_file_logger->debug("===================Pass and reset===================");
             }
         }
@@ -920,13 +914,7 @@ void WashReport::NotificationsToUart(int event_num)
 
 std::string WashReport::time_to_string(time_t t)
 {
-    // std::string result(20, '\0'); // 分配足够的空间来存储时间字符串
-    // std::strftime(&result[0], result.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
-    // // std::cout << " time_to_string " << result << std::endl;
-    // result.resize(std::strlen(result.c_str())); // 调整字符串的长度以去除多余的空字符
-    // return result;
-
-    // 将时间加上8小时（8 * 60 * 60秒）
+  
     t += 8 * 60 * 60;
 
     // 将时间转换为本地时间并格式化为字符串
@@ -983,11 +971,7 @@ std::string WashReport::utc_to_string(long long utcSeconds)
 
     return oss.str();
 }
-
-/**
- * decday":21,"dechour":22,"decmin":35,"decmon":1,"decsec":29,"decyear":2025,"sec":1737470129,"usec":373555}}
- * 1737470129
- */
+ 
 
 void WashReport::ResetAllSensor()
 {
