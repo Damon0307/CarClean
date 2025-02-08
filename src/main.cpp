@@ -86,6 +86,7 @@ int main()
 
 int main()
 {
+  //只同步一次时间
   SyncTimeFirst();
   std::this_thread::sleep_for(std::chrono::seconds(3));
 

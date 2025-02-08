@@ -191,7 +191,7 @@ private:
     IPC ipc;
     AIIPC l_ai_ipc;
     AIIPC r_ai_ipc;
-   int ai_deal_delay_time = 1; // B点结束以后还继续接收AI相机数据的时间
+   int ai_deal_delay_time = 3; // B点结束以后还继续接收AI相机数据的时间
     //两个重要的时间
     //B点触发下降的时间，  用作AI摄像机的超时使用
     time_t   b_exit_time;

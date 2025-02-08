@@ -414,7 +414,11 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
         // 清空左右两侧AI摄像头的数据
         r_ai_ipc.ResetStatus();
         l_ai_ipc.ResetStatus();
-        g_console_logger->debug("Both sides AI IPC status have been reset");
+
+        //清除B点的定时器
+        point_b.ResetStatus();
+
+        g_console_logger->debug("Both sides AI IPC status  and point b have been reset");
         time(&car_active_time); // 流程开始，记录开始时间
         std::cout<<"Got Car license : "<<p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump()<<std::endl;    
     }
