@@ -61,8 +61,26 @@ using namespace std;
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
+// 函数：更新指定配置文件
+bool updateConfigFile(const string &file_path, const string &new_content)
+{
+  ofstream file(file_path);
+  if (!file.is_open())
+  {
+    return false; // 打开文件失败
+  }
+  file << new_content;
+  file.close();
+
+  // 执行sync命令
+  system("sync");
+  return true;
+}
+
 NetFoundation::NetFoundation(/* args */)
 {
+  // 增大 mServer 的默认接收文件大小为20 MB
+  //  mServer.set_payload_max_length(20 * 1024 * 1024);
 }
 
 NetFoundation::~NetFoundation()
@@ -164,6 +182,157 @@ void NetFoundation::StartServer()
   // 增加一个车辆入场的处理
   mServer.Post("/car_in", [&](const Request &req, Response &res)
                { CarInIPCDataHandler(req, res); });
+  // 路由：通过一个URL更新不同的配置文件
+  mServer.Post("/update_def", [](const Request &req, Response &res)
+               {
+      // 从URL查询参数中获取文件名
+
+      // 获取请求体中的新内容
+      string new_content = req.body;
+
+      // 获取文件路径并更新
+      string file_path ="/default_info.json";
+      if (updateConfigFile(file_path, new_content)) {
+          res.set_content("Configuration file updated successfully", "text/plain");
+      } else {
+          res.status = 500;
+          res.set_content("Failed to update the file", "text/plain");
+      } });
+      //获取默认配置文件内容
+  mServer.Post("/get_def", [](const Request &req, Response &res)
+  {
+      // 获取文件路径
+      string file_path = "/default_info.json";
+      // 读取文件内容
+      std::ifstream file(file_path);
+      if (!file.is_open()) {
+          // 如果文件无法打开，返回 500 错误
+          res.status = 500;
+          res.set_content("Failed to open the file", "text/plain");
+          return;
+      }
+      std::stringstream buffer;
+      buffer << file.rdbuf();
+      // 将文件内容作为响应返回
+      res.set_content(buffer.str(), "text/plain");
+
+  });
+
+
+
+  // 客户端测试连接
+  mServer.Post("/test", [](const Request &req, Response &res)
+               {
+          //简单回复ok
+          res.set_content("ok", "text/plain"); });
+
+  // 客户端测试连接
+  mServer.Post("/reboot", [](const Request &req, Response &res)
+               {
+                 // 简单回复ok
+                 res.set_content("ok", "text/plain");
+                 system("reboot"); });
+
+  mServer.Post("/get_log", [](const httplib::Request &req, httplib::Response &res)
+               {
+          
+          printf("get_log\n");
+          std::ifstream log_file("/userdata/LogFile.log");
+          if (!log_file.is_open()) {
+              // 如果文件无法打开，返回 500 错误
+              res.status = 500;
+              res.set_content("Failed to open log file", "text/plain");
+              return;
+          }
+
+          // 读取文件内容 如果文件内容超过500行 则只保留最后的500行
+          std::string buffer((std::istreambuf_iterator<char>(log_file)), std::istreambuf_iterator<char>());
+          std::vector<std::string> lines;
+          std::stringstream ss(buffer);
+          std::string line;
+          while (std::getline(ss, line)) {
+            
+              lines.push_back(line);
+              if (lines.size() > 500) {
+                  lines.erase(lines.begin());
+              }
+          }
+          buffer.clear();
+          for (const auto &l : lines) {
+              buffer += l + "\n";
+          }
+          // 将文件内容作为响应返回
+          res.set_content(buffer, "text/plain");
+
+ 
+          // std::stringstream buffer;
+          // buffer << log_file.rdbuf();
+          // 设置响应内容
+         // res.set_content(buffer.str(), "text/plain");
+         });
+
+  mServer.Post("/update_process", [](const Request &req, Response &res)
+               {
+        printf("updateprocess\n");
+    
+        // 检查请求中是否有文件数据
+        if (req.has_file("file")) {
+            const auto& file = req.get_file_value("file");
+    
+            // 检查文件名的安全性，避免路径穿越等问题
+            std::string filename = file.filename;
+            if (filename.find("/") != std::string::npos || filename.find("..") != std::string::npos) {
+                res.status = 400;
+                res.set_content("Invalid file name", "text/plain");
+                return;
+            }
+    
+            // 设置文件保存路径，建议使用 /tmp 或其他安全目录
+            std::string filepath = "/tmp/" + filename;
+            std::cout << "Receiving file: " << filepath << std::endl;
+    
+            // 尝试打开文件以保存上传的内容
+            std::ofstream ofs(filepath, std::ios::binary);
+            if (ofs.is_open()) {
+                // 写入文件内容
+                ofs.write(file.content.data(), file.content.size());
+                ofs.close();
+    
+                // 设置成功的响应
+                res.status = 200;
+                res.set_content("File uploaded successfully", "text/plain");
+    
+                // 添加执行权限
+                std::string command2 = "chmod +x " + filepath;
+                if (system(command2.c_str()) != 0) {
+                    // 处理错误
+                    res.status = 500;
+                    res.set_content("Failed to set execute permission", "text/plain");
+                    return;
+                }
+
+                //把tmp 目录下的文件移动到 / 目录下
+                std::string command = "mv " + filepath + " /";
+                if (system(command.c_str()) != 0) {
+                    // 处理错误
+                    res.status = 500;
+                    res.set_content("Failed to move file to /", "text/plain");
+                    return;
+                }
+
+                // 执行sync命令
+                system("sync");
+                std::cout << "File saved to /tmp and execute permission set." << std::endl;
+            } else {
+                // 文件无法打开，设置错误响应
+                res.status = 500;
+                res.set_content("Failed to save file", "text/plain");
+            }
+        } else {
+            // 请求中没有文件数据，设置错误响应
+            res.status = 400;
+            res.set_content("No file data in request", "text/plain");
+        } });
 
   // 启动服务器
   mServer.listen(local_server, local_port);
@@ -200,106 +369,8 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   //     const char *ip = "192.168.1.200"; // 静态IP地址
   //     const char *netmask = "255.255.255.0"; // 子网掩码
   //     const char *gw = "192.168.1.1"; // 默认网关
-#if 0
-  const char *iface_name = "eth0";
-  const char *ip_address = ip.c_str();
+#if 1
  
-  const char *netmask = "255.255.255.0";
-  const char *gateway = "192.168.2.1"; // 默认网关
-  const char* dns_server = "8.8.8.8"; //默认DNSserver
-
-  int sock = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sock < 0)
-  {
-    perror("socket");
-    
-  }
-
-  struct ifreq ifr;
-  memset(&ifr, 0, sizeof(ifr));
-  strncpy(ifr.ifr_name, iface_name, IFNAMSIZ - 1);
-
-  struct sockaddr_in *sin = (struct sockaddr_in *)&ifr.ifr_addr;
-  sin->sin_family = AF_INET;
-
-  // Convert IP address and netmask from string to binary form
-  if (inet_aton(ip_address, &sin->sin_addr) == 0)
-  {
-    perror("inet_aton");
-    close(sock);
-    
-  }
-
-  // Set IP address
-  if (ioctl(sock, SIOCSIFADDR, &ifr) < 0)
-  {
-    perror("SIOCSIFADDR");
-    close(sock);
-    
-  }
-
-  // Convert netmask from string to binary form
-  if (inet_aton(netmask, &sin->sin_addr) == 0)
-  {
-    perror("inet_aton");
-    close(sock);
-    
-  }
-
-  // Set netmask
-  if (ioctl(sock, SIOCSIFNETMASK, &ifr) < 0)
-  {
-    perror("SIOCSIFNETMASK");
-    close(sock);
-    
-  }
-
-  close(sock);
-
-  // Add default gateway
-  int route_sock = socket(AF_INET, SOCK_DGRAM, 0);
-  if (route_sock < 0)
-  {
-    perror("socket");
-    
-  }
-
-  struct rtentry rt;
-  memset(&rt, 0, sizeof(rt));
-  rt.rt_flags = RTF_GATEWAY;
-
-  sin = (struct sockaddr_in *)&rt.rt_gateway;
-  sin->sin_family = AF_INET;
-  if (inet_aton(gateway, &sin->sin_addr) == 0)
-  {
-    perror("inet_aton");
-    close(route_sock);
-    
-  }
-
-  sin = (struct sockaddr_in *)&rt.rt_dst;
-  sin->sin_family = AF_INET;
-  sin->sin_addr.s_addr = INADDR_ANY;
-
-  if (ioctl(route_sock, SIOCADDRT, &rt) < 0)
-  {
-    perror("SIOCADDRT");
-    close(route_sock);
-    
-  }
-
-  close(route_sock);
-
-  //设置DNSserver 
-      // 设置 DNS
-    std::ofstream resolv_conf("/etc/resolv.conf");
-    if (resolv_conf.is_open()) {
-        resolv_conf << "nameserver " << dns_server << std::endl;
-        resolv_conf.close();
-    } else {
-        // 错误处理
-    }
-#endif
 
   const char *eth_interface = "eth0";
   const char *static_ip = "192.168.1.200";
@@ -324,6 +395,7 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   {
     // 错误处理
   }
+#endif
 }
 
 std::string NetFoundation::GetPhyIP(const std::string &interface)
@@ -354,12 +426,13 @@ std::string NetFoundation::GetPhyIP(const std::string &interface)
   return std::string(ip);
 }
 
-// ntp时间同步 
+// ntp时间同步
 void NetFoundation::SyncTimeWithNTP()
 {
-    std::atomic<bool> running(true);
-    
-    std::thread([&]() {
+  std::atomic<bool> running(true);
+
+  std::thread([&]()
+              {
         while (running) {
             int sockfd;
             struct sockaddr_in serv_addr;
@@ -445,6 +518,6 @@ void NetFoundation::SyncTimeWithNTP()
 
             // 每隔5分钟同步一次
             std::this_thread::sleep_for(std::chrono::minutes(5));
-        }
-    }).detach();
+        } })
+      .detach();
 }

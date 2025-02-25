@@ -42,7 +42,9 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 time refact Ultra Simple Set Static IP,ip check,exit,25-01-20";
+const char *version_str = "RV1106 time refact Ultra Simple ip check,exit,update,25-02-23";
+
+//const char *version_str = "test update";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
 std::shared_ptr<spdlog::logger> g_file_logger;

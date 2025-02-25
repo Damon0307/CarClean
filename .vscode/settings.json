@@ -78,5 +78,6 @@
         "span": "cpp",
         "stop_token": "cpp",
         "source_location": "cpp"
-    }
+    },
+    "Codegeex.RepoIndex": true
 }
