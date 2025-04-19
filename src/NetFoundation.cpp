@@ -95,6 +95,9 @@ void NetFoundation::InitNetCFG(const char *file_name)
   json data = json::parse(f);
 
   local_server = data["local_server"];
+
+  //local_server = "192.168.1.200";
+
   remote_server = data["remote_server"];
   local_port = data["local_port"];
   remote_port = data["remote_port"];
@@ -112,8 +115,11 @@ void NetFoundation::InitNetCFG(const char *file_name)
         g_console_logger->info("IP change from {} to {}", this->local_server, cur_ip);
         g_file_logger->info("IP change from {} to {}", this->local_server, cur_ip);
         ConfigRV1106IP(this->local_server);
+        g_console_logger->info("try to config ip to {}", this->local_server);
+        g_file_logger->info("try to config ip to {}", this->local_server);
+        
       } 
-      this_thread::sleep_for(chrono::seconds(5));  
+      this_thread::sleep_for(chrono::seconds(30));  
     } });
 }
 
@@ -370,7 +376,9 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   //     const char *netmask = "255.255.255.0"; // 子网掩码
   //     const char *gw = "192.168.1.1"; // 默认网关
 #if 1
- 
+  //杀掉系统中的  udhcpc 进程
+  system("killall udhcpc"); 
+
 
   const char *eth_interface = "eth0";
   const char *static_ip = "192.168.1.200";

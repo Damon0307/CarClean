@@ -69,7 +69,7 @@ public:
     int GetScore(float p);
 
 private:
- 
+    bool has_barrier_gate;
     bool has_report;
     bool has_triger;
     int  wash_alarm_time;
@@ -179,6 +179,7 @@ private:
             is_working = false;
             begin_time = 0;
             finish_time = 0;
+            alarm_timer.stop();
         }
     };
     // a b点位置的光电模块 ，水泵,两侧AI摄像机

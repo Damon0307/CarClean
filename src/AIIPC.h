@@ -46,6 +46,13 @@ public:
         if (pjson.contains("label"))
         {
             res_queue.push_back(pjson["label"]);
+
+            //如果res_queue中已经有25个元素，则删除第一个元素,保证res_queue中最多只有30个元素
+            if (res_queue.size() > 25)
+            {
+                res_queue.pop_front();
+            }
+
         }
 
         if (pjson.contains("label"))

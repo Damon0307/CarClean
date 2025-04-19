@@ -311,6 +311,7 @@ int CarTypeConvert(int p)
 
 WashReport::WashReport(/* args */)
 {
+    has_barrier_gate = false;
     point_b.ResetStatus();
     point_b.SetPonintExit(true); // 设置B点为出口点
     point_b.SetPointID("B");
@@ -374,7 +375,7 @@ void WashReport::InitDefInfo(const char *file_path)
     if (data.contains("BarrierGate") && data["BarrierGate"])
     {
         mBarrierGate = new BarrierGate();
-
+        has_barrier_gate = true;
         // 初始化保持时间和延迟时间
         this->mDelayTime = data["delay_time"];
         this->mKeepTime = data["keep_time"];
@@ -417,8 +418,11 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
 
         //清除B点的定时器
         point_b.ResetStatus();
+        //清除水泵的定时器
+        water_pump.ResetStatus();
 
-        g_console_logger->debug("Both sides AI IPC status  and point b have been reset");
+        g_console_logger->debug("Both sides AI IPC status  and point b   water pump have been reset");
+        g_file_logger->debug("Both sides AI IPC status  and point b water pump have been reset");
         time(&car_active_time); // 流程开始，记录开始时间
         std::cout<<"Got Car license : "<<p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump()<<std::endl;    
     }
@@ -661,8 +665,12 @@ json WashReport::GetCaptureJson()
     res["rightphotoUrl"] = "";
     res["rightclean"] = 0;
     res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
-
+    res["gate_status"]=0;   // 道闸状态 0 未配置道闸， 1 正常， 2 脏车拒绝开闸。
+    res["open_time"]== ""; // 开闸时间
+  
     return res;
+ 
+ 
 }
 json WashReport::GetDeviceStatusJson()
 {
@@ -852,12 +860,34 @@ void WashReport::StartReportingProcess()
                                                   { mBarrierGate->BarrierGateCtrl(false); }, mDelayTime + mKeepTime);
                             // 实际上闸机的关闭是自己控制的现在
                         }
+                        if(has_barrier_gate)
+                        {
+                            capture_res["gate_status"] = 1;
+                            //capture_res["gateOpenTime"] = time_to_string(time(nullptr));
+                            //开闸时间是 当前时间+mDelayTime
+                            time_t now = time(nullptr);
+                            time_t open_time = now + mDelayTime;
+                            capture_res["open_time"] = time_to_string(open_time);
+                        }else
+                        {
+                            capture_res["gate_status"] = 0;
+                        }
+
                     }
                     else
                     {
                         capture_res["cleanRes"] = 3;
                         g_console_logger->debug("With dirty {}", capture_res["ztcCph"].dump().c_str());
                         g_file_logger->debug("With dirty  {}", capture_res["ztcCph"].dump().c_str());
+
+                        if(has_barrier_gate)
+                        {
+                            capture_res["gate_status"] = 2;
+                        
+                        }else
+                        {
+                            capture_res["gate_status"] = 0;
+                        }
                     }
 
                     // 检查 "img_base64" 字段是否存在，如果不存在则默认为 ""

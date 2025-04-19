@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 time refact Ultra Simple ip check,exit,update,25-02-23";
+const char *version_str = "RV1106 time refact Ultra Simple ip check, no exit,update,25-04-19";
 
 //const char *version_str = "test update";
 
@@ -70,7 +70,7 @@ bool isWithinExitWindow()
   // std::cout<<"now.tm_hour:"<<tm_now.tm_hour<<"now.tm_min:"<<tm_now.tm_min<<std::endl;
   // 检查时间是否在23:25-23:28 之间
   // 这里可以根据需要修改时间范围
-  return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 28);
+  return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 27);
 }
 #if 0
 
@@ -150,26 +150,26 @@ int main()
   // 传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess, uni_wash_report.get());
 
-  // 每晚退出程序的检测线程
-  std::thread exit_check_thread([&]()
-                                {
-    while(1){
-        if(isWithinExitWindow()){
-            g_console_logger->info("exit check thread exit!");
-            g_file_logger->info("exit check thread exit!");
-            g_file_logger->flush();
-            //当前线程休眠4分钟
-            this_thread::sleep_for(chrono::minutes(4));
-            exit(0);  
-        }
-        this_thread::sleep_for(chrono::seconds(60));
-    } });
+  // 每晚退出程序的检测线程 有其他系统脚本实现
+  // std::thread exit_check_thread([&]()
+  //                               {
+  //   while(1){
+  //       if(isWithinExitWindow()){
+  //           g_console_logger->info("exit check thread exit!");
+  //           g_file_logger->info("exit check thread exit!");
+  //           g_file_logger->flush();
+  //           //当前线程休眠4分钟
+  //           this_thread::sleep_for(chrono::minutes(4));
+  //           exit(0);  
+  //       }
+  //       this_thread::sleep_for(chrono::seconds(60));
+  //   } });
 
   uni_net.get()->StartServer();
 
   reporter_thread.join();
 
-  exit_check_thread.join();
+  //exit_check_thread.join();
 
   return 0;
 }
