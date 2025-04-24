@@ -404,9 +404,11 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
 
   //  std::cout << p_json.dump() << std::endl;
     ipc.json_data = p_json;
-    ipc.has_trigger = true;
+    
     json response = ResponseToIPC(NORMAL_REPLY_TO_IPC);
     res.set_content(response.dump(), "application/json");
+    //主动清除B点工作状态
+    point_b.is_working =false;
 
     if (p_json.contains("AlarmInfoPlate") && p_json["AlarmInfoPlate"].contains("result") && p_json["AlarmInfoPlate"]["result"].contains("PlateResult") && p_json["AlarmInfoPlate"]["result"]["PlateResult"].contains("license"))
     {
@@ -431,6 +433,8 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
         g_file_logger->debug("Got Wash IPC Data  NO  Licenses!!! ");
         g_console_logger->debug("Got Wash IPC Data NO  Licenses!!!  ");
     }
+    ipc.has_trigger = true;
+   
 }
 
 // todo 接收到绕道摄像头推送的数据
@@ -758,17 +762,18 @@ void WashReport::StartReportingProcess()
 {
     printf("WashReporter StartReportingProcess With Single Radar...\n");
     StartHeartBeat();
-    bool wash_ipc_working = true;
-
+   
     bool last_point_b_status = true;
     bool last_point_b_working = true;
     bool exit_car_leaving = true;
 
     while (1)
     {
-        DealSerialData();
+         DealSerialData();
         if (ipc.has_trigger == true)
         { // ipc 有数据时候整个流程才会开启
+
+            // DealSerialData();
 
             if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
             {

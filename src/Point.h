@@ -119,7 +119,7 @@ public:
         trigger_time = 0;
         leave_time = 0;
         is_working = false;
-        exit_car_leaving =false;
+        exit_car_leaving = false;
         alarm_timer.stop();
     }
 };
