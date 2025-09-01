@@ -868,7 +868,6 @@ void WashReport::StartReportingProcess()
                         if(has_barrier_gate)
                         {
                             capture_res["gate_status"] = 1;
-                            //capture_res["gateOpenTime"] = time_to_string(time(nullptr));
                             //开闸时间是 当前时间+mDelayTime
                             time_t now = time(nullptr);
                             time_t open_time = now + mDelayTime;
@@ -954,7 +953,7 @@ void WashReport::NotificationsToUart(int event_num)
 std::string WashReport::time_to_string(time_t t)
 {
   
-    t += 8 * 60 * 60;
+   // t += 8 * 60 * 60;
 
     // 将时间转换为本地时间并格式化为字符串
     std::string result(20, '\0'); // 分配足够的空间来存储时间字符串

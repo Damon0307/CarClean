@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ rv1106_car_simple ]
+  pull_request:
+    branches: [ rv1106_car_simple ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y cmake build-essential libpthread-stubs0-dev
+        
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        
+    - name: Build
+      run: |
+        cd build
+        make -j$(nproc)
+        
+    - name: Test
+      run: |
+        cd build
+        ctest --output-on-failure

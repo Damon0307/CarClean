@@ -42,8 +42,9 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 time refact Ultra Simple ip check, no exit,update,25-04-19";
+const char *version_str = "RV1106 ntp time,Simple ip check, no exit,25-06-01";
 
+const char *todo_str = " she xiang tou pian yi jian ce";
 //const char *version_str = "test update";
 
 std::shared_ptr<spdlog::logger> g_console_logger;
@@ -70,27 +71,32 @@ bool isWithinExitWindow()
   // std::cout<<"now.tm_hour:"<<tm_now.tm_hour<<"now.tm_min:"<<tm_now.tm_min<<std::endl;
   // 检查时间是否在23:25-23:28 之间
   // 这里可以根据需要修改时间范围
-  return (tm_now.tm_hour == 23 && tm_now.tm_min >= 25 && tm_now.tm_min <= 27);
+  return (tm_now.tm_hour == 23 && tm_now.tm_min >= 29 && tm_now.tm_min <= 31);
 }
-#if 0
-
+  
 int main()
 {
- std::unique_ptr<WashReport> uni_wash_report(new WashReport());  //冲洗场景处理模块(包括绕道)
+  //一个线程每5分钟同步一次时间 SyncTimeFirst
+  // std::thread sync_time_thread([](){
+  //   SyncTimeFirst();
+  //   this_thread::sleep_for(std::chrono::minutes(2));
+  // });
  
-  uni_wash_report.get()->utc_to_string(1737470129);
 
-  return 0;
-}
-#endif
+  // 设置时区为东八区 (GMT+8)
+    setenv("TZ", "CST-8", 1); // 或者使用"GMT-8", 但"CST-8"更常用 
+    tzset();  // 应用时区设置
+  
+    system("killall ntpd");
+    //执行 ntpd -p cn.ntp.org.cn -qn
+    system("ntpd -q -g -p cn.ntp.org.cn");
 
-#if 1
+ //使用 export TZ=CST-8 命令以后，再用system 命令调用ntpd 命令，就可以同步时间了
+  //system("export TZ=CST-8; ntpd -q -g -p time4.tencentyun.com");
+  //system("export TZ=CST-8; ntpd -q -g -p ntp.aliyun.com");
 
-int main()
-{
-  //只同步一次时间
-  SyncTimeFirst();
-  std::this_thread::sleep_for(std::chrono::seconds(3));
+  //system("ntpd -q -g -p ntp.aliyun.com");
+ 
 
   // 创建一个名为 "console" 的日志对象，输出到标准输出流（彩色）
   g_console_logger = spdlog::stdout_color_mt("console");
@@ -151,33 +157,54 @@ int main()
   std::thread reporter_thread(&WashReport::StartReportingProcess, uni_wash_report.get());
 
   // 每晚退出程序的检测线程 有其他系统脚本实现
-  // std::thread exit_check_thread([&]()
-  //                               {
-  //   while(1){
-  //       if(isWithinExitWindow()){
-  //           g_console_logger->info("exit check thread exit!");
-  //           g_file_logger->info("exit check thread exit!");
-  //           g_file_logger->flush();
-  //           //当前线程休眠4分钟
-  //           this_thread::sleep_for(chrono::minutes(4));
-  //           exit(0);  
-  //       }
-  //       this_thread::sleep_for(chrono::seconds(60));
-  //   } });
+  std::thread exit_check_thread([&]()
+                                {
+    while(1){
+        if(isWithinExitWindow()){
+            g_console_logger->info("exit check thread exit!");
+            g_file_logger->info("exit check thread exit!");
+            g_file_logger->flush();
+            //当前线程休眠4分钟
+            this_thread::sleep_for(chrono::minutes(4));
+            exit(0);  
+        }
+        this_thread::sleep_for(chrono::seconds(60));
+    } });
 
   uni_net.get()->StartServer();
 
   reporter_thread.join();
 
-  //exit_check_thread.join();
+   
+  exit_check_thread.join();
 
   return 0;
 }
+
+
+void SyncTimeFirst()
+{
+  // // 设置时区为东八区
+ 
+  //先kiil掉之前的ntpd 进程
+ // system("killall ntpd");
+ 
+  //设置时区东八区
+ // system("export TZ=CST-8");
+ // system("export TZ=GMT-8");
+ 
+ // system("ntpd -q -g -p time4.tencentyun.com");
+
+}
+
+
+#if 0
 void SyncTimeFirst()
 {
   // 设置时区为东八区
   setenv("TZ", "CST-8", 1); // 或者使用"GMT-8", 但"CST-8"更常用
   tzset();                  // 应用时区更改
+
 
 // NTP时间戳是从1900年1月1日开始的秒数
 #define NTP_TIMESTAMP_DELTA 2208988800ull
@@ -214,6 +241,9 @@ void SyncTimeFirst()
     ntp_packet packet;
     socklen_t len = sizeof(serv_addr);
     struct timeval timeout;
+
+    //休眠100ms
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // 创建UDP套接字
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -285,5 +315,4 @@ void SyncTimeFirst()
     break;
   }
 }
-
 #endif
