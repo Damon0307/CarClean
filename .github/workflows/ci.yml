@@ -33,3 +33,11 @@ jobs:
       run: |
         cd build
         ctest --output-on-failure
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+          name: my-built-app
+          path: build/CarClean  # 要上传的文件或目录
+          # 如果是目录，可以写 build/
+          # 还可以设置压缩级别等
