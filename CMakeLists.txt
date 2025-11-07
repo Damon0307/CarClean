@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.1.0)
 
 project(CarClean)
  
-set(ARM_FLAG 0) # 这里只是一个例子，该变量可能来自其他地方
+set(ARM_FLAG 1) # 这里只是一个例子，该变量可能来自其他地方
 
 if (ARM_FLAG)
-    include (luck_cross.cmake)
-    set(CMAKE_BUILD_TYPE Release)
-    #include (/opt/luck_toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-toolchain.cmake)
+   # include (luck_cross.cmake)
+    set(CMAKE_BUILD_TYPE Debug)
+    #set(CMAKE_BUILD_TYPE Release)
+    include (/opt/luck_toolchain/arm-rockchip830-linux-uclibcgnueabihf/arm-toolchain.cmake)
 else ()
     set(CMAKE_BUILD_TYPE Debug)
 endif ()
@@ -21,7 +22,7 @@ file(GLOB_RECURSE SOURCES  src/*.cpp src/*.c  )
 
 include_directories(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/spdlog)
-
+include_directories(${CMAKE_SOURCE_DIR}/src)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 message("SOURCES"  ${SOURCES})

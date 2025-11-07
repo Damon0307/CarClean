@@ -377,7 +377,11 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   //     const char *gw = "192.168.1.1"; // 默认网关
 #if 1
   //杀掉系统中的  udhcpc 进程
-  system("killall udhcpc"); 
+  int ret = system("killall udhcpc");
+  if (ret != 0) {
+    g_console_logger->error("Failed to kill udhcpc process, system() returned {}", ret);
+    g_file_logger->error("Failed to kill udhcpc process, system() returned {}", ret);
+  }
 
 
   const char *eth_interface = "eth0";
