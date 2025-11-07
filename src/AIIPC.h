@@ -20,7 +20,7 @@
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
-#define MAX_QUEUE_SIZE 25
+#define MAX_AI_LABEL_QUEUE_SIZE 25
 
 using json = nlohmann::json;
 using namespace std;
@@ -52,7 +52,7 @@ public:
                 const std::string lbl = pjson["label"].get<std::string>();
                 // 记录标签队列（仅调试/追踪用途）
                 res_queue.push_back(lbl);
-                if (res_queue.size() > MAX_QUEUE_SIZE)
+                if (res_queue.size() > MAX_AI_LABEL_QUEUE_SIZE)
                 {
                     res_queue.pop_front();
                 }

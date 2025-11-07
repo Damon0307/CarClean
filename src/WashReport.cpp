@@ -377,10 +377,12 @@ void WashReport::InitDefInfo(const char *file_path)
         mBarrierGate = new BarrierGate();
         has_barrier_gate = true;
         // 初始化保持时间和延迟时间
-        this->mDelayTime = data["delay_time"];
-        this->mKeepTime = data["keep_time"];
-        mDelayTime *= 1000;
-        mKeepTime *= 1000;
+
+        int p_delay_time = data["delay_time"];
+        int p_keep_time = data["keep_time"];
+
+        this->mDelayTimeMs = p_delay_time * 1000;
+        this->mKeepTimeMs = p_keep_time * 1000;
     }
     else
     {
@@ -811,7 +813,8 @@ void WashReport::StartReportingProcess()
                 std::cout<<"enter time: "<<capture_res["enterTime"]<<std::endl;
                 std::cout<<"leave time: "<<capture_res["leaveTime"]<<std::endl;
 
-                capture_res["alarmType"] = GetAlarmByWaterPump();
+                g_console_logger->debug("leave time: {}", capture_res["leaveTime"].dump().c_str());
+                g_file_logger->debug("leave time: {}", capture_res["leaveTime"].dump().c_str());
                 // 前后轮冲洗时间改为 0
                 capture_res["frontWheelWashTime"] = 0;
                 capture_res["hindWheelWashTime"] = 0;
@@ -856,23 +859,23 @@ void WashReport::StartReportingProcess()
                         if (NULL != mBarrierGate)
                         {
 
-                            g_console_logger->debug("Gate Will be open for {} in  {} ms ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
-                            g_file_logger->debug("Gate Will be open for {} in  {} ms ", capture_res["ztcCph"].dump().c_str(), mDelayTime);
+                            g_console_logger->debug("Gate Will be open for {} in  {} ms ", capture_res["ztcCph"].dump().c_str(), mDelayTimeMs);
+                            g_file_logger->debug("Gate Will be open for {} in  {} ms ", capture_res["ztcCph"].dump().c_str(), mDelayTimeMs);
 
                             mBarrierGate->BarrierGateCtrl(false);
                             mDelayTimer.setTimeout([this]()
-                                                   { mBarrierGate->BarrierGateCtrl(true); }, mDelayTime);
+                                                   { mBarrierGate->BarrierGateCtrl(true); }, mDelayTimeMs);
 
                             mKeepTimer.setTimeout([this]()
-                                                  { mBarrierGate->BarrierGateCtrl(false); }, mDelayTime + mKeepTime);
+                                                  { mBarrierGate->BarrierGateCtrl(false); }, mDelayTimeMs + mKeepTimeMs);
                             // 实际上闸机的关闭是自己控制的现在
                         }
                         if(has_barrier_gate)
                         {
                             capture_res["gate_status"] = 1;
-                            //开闸时间是 当前时间+mDelayTime
+                            //开闸时间是 当前时间+mDelayTimeMs
                             time_t now = time(nullptr);
-                            time_t open_time = now + mDelayTime;
+                            time_t open_time = now + mDelayTimeMs / 1000;
                             capture_res["open_time"] = time_to_string(open_time);
                         }else
                         {
