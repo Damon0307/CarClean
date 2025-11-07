@@ -557,9 +557,9 @@ void WashReport::Deal_R_AIIPCData(const json &p_json, Response &res)
             time(&cur_time);
             if (difftime(cur_time, point_b.leave_time) <= ai_deal_delay_time)
             {
-                l_ai_ipc.DealAIIPCData(p_json);
-                g_console_logger->debug("Deal_L_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
-                g_file_logger->debug("Deal_L_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
+                r_ai_ipc.DealAIIPCData(p_json);
+                g_console_logger->debug("Deal_R_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
+                g_file_logger->debug("Deal_R_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
             }
             else
             {
@@ -669,8 +669,8 @@ json WashReport::GetCaptureJson()
     res["rightphotoUrl"] = "";
     res["rightclean"] = 0;
     res["leftclean"] = 0; // 车辆左侧冲洗洁净 度数值
-    res["gate_status"]=0;   // 道闸状态 0 未配置道闸， 1 正常， 2 脏车拒绝开闸。
-    res["open_time"]== ""; // 开闸时间
+    res["gate_status"] = 0;   // 道闸状态 0 未配置道闸， 1 正常， 2 脏车拒绝开闸。
+    res["open_time"] = ""; // 开闸时间 修复: 使用赋值
   
     return res;
  
@@ -698,6 +698,8 @@ json WashReport::GetCarInJson()
     res["picture"] = "";
     res["dataType"] = 4;
     res["direction"] = 0;
+
+    return res;
 }
 
 std::string WashReport::getTime(const std::string &format)
@@ -817,20 +819,20 @@ void WashReport::StartReportingProcess()
                 int ipc_dir = ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["direction"];
                 capture_res["direction"] = GetDirByIPC(ipc_dir); // 通过IPC
 
+                // 细粒度时间窗口采集：在整个 ai_deal_delay_time 秒窗口内每200ms轮询状态，持续接收其他线程推送的数据，不提前退出
                 bool ai_all_res = false;
-
-                for (int i = 0; i <= ai_deal_delay_time; i++)
+                auto window_start = std::chrono::steady_clock::now();
+                auto deadline = window_start + std::chrono::seconds(ai_deal_delay_time);
+                int iteration = 0;
+                while (std::chrono::steady_clock::now() < deadline)
                 {
-                    ai_all_res = GetAIIPCDetectResult();
-                    if (ai_all_res == true)
-                    {
-                        g_console_logger->debug("Get AI ipc data success in {} times", i);
-                    }
-                    else
-                    {
-                        g_console_logger->debug("Get AI ipc data failed in {} times", i);
-                    }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    bool left_has = l_ai_ipc.GetResult();
+                    bool right_has = r_ai_ipc.GetResult();
+                    ai_all_res = left_has && right_has; // 只要窗口期内曾经都到过数据即可
+                    g_console_logger->debug("AI IPC collecting window iter:{} left:{} right:{}", iteration, (int)left_has, (int)right_has);
+                    g_file_logger->debug("AI IPC collecting window iter:{} left:{} right:{}", iteration, (int)left_has, (int)right_has);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                    ++iteration;
                 }
 
                 if (ai_all_res)
@@ -952,62 +954,43 @@ void WashReport::NotificationsToUart(int event_num)
 
 std::string WashReport::time_to_string(time_t t)
 {
-  
-   // t += 8 * 60 * 60;
-
-    // 将时间转换为本地时间并格式化为字符串
-    std::string result(20, '\0'); // 分配足够的空间来存储时间字符串
-    std::strftime(&result[0], result.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
-
-    // 调整字符串的长度以去除多余的空字符
-    result.resize(std::strlen(result.c_str()));
-
-    g_console_logger->debug(" time_to_string result {}", result);
-
-    return result;
+    // 线程安全版本：使用 localtime_r (或 gmtime_r) 而不是非线程安全的 localtime
+    std::tm tm_buf;
+    if (localtime_r(&t, &tm_buf) == nullptr)
+    {
+        g_console_logger->error("time_to_string localtime_r failed for {}", static_cast<long long>(t));
+        return "";
+    }
+    char buf[20]; // YYYY-MM-DD HH:MM:SS => 19 + null
+    if (std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_buf) == 0)
+    {
+        g_console_logger->error("time_to_string strftime failed");
+        return "";
+    }
+    return std::string(buf);
 }
 
 std::string WashReport::utc_to_string(long long utcSeconds)
 {
-    // 模拟日志记录
-    std::cout << "utc_to_string(utcSeconds=" << utcSeconds << ")\n";
-
-    // 将传入的UTC秒数转换成time_t类型
-    std::time_t timeT = static_cast<std::time_t>(utcSeconds);
-
-    // 使用gmtime得到UTC时间的tm结构体
-    std::tm *gmtm = std::gmtime(&timeT);
-
-    if (gmtm == nullptr)
+    // 直接加 8 小时偏移并格式化，不手动修改 tm_hour，避免跨日处理错误
+    if (utcSeconds < 0)
     {
-        // 处理错误，例如可以返回空字符串或者抛出异常
+        g_console_logger->warn("utc_to_string received negative utcSeconds {}", utcSeconds);
+    }
+    std::time_t t = static_cast<std::time_t>(utcSeconds + 8LL * 60 * 60); // 转为北京时间 (UTC+8)
+    std::tm tm_buf;
+    if (gmtime_r(&t, &tm_buf) == nullptr) // gmtime_r 得到调整后 UTC+8 对应的结构体
+    {
+        g_console_logger->error("utc_to_string gmtime_r failed for {}", utcSeconds);
         return "";
     }
-
-    // 将tm结构体转换为北京时间
-    gmtm->tm_hour += 8; // 加上8小时
-    if (gmtm->tm_hour >= 24)
+    char buf[20];
+    if (std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_buf) == 0)
     {
-        gmtm->tm_hour -= 24;
-        // 使用mktime来处理日期和月份的变化
-        timeT = mktime(gmtm);
-        gmtm = std::gmtime(&timeT);
-        if (gmtm == nullptr)
-        {
-            // 处理错误，例如可以返回空字符串或者抛出异常
-            return "";
-        }
+        g_console_logger->error("utc_to_string strftime failed");
+        return "";
     }
-
-    // 创建一个输出流，并设置所需的格式
-    std::ostringstream oss;
-    // 格式化输出
-    oss << std::put_time(gmtm, "%Y-%m-%d %H:%M:%S");
-
-    // 模拟日志记录
-    std::cout << "oss=" << oss.str() << "\n";
-
-    return oss.str();
+    return std::string(buf);
 }
  
 
