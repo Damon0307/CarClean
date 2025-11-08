@@ -34,7 +34,7 @@ public:
 
 
  
-    void PostDataToServer(json p_json);
+    bool PostDataToServer(json p_json);
     
     void SetWashIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
     {

@@ -53,7 +53,7 @@ public:
     void Deal_R_AIIPCData(const json &p_json, Response &res);
     void DealSerialData();
     void StartReportingProcess();
-    void SetPassJsonFunc(std::function<void(json)> func);
+    void SetPassJsonFunc(std::function<bool(json)> func);
 
     void SetDLWashFunc(dl_report_wash_func_t func);
     void SetDLCarPassFunc(dl_report_car_pass_func_t func);  
@@ -92,7 +92,7 @@ private:
    
     bool GetAIIPCDetectResult();
     void ResetAllSensor();
-    std::function<void(json)> PostJsonToServer;
+    std::function<bool(json)> PostJsonToServer;
     dl_report_wash_func_t dl_report_wash;   
     dl_report_car_pass_func_t dl_report_car_pass;   
     dl_report_status_func_t dl_report_status;
@@ -154,6 +154,10 @@ private:
                 {
                     is_working = true;
                     time(&begin_time); // 流程开始，记录开始时间
+
+                    g_console_logger->debug("Water Pump start time {}",time_to_string(begin_time));
+                    g_file_logger->debug("Water Pump start time {}",time_to_string(begin_time));
+
                     alarm_timer.setTimeout([&](){
                             alarm_func(2); //水泵的告警ID是2
                     },600*1000);

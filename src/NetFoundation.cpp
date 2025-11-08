@@ -145,7 +145,7 @@ void NetFoundation::CarInIPCDataHandler(const Request &req, Response &res)
   car_in_ipc_func(req_data, res);
 }
 
-void NetFoundation::PostDataToServer(json p_json)
+bool NetFoundation::PostDataToServer(json p_json)
 {
   // 创建客户端
   httplib::Client cli(remote_server, remote_port);
@@ -156,6 +156,10 @@ void NetFoundation::PostDataToServer(json p_json)
   // 发送POST请求与JSON body
   auto res = cli.Post("/chechong/upload", headers, p_json.dump(), "application/json");
 
+//打印发送的内容
+ // std::cout << "send data to remote server : " << p_json.dump() << std::endl;
+
+
   //! NB
   // httplib::Client cli("https://hwlock.br-app.cn", 8080, "./cert.pem", "./key.pem");
 
@@ -164,11 +168,17 @@ void NetFoundation::PostDataToServer(json p_json)
   {
     std::cout << "Got res from remote server" << std::endl;
     std::cout << res->body << std::endl;
+
+    return true;
   }
   else
   {
     std::cout << "Error sending data\n";
+    return false;
   }
+
+  return false;
+
 }
 
 void NetFoundation::StartServer()
