@@ -161,8 +161,6 @@ private:
                     alarm_timer.setTimeout([&](){
                             alarm_func(2); //水泵的告警ID是2
                     },600*1000);
-                     g_console_logger->debug("Water Pump start time {}",time_to_string(finish_time));
-                     g_file_logger->debug("Water Pump finish time {}",time_to_string(finish_time));
                 }
                 else
                 {
