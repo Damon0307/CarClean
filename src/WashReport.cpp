@@ -660,7 +660,7 @@ json WashReport::GetCaptureJson()
     res["deviceNo"] = deviceNo;
     res["captureTime"] = "";
     res["ztcCph"] = "";
-    res["ztcColor"];
+    res["ztcColor"]= "";
     res["vehicleType"];
     res["enterTime"] = "";
     res["leaveTime"] = "";
