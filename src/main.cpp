@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK ,no exit,25-11-08_4";
+const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK ,no exit,25-11-09";
 
 const char *todo_str = " she xiang tou pian yi jian ce";
 //const char *version_str = "test update";
@@ -156,6 +156,8 @@ int main()
   // 传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess, uni_wash_report.get());
 
+#if 0
+
   // 每晚退出程序的检测线程 有其他系统脚本实现
   std::thread exit_check_thread([&]()
                                 {
@@ -170,13 +172,16 @@ int main()
         }
         this_thread::sleep_for(chrono::seconds(60));
     } });
+  exit_check_thread.join();
+
+#endif
 
   uni_net.get()->StartServer();
 
   reporter_thread.join();
 
    
-  exit_check_thread.join();
+
 
   return 0;
 }
