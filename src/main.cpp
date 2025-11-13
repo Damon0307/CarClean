@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK ,no exit,25-11-09";
+const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK ,no exit,25-11-11";
 
 const char *todo_str = " she xiang tou pian yi jian ce";
 //const char *version_str = "test update";
@@ -162,17 +162,21 @@ int main()
   std::thread exit_check_thread([&]()
                                 {
     while(1){
-        if(isWithinExitWindow()){
-            g_console_logger->info("exit check thread exit!");
-            g_file_logger->info("exit check thread exit!");
-            g_file_logger->flush();
+        if(isWithinExitWindow())
+        {
+     
             //当前线程休眠4分钟
-            this_thread::sleep_for(chrono::minutes(4));
-            exit(0);  
+            this_thread::sleep_for(chrono::minutes(2));
+               //执行系统重启命令
+          g_console_logger->info("system reboot now!");
+          g_file_logger->info("system reboot now!");
+          g_file_logger->flush();
+          system("reboot");
+          exit(0);  
         }
-        this_thread::sleep_for(chrono::seconds(60));
+        this_thread::sleep_for(chrono::seconds(10));
     } });
-  exit_check_thread.join();
+
 
 #endif
 
@@ -180,7 +184,7 @@ int main()
 
   reporter_thread.join();
 
-   
+  //exit_check_thread.join();
 
 
   return 0;
