@@ -96,7 +96,7 @@ void NetFoundation::InitNetCFG(const char *file_name)
 
   local_server = data["local_server"];
 
-  //local_server = "192.168.1.200";
+  // local_server = "192.168.1.200";
 
   remote_server = data["remote_server"];
   local_port = data["local_port"];
@@ -156,9 +156,8 @@ bool NetFoundation::PostDataToServer(json p_json)
   // 发送POST请求与JSON body
   auto res = cli.Post("/chechong/upload", headers, p_json.dump(), "application/json");
 
-//打印发送的内容
- // std::cout << "send data to remote server : " << p_json.dump() << std::endl;
-
+  // 打印发送的内容
+  //  std::cout << "send data to remote server : " << p_json.dump() << std::endl;
 
   //! NB
   // httplib::Client cli("https://hwlock.br-app.cn", 8080, "./cert.pem", "./key.pem");
@@ -178,7 +177,6 @@ bool NetFoundation::PostDataToServer(json p_json)
   }
 
   return false;
-
 }
 
 void NetFoundation::StartServer()
@@ -198,6 +196,9 @@ void NetFoundation::StartServer()
   // 增加一个车辆入场的处理
   mServer.Post("/car_in", [&](const Request &req, Response &res)
                { CarInIPCDataHandler(req, res); });
+
+
+
   // 路由：通过一个URL更新不同的配置文件
   mServer.Post("/update_def", [](const Request &req, Response &res)
                {
@@ -214,27 +215,25 @@ void NetFoundation::StartServer()
           res.status = 500;
           res.set_content("Failed to update the file", "text/plain");
       } });
-      //获取默认配置文件内容
+  // 获取默认配置文件内容
   mServer.Post("/get_def", [](const Request &req, Response &res)
-  {
-      // 获取文件路径
-      string file_path = "/default_info.json";
-      // 读取文件内容
-      std::ifstream file(file_path);
-      if (!file.is_open()) {
-          // 如果文件无法打开，返回 500 错误
-          res.status = 500;
-          res.set_content("Failed to open the file", "text/plain");
-          return;
-      }
-      std::stringstream buffer;
-      buffer << file.rdbuf();
-      // 将文件内容作为响应返回
-      res.set_content(buffer.str(), "text/plain");
-
-  });
-
-
+               {
+                 // 获取文件路径
+                 string file_path = "/default_info.json";
+                 // 读取文件内容
+                 std::ifstream file(file_path);
+                 if (!file.is_open())
+                 {
+                   // 如果文件无法打开，返回 500 错误
+                   res.status = 500;
+                   res.set_content("Failed to open the file", "text/plain");
+                   return;
+                 }
+                 std::stringstream buffer;
+                 buffer << file.rdbuf();
+                 // 将文件内容作为响应返回
+                 res.set_content(buffer.str(), "text/plain");
+               });
 
   // 客户端测试连接
   mServer.Post("/test", [](const Request &req, Response &res)
@@ -251,41 +250,43 @@ void NetFoundation::StartServer()
 
   mServer.Post("/get_log", [](const httplib::Request &req, httplib::Response &res)
                {
-          
-          printf("get_log\n");
-          std::ifstream log_file("/userdata/LogFile.log");
-          if (!log_file.is_open()) {
-              // 如果文件无法打开，返回 500 错误
-              res.status = 500;
-              res.set_content("Failed to open log file", "text/plain");
-              return;
-          }
+                 printf("get_log\n");
+                 std::ifstream log_file("/userdata/LogFile.log");
+                 if (!log_file.is_open())
+                 {
+                   // 如果文件无法打开，返回 500 错误
+                   res.status = 500;
+                   res.set_content("Failed to open log file", "text/plain");
+                   return;
+                 }
 
-          // 读取文件内容 如果文件内容超过500行 则只保留最后的500行
-          std::string buffer((std::istreambuf_iterator<char>(log_file)), std::istreambuf_iterator<char>());
-          std::vector<std::string> lines;
-          std::stringstream ss(buffer);
-          std::string line;
-          while (std::getline(ss, line)) {
-            
-              lines.push_back(line);
-              if (lines.size() > 500) {
-                  lines.erase(lines.begin());
-              }
-          }
-          buffer.clear();
-          for (const auto &l : lines) {
-              buffer += l + "\n";
-          }
-          // 将文件内容作为响应返回
-          res.set_content(buffer, "text/plain");
+                 // 读取文件内容 如果文件内容超过500行 则只保留最后的500行
+                 std::string buffer((std::istreambuf_iterator<char>(log_file)), std::istreambuf_iterator<char>());
+                 std::vector<std::string> lines;
+                 std::stringstream ss(buffer);
+                 std::string line;
+                 while (std::getline(ss, line))
+                 {
 
- 
-          // std::stringstream buffer;
-          // buffer << log_file.rdbuf();
-          // 设置响应内容
-         // res.set_content(buffer.str(), "text/plain");
-         });
+                   lines.push_back(line);
+                   if (lines.size() > 500)
+                   {
+                     lines.erase(lines.begin());
+                   }
+                 }
+                 buffer.clear();
+                 for (const auto &l : lines)
+                 {
+                   buffer += l + "\n";
+                 }
+                 // 将文件内容作为响应返回
+                 res.set_content(buffer, "text/plain");
+
+                 // std::stringstream buffer;
+                 // buffer << log_file.rdbuf();
+                 // 设置响应内容
+                 // res.set_content(buffer.str(), "text/plain");
+               });
 
   mServer.Post("/update_process", [](const Request &req, Response &res)
                {
@@ -350,6 +351,21 @@ void NetFoundation::StartServer()
             res.set_content("No file data in request", "text/plain");
         } });
 
+
+          // 客户端请求清理崩溃日志
+  mServer.Post("/clear_log", [](const Request &req, Response &res)
+               {
+                //  printf("clear_log\n");
+// 先执行 cd /  回车 再执行
+// find   /mnt/sdcard/ -name "core-*-CarClean" -exec rm -f {} + 
+          system("cd / && find   /mnt/sdcard/ -name \"core-*-CarClean\" -exec rm -f {} + ");
+                
+          //简单回复ok
+          res.set_content("ok", "text/plain"); });
+
+
+
+
   // 启动服务器
   mServer.listen(local_server, local_port);
 }
@@ -386,13 +402,13 @@ void NetFoundation::ConfigRV1106IP(const std::string &ip)
   //     const char *netmask = "255.255.255.0"; // 子网掩码
   //     const char *gw = "192.168.1.1"; // 默认网关
 #if 1
-  //杀掉系统中的  udhcpc 进程
+  // 杀掉系统中的  udhcpc 进程
   int ret = system("killall udhcpc");
-  if (ret != 0) {
+  if (ret != 0)
+  {
     g_console_logger->error("Failed to kill udhcpc process, system() returned {}", ret);
     g_file_logger->error("Failed to kill udhcpc process, system() returned {}", ret);
   }
-
 
   const char *eth_interface = "eth0";
   const char *static_ip = "192.168.1.200";
