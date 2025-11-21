@@ -91,16 +91,6 @@ public:
                 detect_json["latest_img_base64"] = img;
             }
 
-            // 附加元数据（存在则保存）
-            static const std::vector<std::string> meta_keys = {"device_id", "device_version", "date", "timestamp"};
-            for (auto &k : meta_keys)
-            {
-                if (pjson.contains(k))
-                {
-                    detect_json[k] = pjson[k];
-                }
-            }
-
             has_res.store(true, std::memory_order_release);
         }
         catch (const std::exception &e)
