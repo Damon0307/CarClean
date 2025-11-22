@@ -355,7 +355,7 @@ void NetFoundation::StartServer()
           // 客户端请求清理崩溃日志
   mServer.Post("/clear_log", [](const Request &req, Response &res)
                {
-                //  printf("clear_log\n");
+                  printf("clear_log\n");
 // 先执行 cd /  回车 再执行
 // find   /mnt/sdcard/ -name "core-*-CarClean" -exec rm -f {} + 
           system("cd / && find   /mnt/sdcard/ -name \"core-*-CarClean\" -exec rm -f {} + ");
