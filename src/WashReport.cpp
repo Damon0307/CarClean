@@ -321,6 +321,18 @@ WashReport::WashReport(/* args */)
     // need lock?
     point_b.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
     water_pump.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
+
+    l_ai_ipc.SetAIIPCType(1); // 左侧AIIPC
+    r_ai_ipc.SetAIIPCType(1); // 右侧AIIPC
+
+    side_l_ai_ipc.SetAIIPCType(2); // 左侧车轮AIIPC
+    side_r_ai_ipc.SetAIIPCType(2); // 右侧车轮AIIPC
+    tail_ai_ipc.SetAIIPCType(2);   // 尾部
+
+    roof_ai_ipc.SetAIIPCType(3);   // 顶部
+
+
+
 }
 
 WashReport::~WashReport()
@@ -1206,3 +1218,14 @@ void WashReport::SetDLStatusFunc(dl_report_status_func_t func)
     if (func)
         dl_report_status = func;
 }
+
+//todo 接收到左侧AI摄像头推送的数据
+void WashReport::Deal_Side_L_AIIPCData(const json &p_json, Response &res)
+{
+
+}
+
+
+    // void Deal_Side_R_AIIPCData(const json &p_json, Response &res);
+    // void Deal_Tail_AIIPCData(const json &p_json, Response &res);
+    // void Deal_Roof_AIIPCData(const json &p_json, Response &res);

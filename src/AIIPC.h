@@ -25,6 +25,13 @@ extern std::shared_ptr<spdlog::logger> g_file_logger;
 using json = nlohmann::json;
 using namespace std;
 
+//2025-11-24 新增摄像机种类 1 车轮，2 车身面 3 车顶棚
+enum class CameraType {
+    WHEEL = 1,
+    BODY = 2,
+    ROOF = 3
+};
+
 class AIIPC
 {
 public:
@@ -42,64 +49,8 @@ public:
         cur_dirty_img.clear();
     }
 
-    void DealAIIPCData(const json &pjson)
-    {
-        try
-        {
-            std::lock_guard<std::mutex> lk(mtx);
-            if (pjson.contains("label") && pjson["label"].is_string())
-            {
-                const std::string lbl = pjson["label"].get<std::string>();
-                // 记录标签队列（仅调试/追踪用途）
-                res_queue.push_back(lbl);
-                if (res_queue.size() > MAX_AI_LABEL_QUEUE_SIZE)
-                {
-                    res_queue.pop_front();
-                }
-                // 标记脏车出现
-                if (lbl != "clean")
-                {
-                    dirty_seen.store(true, std::memory_order_relaxed);
-                }
-                // 暂存最后一个原始标签（用于区分仅 clean 场景）
-                detect_json["raw_label"] = lbl;
-            }
-
-            if (pjson.contains("extend") && pjson["extend"].is_object())
-            {
-                auto &ext = pjson["extend"];
-                if (ext.contains("alarm_objs") && ext["alarm_objs"].is_array() && !ext["alarm_objs"].empty())
-                {
-                    auto &first = ext["alarm_objs"][0];
-                    if (first.contains("score") && first["score"].is_number())
-                    {
-                        detect_json["score"] = first["score"];
-                    }
-                }
-            }
-
-            if (pjson.contains("img_base64") && pjson["img_base64"].is_string())
-            {
-                const std::string img = pjson["img_base64"].get<std::string>();
-                // 记录第一个脏图（只在脏标签首次出现时抓取）
-                if (!first_dirty_captured && pjson.contains("label") && pjson["label"].is_string() && pjson["label"].get<std::string>() != "clean")
-                {
-                    cur_dirty_img = img;
-                    first_dirty_captured = true;
-                }
-                // 始终保存最新图供调试（不覆盖脏图选择链式判断）
-                detect_json["latest_img_base64"] = img;
-            }
-
-            has_res.store(true, std::memory_order_release);
-        }
-        catch (const std::exception &e)
-        {
-            g_console_logger->error("DealAIIPCData exception: {}", e.what());
-            g_file_logger->error("DealAIIPCData exception: {}", e.what());
-        }
-    }
-
+    void DealAIIPCData(const json &pjson);
+  
     json GetDetectRes()
     {
         std::lock_guard<std::mutex> lk(mtx);
@@ -134,8 +85,15 @@ public:
     {
         return has_res.load(std::memory_order_acquire);
     }
+ 
+
+    void SetAIIPCType(int type)
+    {
+        aiipc_type = type;
+    }
 
 private:
+    int aiipc_type = 1;                     // AI IPC 类型标识
     std::atomic<bool> has_res;          // 是否至少收到过一帧
     std::atomic<bool> dirty_seen;       // 是否出现过非 clean 标签
     bool first_dirty_captured;          // 第一张脏图是否已捕获
@@ -143,6 +101,12 @@ private:
     std::deque<std::string> res_queue;  // 最近标签窗口（调试用途）
     std::string cur_dirty_img;          // 第一张脏图
     std::mutex mtx;                     // 保护聚合状态
+
+    void DealWheelAIIPCData(const json &pjson);
+    void DealBodyAIIPCData(const json &pjson);
+    void DealRoofAIIPCData(const json &pjson);
+
+
 };
 
 #endif // __AIIPC_H__

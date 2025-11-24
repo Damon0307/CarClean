@@ -51,6 +51,14 @@ public:
 //处理左右两侧AIIPC 冲洗干净程度数据
     void Deal_L_AIIPCData(const json &p_json, Response &res);
     void Deal_R_AIIPCData(const json &p_json, Response &res);
+
+    void Deal_Side_L_AIIPCData(const json &p_json, Response &res);
+    void Deal_Side_R_AIIPCData(const json &p_json, Response &res);
+    void Deal_Tail_AIIPCData(const json &p_json, Response &res);
+    void Deal_Roof_AIIPCData(const json &p_json, Response &res);
+
+
+
     void DealSerialData();
     void StartReportingProcess();
     void SetPassJsonFunc(std::function<bool(json)> func);
@@ -194,7 +202,15 @@ private:
     IPC ipc;
     AIIPC l_ai_ipc;
     AIIPC r_ai_ipc;
-   int ai_deal_delay_time = 3; // B点结束以后还继续接收AI相机数据的时间
+ //2025 11 24新增四个ai相机
+   AIIPC  side_l_ai_ipc;
+   AIIPC  side_r_ai_ipc;
+   AIIPC  tail_ai_ipc;
+   AIIPC  roof_ai_ipc;
+
+
+
+    int ai_deal_delay_time = 3; // B点结束以后还继续接收AI相机数据的时间
     //两个重要的时间
     //B点触发下降的时间，  用作AI摄像机的超时使用
     time_t   b_exit_time;
