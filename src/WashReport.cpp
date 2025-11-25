@@ -330,6 +330,8 @@ WashReport::WashReport(/* args */)
     tail_ai_ipc.SetAIIPCType(2);   // 尾部
 
     roof_ai_ipc.SetAIIPCType(3); // 顶部
+
+    
 }
 
 WashReport::~WashReport()
@@ -404,9 +406,21 @@ void WashReport::InitDefInfo(const char *file_path)
         ai_deal_delay_time = data["time_after_b"];
     }
 
+    //判断存不存在 power_type_report_interval 字段
+    if (data.contains("power_type_report_interval"))
+    {
+        power_type_report_interval = data["power_type_report_interval"];
+    }
+
     g_console_logger->debug("wash alarm time set to {}", wash_alarm_time);
 
     f.close();
+
+    ReportPowerType();
+    power_type_report_timer.setInterval([&]() {
+        ReportPowerType();
+    },
+                                      power_type_report_interval * 60 * 1000);
 }
 
 // 接收到摄像头推送的抓拍数据
@@ -1170,6 +1184,21 @@ int WashReport::GetScore(float p)
         return 4;
     }
     return 1;
+}
+
+void WashReport::ReportPowerType()
+{  
+    json res;
+    res["deviceNo"] = deviceNo;
+    res["updateTime"];
+    res["status"];
+    res["powerType"] = cur_power_type;
+    res["dataType"] = 4;
+ 
+    res["status"] = 1;
+    res["updateTime"] = getTime(time_format);
+    PostJsonToServer(res);
+    
 }
 
 void WashReport::StartHeartBeat()

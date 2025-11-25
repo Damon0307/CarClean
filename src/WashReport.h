@@ -76,6 +76,8 @@ public:
 
     int GetScore(float p);
 
+    void ReportPowerType(); //上报电源类型
+
 private:
     bool has_barrier_gate;
     bool has_report;
@@ -85,6 +87,10 @@ private:
     std::string deviceNo;
     std::string nvr_channel;
     std::string nvr_serial_num;
+
+    int power_type_report_interval = 10; // 电源类型上报间隔，单位分钟  
+    Timer power_type_report_timer;
+    int cur_power_type = 1; // 当前的电源类型，初始值为1 市电
 
     int serial_fd;
     std::string port_name;
