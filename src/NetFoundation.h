@@ -29,9 +29,13 @@ public:
     void WashIPCDataHandler(const Request& req, Response& res);
     void DetourIPCDataHandler(const Request& req, Response& res);
     void CarInIPCDataHandler(const Request& req, Response& res);
-    void LeftSideAIIPCDataHandler(const Request& req, Response& res);
-    void RightSideAIIPCDataHandler(const Request& req, Response& res);
+    void LeftWheelAIIPCHandler(const Request& req, Response& res);
+    void RightWheelAIIPCHandler(const Request& req, Response& res);
 
+    void TailAIIPCHandler(const Request& req, Response& res);
+    void RoofAIIPCHandler(const Request& req, Response& res);
+    void LeftSideAIIPCHandler(const Request& req, Response& res);
+    void RightSideAIIPCHandler(const Request& req, Response& res);
 
  
     bool PostDataToServer(json p_json);
@@ -59,6 +63,29 @@ public:
     {
       car_in_ipc_func =  p_func; 
     } 
+
+    void SetTailIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
+    {
+      wash_tail_aiipc_func =  p_func; 
+    }
+
+    void SetRoofIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
+    {
+      wash_roof_aiipc_func =  p_func; 
+    }
+
+    void SetLeftSideIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
+    {
+      wash_side_l_aiipc_func =  p_func; 
+    }
+
+    void SetRightSideIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
+    {
+      wash_side_r_aiipc_func =  p_func; 
+    }
+
+
+
  
     //注册AIIPC 的webhook
     void RegisterWebHookForAIIPC();
@@ -78,12 +105,22 @@ private:
     std::function<void(const json&, Response&)> wash_hadler_func;
     //绕道摄像头
     std::function<void(const json&, Response&)> detour_hadler_func;
-    //左侧ai ipc
+    //左侧车轮ai ipc
     std::function<void(const json&, Response&)> wash_l_aiipc_func;
-    //右侧ai ipc
+    //右侧车轮ai ipc
     std::function<void(const json&, Response&)> wash_r_aiipc_func;
     //车辆入场摄像头
     std::function<void(const json&, Response&)> car_in_ipc_func; 
+
+    //车尾部AI IPC
+    std::function<void(const json&, Response&)> wash_tail_aiipc_func;
+    //车顶AI IPC
+    std::function<void(const json&, Response&)> wash_roof_aiipc_func;
+    //左侧AI IPC
+    std::function<void(const json&, Response&)> wash_side_l_aiipc_func;
+    //右侧AI IPC
+    std::function<void(const json&, Response&)> wash_side_r_aiipc_func;
+
   
     httplib::Server mServer;
 

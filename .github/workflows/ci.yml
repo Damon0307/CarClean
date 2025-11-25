@@ -1,0 +1,11 @@
+name: Simple CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  hello-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Hello
+        run: echo "hello"

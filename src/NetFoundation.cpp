@@ -190,14 +190,23 @@ void NetFoundation::StartServer()
                { DetourIPCDataHandler(req, res); });
 
   mServer.Post("/aiipc/left", [&](const Request &req, Response &res)
-               { LeftSideAIIPCDataHandler(req, res); });
+               { LeftWheelAIIPCHandler(req, res); });
   mServer.Post("/aiipc/right", [&](const Request &req, Response &res)
-               { RightSideAIIPCDataHandler(req, res); });
+               { RightWheelAIIPCHandler(req, res); });
   // 增加一个车辆入场的处理
   mServer.Post("/car_in", [&](const Request &req, Response &res)
                { CarInIPCDataHandler(req, res); });
 
-
+//2025-11-25 增加车尾 车顶 左侧 右侧 AI IPC 处理路由
+  mServer.Post("/aiipc/tail", [&](const Request &req, Response &res)
+               { TailAIIPCHandler(req, res); });
+  mServer.Post("/aiipc/roof", [&](const Request &req, Response &res)
+               { RoofAIIPCHandler(req, res); });
+  mServer.Post("/aiipc/side_left", [&](const Request &req, Response &res)
+               { LeftSideAIIPCHandler(req, res); });
+  mServer.Post("/aiipc/side_right", [&](const Request &req, Response &res)
+               { RightSideAIIPCHandler(req, res); });
+ 
 
   // 路由：通过一个URL更新不同的配置文件
   mServer.Post("/update_def", [](const Request &req, Response &res)
@@ -375,19 +384,52 @@ void NetFoundation::RegisterWebHookForAIIPC()
 {
 }
 
-void NetFoundation::LeftSideAIIPCDataHandler(const Request &req, Response &res)
+void NetFoundation::LeftWheelAIIPCHandler(const Request &req, Response &res)
 {
   // 获取请求body  // 解析json
   auto body = req.body;
   json req_data = json::parse(body);
   wash_l_aiipc_func(req_data, res);
 }
-void NetFoundation::RightSideAIIPCDataHandler(const Request &req, Response &res)
+void NetFoundation::RightWheelAIIPCHandler(const Request &req, Response &res)
 {
   // 获取请求body  // 解析json
   auto body = req.body;
   json req_data = json::parse(body);
   wash_r_aiipc_func(req_data, res);
+}
+
+void NetFoundation::TailAIIPCHandler(const Request& req, Response& res)
+{
+    // 获取请求body  // 解析json
+    auto body = req.body;
+    json req_data = json::parse(body);
+    wash_tail_aiipc_func(req_data, res);
+}
+
+void NetFoundation::RoofAIIPCHandler(const Request& req, Response& res)
+{
+    // 获取请求body  // 解析json
+    auto body = req.body;
+    json req_data = json::parse(body);
+    wash_roof_aiipc_func(req_data, res);
+}
+
+ 
+void NetFoundation::LeftSideAIIPCHandler(const Request& req, Response& res)
+{
+    // 获取请求body  // 解析json
+    auto body = req.body;
+    json req_data = json::parse(body);
+    wash_side_l_aiipc_func(req_data, res);
+}
+
+void NetFoundation::RightSideAIIPCHandler(const Request& req, Response& res)
+{
+    // 获取请求body  // 解析json
+    auto body = req.body;
+    json req_data = json::parse(body);
+    wash_side_r_aiipc_func(req_data, res);
 }
 
 int set_static_ip(const char *iface_name, const char *ip_address, const char *netmask, const char *gateway)

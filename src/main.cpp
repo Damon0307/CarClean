@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK ,no exit,25-11-17";
+const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK,add RLTR 4aiipc ,no exit,25-11-25";
 
 //接入6个ai ipc
 
@@ -102,7 +102,7 @@ int main()
 
   auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
       file_path_logger, // 日志文件名
-      10 * 1024 * 1024, // 文件最大尺寸：10MB
+      50 * 1024 * 1024, // 文件最大尺寸：50MB
       3);               // 保留的文件份数
 
   // 设置日志器名称和sink
@@ -149,6 +149,23 @@ int main()
 
   auto wash_r_aiipc_hander = std::bind(&WashReport::Deal_R_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
   uni_net.get()->Set_R_IPCDataHandleFunc(wash_r_aiipc_hander);
+
+  // 绑定车尾AI识别干净程度的数据处理通道
+  auto wash_tail_aiipc_hander = std::bind(&WashReport::Deal_Tail_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
+  uni_net.get()->SetTailIPCDataHandleFunc(wash_tail_aiipc_hander);
+
+  // 绑定车顶AI识别干净程度的数据处理通道
+  auto wash_roof_aiipc_hander = std::bind(&WashReport::Deal_Roof_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
+  uni_net.get()->SetRoofIPCDataHandleFunc(wash_roof_aiipc_hander);
+
+  // 绑定左侧AI识别干净程度的数据处理通道
+  auto wash_side_l_aiipc_hander = std::bind(&WashReport::Deal_Side_L_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
+  uni_net.get()->SetLeftSideIPCDataHandleFunc(wash_side_l_aiipc_hander);
+
+  // 绑定右侧AI识别干净程度的数据处理通道
+  auto wash_side_r_aiipc_hander = std::bind(&WashReport::Deal_Side_R_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
+  uni_net.get()->SetRightSideIPCDataHandleFunc(wash_side_r_aiipc_hander);
+ 
 
   // 传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess, uni_wash_report.get());
