@@ -714,6 +714,20 @@ json WashReport::GetCaptureJson()
     res["leftclean"] = 0;   // 车辆左侧冲洗洁净 度数值
     res["gate_status"] = 0; // 道闸状态 0 未配置道闸， 1 正常， 2 脏车拒绝开闸。
     res["open_time"] = "";  // 开闸时间 修复: 使用赋值
+
+
+    //2025-11-27 增加顶棚，左右两侧，尾巴
+    res["isCoverd"] =false;
+    res["roofPic"] = "";
+    res["leftPic"] = "";
+    res["rightPic"] = "";
+    res["tailPic"] = "";
+    res["leftCleanLevel"] = 0;
+    res["rightCleanLevel"] = 0;
+    res["tailCleanLevel"] = 0;
+
+
+
     return res;
 }
 json WashReport::GetDeviceStatusJson()
