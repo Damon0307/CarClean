@@ -645,6 +645,17 @@ void WashReport::DealSerialData()
                             // point_a.DealStatus(serial_data_queue[i + 1]);
                             point_b.DealStatus(serial_data_queue[i + 2]);
                             water_pump.DealStatus(serial_data_queue[i + 5]);
+
+                            //电源类型
+                            int power_type = serial_data_queue[i + 1];
+                            if (power_type != cur_power_type)
+                            {
+                                cur_power_type = power_type;
+                                g_console_logger->info("Power type changed to {} ", cur_power_type);
+                                g_file_logger->info("Power type changed to {} ", cur_power_type);
+                                ReportPowerType();
+                            }
+
                             break;
                         }
                     }
@@ -1175,15 +1186,15 @@ void WashReport::ReportPowerType()
 {  
     json res;
     res["deviceNo"] = deviceNo;
-    res["updateTime"];
-    res["status"];
     res["powerType"] = cur_power_type;
-    res["dataType"] = 4;
- 
-    res["status"] = 1;
+    res["dataType"] = 5;
     res["updateTime"] = getTime(time_format);
-    PostJsonToServer(res);
-    
+
+    //判断如果PostJsonToServer 是可用的，则发送数据
+    if(PostJsonToServer)
+    {PostJsonToServer(res);}
+
+
 }
 
 void WashReport::StartHeartBeat()
