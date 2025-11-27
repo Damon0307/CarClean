@@ -1,0 +1,12 @@
+name: 手动打招呼
+
+on:
+  workflow_dispatch:
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 打印问候语
+        run: echo "hello"
