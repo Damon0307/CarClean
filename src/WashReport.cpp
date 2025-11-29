@@ -327,9 +327,9 @@ WashReport::WashReport(/* args */)
 
     side_l_ai_ipc.SetAIIPCType(2); // 左侧车轮AIIPC
     side_r_ai_ipc.SetAIIPCType(2); // 右侧车轮AIIPC
-    tail_ai_ipc.SetAIIPCType(2);   // 尾部
+    
 
-    roof_ai_ipc.SetAIIPCType(3); // 顶部
+    roof_tail_ai_ipc.SetAIIPCType(3); // 顶部
 
     
 }
@@ -1011,6 +1011,41 @@ void WashReport::StartReportingProcess()
                     g_console_logger->debug("Timeout occurred while waiting for ai ipc data");
                     g_file_logger->debug("Timeout occurred while waiting for ai ipc data");
                 }
+                //*左右两侧+顶棚数据仅作为辅助数据  start*/
+              
+                //处理左侧车身 和 右侧车身
+                 if(side_l_ai_ipc.GetResult() && side_r_ai_ipc.GetResult())
+                {
+                    // 获取左侧车身和右侧车身的结果
+                    auto l_result = side_l_ai_ipc.GetDetectRes();
+                    auto r_result = side_r_ai_ipc.GetDetectRes();
+
+                    capture_res["leftPic"] = l_result.contains("img_base64") ? l_result["img_base64"] : "";
+                    capture_res["rightPic"] = r_result.contains("img_base64") ? r_result["img_base64"] : "";
+                    capture_res["leftCleanLevel"] = l_result.contains("score") ? l_result["score"].get<float>() : 0.0;
+                    capture_res["rightCleanLevel"] = r_result.contains("score") ? r_result["score"].get<float>() : 0.0;
+                }else
+                {
+                    g_console_logger->debug("Side AI IPC data not ready, skipping side clean level and pictures");
+                    g_file_logger->debug("Side AI IPC data not ready, skipping side clean level and pictures");
+                }
+                //处理车尾和顶棚
+                if(roof_tail_ai_ipc.GetResult())
+                {
+                    auto tail_result = roof_tail_ai_ipc.GetDetectRes();
+                    auto roof_result = roof_tail_ai_ipc.GetRoofDetectRes();
+                    capture_res["tailPic"] = tail_result.contains("img_base64") ? tail_result["img_base64"] : "";
+                    capture_res["roofPic"] = roof_result.contains("img_base64") ? roof_result["img_base64"] : "";
+                    capture_res["tailCleanLevel"] = tail_result.contains("score") ? tail_result["score"].get<float>() : 0.0;
+                    capture_res["isCoverd"] = roof_tail_ai_ipc.IsCovered() ? true : false;
+                }
+                else
+                {
+                    g_console_logger->debug("Roof and tail AI IPC data not ready, skipping roof and tail clean level and pictures");
+                    g_file_logger->debug("Roof and tail AI IPC data not ready, skipping roof and tail clean level and pictures");
+                }
+
+               //*左右两侧+顶棚数据仅作为辅助数据  end*/
 
                 bool post_res = PostJsonToServer(capture_res);
 
@@ -1101,6 +1136,11 @@ void WashReport::ResetAllSensor()
     ipc.ResetStatus();
     l_ai_ipc.ResetStatus();
     r_ai_ipc.ResetStatus();
+
+    side_l_ai_ipc.ResetStatus();
+    side_r_ai_ipc.ResetStatus();
+    roof_tail_ai_ipc.ResetStatus();
+
 }
 
 int WashReport::GetAlarmByWaterPump()
@@ -1339,53 +1379,20 @@ void WashReport::Deal_Side_R_AIIPCData(const json &p_json, Response &res)
 
     res.set_content("OK", "text/plain");
 }
-/**
- * @brief 处理尾部AI IPC数据的函数
- * @param p_json 输入的JSON数据，包含需要处理的AI IPC信息
- * @param res 用于设置响应内容的对象
- */
-void WashReport::Deal_Tail_AIIPCData(const json &p_json, Response &res)
-{
-    // 检查JSON数据中是否包含"label"字段
-    if (p_json.contains("label"))
-    {
-        // 检查point_b是否正在工作
-        if (point_b.is_working)
-        {
-            tail_ai_ipc.DealAIIPCData(p_json);
-            g_console_logger->debug("Deal_Tail_AIIPCData clean res {}  ", p_json["label"].dump().c_str());
-            // 记录调试信息到控制台和文件日志
-            g_file_logger->debug("Deal_Tail_AIIPCData clean res {} ", p_json["label"].dump().c_str());
-        }
-        else
-        {
-            // 如果当前时间与 point_b的leave_time相差  ai_deal_delay_time 以内则处理
-            time_t cur_time;
-            time(&cur_time);
-            if (difftime(cur_time, point_b.leave_time) <= ai_deal_delay_time)
-            {
-                tail_ai_ipc.DealAIIPCData(p_json);
-                g_console_logger->debug("Deal_Tail_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
-                g_file_logger->debug("Deal_Tail_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
-            }
-        }
-    }
-    res.set_content("OK", "text/plain");
-}
 
-void WashReport::Deal_Roof_AIIPCData(const json &p_json, Response &res)
+
+void WashReport::Deal_TailAndRoof_AIIPCData(const json &p_json, Response &res)
 {
     // 检查JSON数据中是否包含"label"字段
     if (p_json.contains("label"))
-    {
-         
+    {    
       //  if (point_b.is_working)
         if (ipc.has_trigger == true)
         {
-            roof_ai_ipc.DealAIIPCData(p_json);
-            g_console_logger->debug("Deal_Roof_AIIPCData clean res {}  ", p_json["label"].dump().c_str());
+            roof_tail_ai_ipc.DealAIIPCData(p_json);
+            g_console_logger->debug("Deal Tail and roof clean res {}  ", p_json["label"].dump().c_str());
             // 记录调试信息到控制台和文件日志
-            g_file_logger->debug("Deal_Roof_AIIPCData clean res {} ", p_json["label"].dump().c_str());
+            g_file_logger->debug("Deal Tail and roof clean res {} ", p_json["label"].dump().c_str());
         }
         else{
             g_console_logger->debug("Rejected handle Roof AIIPC cause ipc has no trigger");
@@ -1398,7 +1405,7 @@ void WashReport::Deal_Roof_AIIPCData(const json &p_json, Response &res)
         //     time(&cur_time);
         //     if (difftime(cur_time, point_b.leave_time) <= ai_deal_delay_time)
         //     {
-        //         roof_ai_ipc.DealAIIPCData(p_json);
+        //         roof_tail_ai_ipc.DealAIIPCData(p_json);
         //         g_console_logger->debug("Deal_Roof_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
         //         g_file_logger->debug("Deal_Roof_AIIPCData clean res  in delay time {} ", p_json["label"].dump().c_str());
         //     }

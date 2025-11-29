@@ -198,9 +198,11 @@ void NetFoundation::StartServer()
                { CarInIPCDataHandler(req, res); });
 
 //2025-11-25 增加车尾 车顶 左侧 右侧 AI IPC 处理路由
-  mServer.Post("/aiipc/tail", [&](const Request &req, Response &res)
-               { TailAIIPCHandler(req, res); });
-  mServer.Post("/aiipc/roof", [&](const Request &req, Response &res)
+  // mServer.Post("/aiipc/tail", [&](const Request &req, Response &res)
+  //              { TailAIIPCHandler(req, res); });
+
+  //车尾现在加到顶棚一起处理
+  mServer.Post("/aiipc/roof_and_tail", [&](const Request &req, Response &res)
                { RoofAIIPCHandler(req, res); });
   mServer.Post("/aiipc/side_left", [&](const Request &req, Response &res)
                { LeftSideAIIPCHandler(req, res); });

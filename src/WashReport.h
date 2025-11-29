@@ -54,8 +54,8 @@ public:
 
     void Deal_Side_L_AIIPCData(const json &p_json, Response &res);
     void Deal_Side_R_AIIPCData(const json &p_json, Response &res);
-    void Deal_Tail_AIIPCData(const json &p_json, Response &res);
-    void Deal_Roof_AIIPCData(const json &p_json, Response &res);
+    
+    void Deal_TailAndRoof_AIIPCData(const json &p_json, Response &res);
 
 
 
@@ -208,11 +208,11 @@ private:
     IPC ipc;
     AIIPC l_ai_ipc;
     AIIPC r_ai_ipc;
- //2025 11 24新增四个ai相机
+ //2025 11 24新增三个ai相机
    AIIPC  side_l_ai_ipc;
    AIIPC  side_r_ai_ipc;
-   AIIPC  tail_ai_ipc;
-   AIIPC  roof_ai_ipc;
+  
+   AIIPC  roof_tail_ai_ipc;
 
 
 

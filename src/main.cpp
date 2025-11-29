@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK,add RLTR 4aiipc ,no exit,25-11-25";
+const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK,add 3 aiipc ,no exit,25-11-30";
 
 //接入6个ai ipc
 
@@ -150,12 +150,9 @@ int main()
   auto wash_r_aiipc_hander = std::bind(&WashReport::Deal_R_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
   uni_net.get()->Set_R_IPCDataHandleFunc(wash_r_aiipc_hander);
 
-  // 绑定车尾AI识别干净程度的数据处理通道
-  auto wash_tail_aiipc_hander = std::bind(&WashReport::Deal_Tail_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
-  uni_net.get()->SetTailIPCDataHandleFunc(wash_tail_aiipc_hander);
-
-  // 绑定车顶AI识别干净程度的数据处理通道
-  auto wash_roof_aiipc_hander = std::bind(&WashReport::Deal_Roof_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
+ 
+  // 绑定车顶+车尾AI识别干净程度的数据处理通道
+  auto wash_roof_aiipc_hander = std::bind(&WashReport::Deal_TailAndRoof_AIIPCData, uni_wash_report.get(), std::placeholders::_1, std::placeholders::_2);
   uni_net.get()->SetRoofIPCDataHandleFunc(wash_roof_aiipc_hander);
 
   // 绑定左侧AI识别干净程度的数据处理通道
