@@ -82,7 +82,7 @@ private:
 
     int power_type_report_interval = 10; // 电源类型上报间隔，单位分钟  
     Timer power_type_report_timer;
-    int cur_power_type = 1; // 当前的电源类型，初始值为1 市电
+    int cur_power_type = 1; // 当前的电源类型，初始值为1 市电 , 0 为备用电源
 
     int serial_fd;
     std::string port_name;

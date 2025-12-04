@@ -1192,7 +1192,11 @@ void WashReport::ReportPowerType()
 
     //判断如果PostJsonToServer 是可用的，则发送数据
     if(PostJsonToServer)
-    {PostJsonToServer(res);}
+    {
+        PostJsonToServer(res);
+        g_console_logger->info("Report Power Type  {}  ", cur_power_type);
+        g_file_logger->info("Report Power Type  {}  ", cur_power_type);
+    }
 
 
 }
