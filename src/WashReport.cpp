@@ -443,10 +443,17 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
         r_ai_ipc.ResetStatus();
         l_ai_ipc.ResetStatus();
 
+        side_l_ai_ipc.ResetStatus();
+        side_r_ai_ipc.ResetStatus();
+
+        roof_tail_ai_ipc.ResetStatus();
+
         // 清除B点的定时器
         point_b.ResetStatus();
         // 清除水泵的定时器
         water_pump.ResetStatus();
+
+
 
         g_console_logger->debug("Both sides AI IPC status  and point b   water pump have been reset");
         g_file_logger->debug("Both sides AI IPC status  and point b water pump have been reset");
