@@ -395,7 +395,13 @@ void WashReport::InitDefInfo(const char *file_path)
         ai_deal_delay_time = data["time_after_b"];
     }
 
-    //判断存不存在 power_type_report_interval 字段
+    // 判断存不存在 power_report_flag 字段
+    if (data.contains("power_report_flag"))
+    {
+        power_report_flag = data["power_report_flag"];
+    }
+
+    // 判断存不存在 power_type_report_interval 字段
     if (data.contains("power_type_report_interval"))
     {
         power_type_report_interval = data["power_type_report_interval"];
@@ -406,10 +412,9 @@ void WashReport::InitDefInfo(const char *file_path)
     f.close();
 
     ReportPowerType();
-    power_type_report_timer.setInterval([&]() {
-        ReportPowerType();
-    },
-                                      power_type_report_interval * 60 * 1000);
+    power_type_report_timer.setInterval([&]()
+                                        { ReportPowerType(); },
+                                        power_type_report_interval * 60 * 1000);
 }
 
 // 接收到摄像头推送的抓拍数据
@@ -632,13 +637,13 @@ void WashReport::DealSerialData()
                     for (int i = 0; i < serial_data_queue.size(); i++)
                     {
                         if (serial_data_queue[i] == 0x55 && (i + 8) <= (serial_data_queue.size() - 1))
-                        { // 寻找到帧头，且后续长度足够解
-//把每个字节的数据在一行中打印出来
-                            // for (int j = 0; j < 9; j++)
-                            // {
-                            //     printf("0x%02X ", (unsigned char)serial_data_queue[i + j]);
-                            // }
-                            // printf("\n");
+                        {   // 寻找到帧头，且后续长度足够解
+                            // 把每个字节的数据在一行中打印出来
+                            //  for (int j = 0; j < 9; j++)
+                            //  {
+                            //      printf("0x%02X ", (unsigned char)serial_data_queue[i + j]);
+                            //  }
+                            //  printf("\n");
 
                             have_decode = true;
                             // 校验CRC16
@@ -646,7 +651,7 @@ void WashReport::DealSerialData()
                             point_b.DealStatus(serial_data_queue[i + 2]);
                             water_pump.DealStatus(serial_data_queue[i + 5]);
 
-                            //电源类型
+                            // 电源类型
                             int power_type = serial_data_queue[i + 1];
                             if (power_type != cur_power_type)
                             {
@@ -683,12 +688,12 @@ json WashReport::GetCaptureJson()
     res["deviceNo"] = deviceNo;
     res["captureTime"] = "";
     res["ztcCph"] = "";
-    res["ztcColor"]= "";
+    res["ztcColor"] = "";
     res["vehicleType"];
     res["enterTime"] = "";
     res["leaveTime"] = "";
-    res["alarmType"]=5; //告警类型 1：车辆绕行  2：冲洗时间不足  3：未冲洗  4：其他  5：正常冲洗
- 
+    res["alarmType"] = 5; // 告警类型 1：车辆绕行  2：冲洗时间不足  3：未冲洗  4：其他  5：正常冲洗
+
     res["frontWheelWashTime"] = 0;
     res["hindWheelWashTime"] = 0;
     res["deviceSerial"] = nvr_serial_num;
@@ -696,7 +701,7 @@ json WashReport::GetCaptureJson()
     res["picture"] = " ";
     res["dataType"] = 1;
     res["direction"];
-    res["cleanRes"] = 0;          // 车辆车轮清洗结果 1：未知  2：冲洗干净  3：未冲洗干净
+    res["cleanRes"] = 0;      // 车辆车轮清洗结果 1：未知  2：冲洗干净  3：未冲洗干净
     res["leftphotoUrl"] = ""; // 车辆左侧抓拍图片
     res["rightphotoUrl"] = "";
     res["rightclean"] = 0;
@@ -802,7 +807,7 @@ void WashReport::StartReportingProcess()
     {
         DealSerialData();
         if (ipc.has_trigger == true)
-        {  
+        {
 
             if (point_b.is_working != last_point_b_working || point_b.cur_status != last_point_b_status || point_b.exit_car_leaving != exit_car_leaving)
             {
@@ -822,7 +827,7 @@ void WashReport::StartReportingProcess()
                 capture_res["vehicleType"] = CarTypeConvert(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["type"]);
                 //*进入时间就是抓拍时间
                 capture_res["enterTime"] = utc_to_string(ipc.json_data["AlarmInfoPlate"]["result"]["PlateResult"]["timeStamp"]["Timeval"]["sec"]);
-               
+
                 double diff_seconds = difftime(point_b.leave_time, car_active_time);
                 long long time_interval = static_cast<long long>(diff_seconds); // 如果需要整数部分
 
@@ -835,40 +840,44 @@ void WashReport::StartReportingProcess()
                 // 打印enterTime 和 leaveTime
                 std::cout << "enter time: " << capture_res["enterTime"] << std::endl;
                 std::cout << "leave time: " << capture_res["leaveTime"] << std::endl;
-                //根据进入时间 和离开时间计算冲洗时间，以及水泵的状态得出alarmType
-//!告警类型
-// 1：车辆绕行
-// 2：冲洗时间不足
-// 3：未冲洗
-// 4：其他
-// 5：正常冲洗
-               capture_res["alarmType"] =GetAlarmByWaterPump();
+                // 根据进入时间 和离开时间计算冲洗时间，以及水泵的状态得出alarmType
+                //! 告警类型
+                // 1：车辆绕行
+                // 2：冲洗时间不足
+                // 3：未冲洗
+                // 4：其他
+                // 5：正常冲洗
+                capture_res["alarmType"] = GetAlarmByWaterPump();
 
                 g_console_logger->debug("leave time: {}", capture_res["leaveTime"].dump().c_str());
                 g_file_logger->debug("leave time: {}", capture_res["leaveTime"].dump().c_str());
-                //记录告警类型到日志
-                if(capture_res["alarmType"] == 5)
+                // 记录告警类型到日志
+                if (capture_res["alarmType"] == 5)
                 {
-                 g_console_logger->debug("Alarm Type is 正常冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
-                 g_file_logger->debug("Alarm Type is 正常冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
-                }else if(capture_res["alarmType"] == 2)
-                {
-                 g_console_logger->debug("Alarm Type is 冲洗时间不足 for  {} ", capture_res["ztcCph"].dump().c_str());
-                 g_file_logger->debug("Alarm Type is 冲洗时间不足 for  {} ", capture_res["ztcCph"].dump().c_str());
-                }else if(capture_res["alarmType"] == 3)
-                {
-                 g_console_logger->debug("Alarm Type is 未冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
-                 g_file_logger->debug("Alarm Type is 未冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
-                }else if(capture_res["alarmType"] == 4)
-                {
-                 g_console_logger->debug("Alarm Type is 其他 for  {} ", capture_res["ztcCph"].dump().c_str());
-                 g_file_logger->debug("Alarm Type is 其他 for  {} ", capture_res["ztcCph"].dump().c_str());
-                }else if(capture_res["alarmType"] == 1)
-                {
-                 g_console_logger->debug("Alarm Type is 车辆绕行 for  {} ", capture_res["ztcCph"].dump().c_str());
-                 g_file_logger->debug("Alarm Type is 车辆绕行 for  {} ", capture_res["ztcCph"].dump().c_str());
+                    g_console_logger->debug("Alarm Type is 正常冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
+                    g_file_logger->debug("Alarm Type is 正常冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
                 }
-              
+                else if (capture_res["alarmType"] == 2)
+                {
+                    g_console_logger->debug("Alarm Type is 冲洗时间不足 for  {} ", capture_res["ztcCph"].dump().c_str());
+                    g_file_logger->debug("Alarm Type is 冲洗时间不足 for  {} ", capture_res["ztcCph"].dump().c_str());
+                }
+                else if (capture_res["alarmType"] == 3)
+                {
+                    g_console_logger->debug("Alarm Type is 未冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
+                    g_file_logger->debug("Alarm Type is 未冲洗 for  {} ", capture_res["ztcCph"].dump().c_str());
+                }
+                else if (capture_res["alarmType"] == 4)
+                {
+                    g_console_logger->debug("Alarm Type is 其他 for  {} ", capture_res["ztcCph"].dump().c_str());
+                    g_file_logger->debug("Alarm Type is 其他 for  {} ", capture_res["ztcCph"].dump().c_str());
+                }
+                else if (capture_res["alarmType"] == 1)
+                {
+                    g_console_logger->debug("Alarm Type is 车辆绕行 for  {} ", capture_res["ztcCph"].dump().c_str());
+                    g_file_logger->debug("Alarm Type is 车辆绕行 for  {} ", capture_res["ztcCph"].dump().c_str());
+                }
+
                 // 前后轮冲洗时间改为 0
                 capture_res["frontWheelWashTime"] = 0;
                 capture_res["hindWheelWashTime"] = 0;
@@ -888,10 +897,10 @@ void WashReport::StartReportingProcess()
 
                 while (std::chrono::steady_clock::now() < deadline)
                 {
-                    //打印剩余多少收集时间
+                    // 打印剩余多少收集时间
                     auto remaining_time = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now()).count();
                     g_console_logger->debug("remaining collect  time {} ms", remaining_time);
-                    
+
                     std::this_thread::sleep_for(std::chrono::milliseconds(3000));
                 }
 
@@ -917,7 +926,7 @@ void WashReport::StartReportingProcess()
                         g_console_logger->debug("All clean {}", capture_res["ztcCph"].dump().c_str());
                         g_file_logger->debug("All clean {}", capture_res["ztcCph"].dump().c_str());
 
-                       // 闸机控制,异步操作根据延迟时间和保持时间控制BarrierGateCtrl
+                        // 闸机控制,异步操作根据延迟时间和保持时间控制BarrierGateCtrl
                         if (NULL != mBarrierGate)
                         {
 
@@ -1183,22 +1192,28 @@ int WashReport::GetScore(float p)
 }
 
 void WashReport::ReportPowerType()
-{  
-    json res;
-    res["deviceNo"] = deviceNo;
-    res["powerType"] = cur_power_type;
-    res["dataType"] = 5;
-    res["updateTime"] = getTime(time_format);
-
-    //判断如果PostJsonToServer 是可用的，则发送数据
-    if(PostJsonToServer)
+{
+    if (power_report_flag)
     {
-        PostJsonToServer(res);
-        g_console_logger->info("Report Power Type  {}  ", cur_power_type);
-        g_file_logger->info("Report Power Type  {}  ", cur_power_type);
+
+        json res;
+        res["deviceNo"] = deviceNo;
+        res["powerType"] = cur_power_type;
+        res["dataType"] = 5;
+        res["updateTime"] = getTime(time_format);
+
+        // 判断如果PostJsonToServer 是可用的，则发送数据
+        if (PostJsonToServer)
+        {
+            PostJsonToServer(res);
+            g_console_logger->info("Report Power Type  {}  ", cur_power_type);
+            g_file_logger->info("Report Power Type  {}  ", cur_power_type);
+        }
+    }else
+    {
+        g_console_logger->info("Power Type report is disabled ");
+        g_file_logger->info("Power Type report is disabled ");
     }
-
-
 }
 
 void WashReport::StartHeartBeat()

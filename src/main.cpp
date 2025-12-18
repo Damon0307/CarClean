@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK ,power type,no exit,25-12-3";
+const char *version_str = "RV1106 ntp time,Simple, ip check, AIIPC LOCK ,power type,no exit,25-12-18";
 
 const char *todo_str = " she xiang tou pian yi jian ce";
 //const char *version_str = "test update";
@@ -100,7 +100,7 @@ int main()
 
   auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
       file_path_logger, // 日志文件名
-      10 * 1024 * 1024, // 文件最大尺寸：10MB
+      50 * 1024 * 1024, // 文件最大尺寸：50MB
       3);               // 保留的文件份数
 
   // 设置日志器名称和sink
