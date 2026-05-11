@@ -10,7 +10,8 @@
 */
 
 
-#include <string> 
+#include <string>
+#include <atomic>
 #include "httplib.h"
 #include "json.hpp"
  
@@ -94,6 +95,7 @@ private:
     std::string GetPhyIP(const std::string& interface);
 
     std::thread ip_check_thread;
+    std::atomic<bool> ip_check_running{true};
 
 };
 

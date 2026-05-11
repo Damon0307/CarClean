@@ -85,7 +85,9 @@ NetFoundation::NetFoundation(/* args */)
 
 NetFoundation::~NetFoundation()
 {
-  ip_check_thread.join();
+  ip_check_running = false;
+  if (ip_check_thread.joinable())
+    ip_check_thread.join();
 }
 
 void NetFoundation::InitNetCFG(const char *file_name)
@@ -107,7 +109,7 @@ void NetFoundation::InitNetCFG(const char *file_name)
 
   ip_check_thread = std::thread([this]()
                                 {
-    while (true)
+    while (ip_check_running)
     { 
       std::string cur_ip = GetPhyIP("eth0");  
       if(cur_ip!=this->local_server)
