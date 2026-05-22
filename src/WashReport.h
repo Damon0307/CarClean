@@ -8,6 +8,7 @@
 #include <deque>
 #include <mutex>
 #include <time.h>
+#include <atomic>
 #include "spdlog/spdlog.h"
 #include "json.hpp"
 #include "httplib.h"
@@ -66,6 +67,7 @@ public:
     static std::string time_to_string(time_t t);
     static std::string utc_to_string(long long utcSeconds);
 
+    int GetAlarmByWaterPump(time_t wp_begin, time_t wp_finish, time_t b_leave);
     int GetScore(float p);
 
     void ReportPowerType(); //上报电源类型
@@ -90,6 +92,8 @@ private:
     std::string port_name;
     std::deque<char> serial_data_queue; // 目前看只需要保存一帧数据即可
     std::mutex  sensor_data_mutex;       // 配合他的mutex
+
+    mutable std::mutex m_state_mutex;    // 保护 point_b/water_pump/ipc/cur_power_type 跨线程访问
 
     json ResponseToIPC(int logic_type);
 
@@ -207,8 +211,7 @@ private:
     //B点触发下降的时间，  用作AI摄像机的超时使用
     time_t   b_exit_time;
 
-    int GetAlarmByWaterPump();//通过水泵的工作时间判断是否超时
-    int GetDirByIPC(int ipc_dir); // 通过IPC 
+    int GetDirByIPC(int ipc_dir); // 通过IPC
 
     void NotificationsToUart(int event_num); //发送事件信息给串口方便其控制NVR
 
