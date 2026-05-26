@@ -19,7 +19,8 @@ class Point
 {
 private:
   //小模块 就不做数据保护了
- 
+    alarm_func_t alarm_func;
+
 public:
     Point(/* args */)
     {
@@ -31,7 +32,7 @@ public:
         alarm_timer.stop();
     };
     ~Point(){};
-    alarm_func_t alarm_func;
+    void SetAlarmFunc(alarm_func_t func) { alarm_func = func; }
     void SetPonintExit(bool status) // 设置该点是否为出口点
     {
         is_exit = status;
@@ -58,7 +59,7 @@ public:
             if (is_working == false)
             {
                  //异常报警开启
-                alarm_timer.setTimeout([&](){
+                alarm_timer.setTimeout([alarm_func = this->alarm_func, is_exit = this->is_exit](){
                     if(is_exit==true){
                     alarm_func(3);
                     }else{

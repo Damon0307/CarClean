@@ -132,7 +132,7 @@ private:
             alarm_timer.stop();
         };
         ~WaterPump(){};
-         alarm_func_t alarm_func;
+        void SetAlarmFunc(alarm_func_t func) { alarm_func = func; }
         //工作超时报警定时器
         Timer alarm_timer;
 
@@ -170,7 +170,7 @@ private:
                     g_console_logger->debug("Water Pump start time {}",time_to_string(begin_time));
                     g_file_logger->debug("Water Pump start time {}",time_to_string(begin_time));
 
-                    alarm_timer.setTimeout([&](){
+                    alarm_timer.setTimeout([alarm_func = this->alarm_func](){
                             alarm_func(2); //水泵的告警ID是2
                     },600*1000);
                 }
@@ -195,6 +195,8 @@ private:
             finish_time = 0;
             alarm_timer.stop();
         }
+    private:
+        alarm_func_t alarm_func;
     };
     // a b点位置的光电模块 ，水泵,两侧AI摄像机
 

@@ -319,8 +319,8 @@ WashReport::WashReport(/* args */)
     ipc.ResetStatus();
     serial_data_queue.clear();
     // need lock?
-    point_b.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
-    water_pump.alarm_func = std::bind(&WashReport::AlarmReport, this, std::placeholders::_1);
+    point_b.SetAlarmFunc(std::bind(&WashReport::AlarmReport, this, std::placeholders::_1));
+    water_pump.SetAlarmFunc(std::bind(&WashReport::AlarmReport, this, std::placeholders::_1));
 }
 
 WashReport::~WashReport()
@@ -412,7 +412,8 @@ void WashReport::InitDefInfo(const char *file_path)
     f.close();
 
     ReportPowerType();
-    power_type_report_timer.setInterval([&]()
+    power_type_report_timer.stop();
+    power_type_report_timer.setInterval([this]()
                                         { ReportPowerType(); },
                                         power_type_report_interval * 60 * 1000);
 }
@@ -1232,7 +1233,8 @@ void WashReport::ReportPowerType()
 void WashReport::StartHeartBeat()
 {
 
-    mHeartBearTimer.setInterval([&]()
+    mHeartBearTimer.stop();
+    mHeartBearTimer.setInterval([this]()
                                 {
                                     json res = GetDeviceStatusJson();
                                     res["status"] = 1;
@@ -1242,7 +1244,8 @@ void WashReport::StartHeartBeat()
                                 120 * 1000);
 
 #if (DIRECTOR_LINK_ENABLE == 1)
-    mDlReportStatusTimer.setInterval([&]()
+    mDlReportStatusTimer.stop();
+    mDlReportStatusTimer.setInterval([this]()
                                      { dl_report_status(deviceNo, 0); },
                                      120 * 1000); // 5 minutes
 #endif
