@@ -2,21 +2,26 @@
 #define __AIIPC_H__
 
 /**
- * AI 摄像头模块抽象
+ * AI 摄像头模块抽象（简化版）
+ *
+ * 所有摄像机统一处理 clean/dirty 标签 + score + img_base64。
+ * 通过 aiipc_type 区分摄像机用途（仅影响日志/调试）。
+ *
+ * 当前使用的摄像机:
+ *   type 1: 左轮 / 右轮
+ *   type 3: 车尾
+ *   (type 2: 车身侧面 — 暂时屏蔽)
  */
 
 #include <iostream>
 #include <string>
-#include <chrono>
-#include <thread>
 #include <deque>
 #include <mutex>
 #include <memory>
 #include <atomic>
 #include "json.hpp"
-#include "spdlog/spdlog.h" // 引入spdlog主头文件，包含logger定义
+#include "spdlog/spdlog.h"
 
-// extern logger obj
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
 
@@ -25,18 +30,20 @@ extern std::shared_ptr<spdlog::logger> g_file_logger;
 using json = nlohmann::json;
 using namespace std;
 
-//2025-11-24 新增摄像机种类 1 车轮，2 车身面 3 车顶棚
-enum class CameraType {
-    WHEEL = 1,
-    BODY = 2,
-    ROOF = 3
-};
-
 class AIIPC
 {
 public:
-    AIIPC() : has_res(false), dirty_seen(false), first_dirty_captured(false) {}
+    enum AIIPCType {
+        TYPE_WHEEL = 1,       // 车轮
+        TYPE_SIDE_BODY = 2,   // 车身侧面（暂时屏蔽）
+        TYPE_TAIL = 3         // 车尾
+    };
+
+    AIIPC() : aiipc_type(TYPE_WHEEL), has_res(false), dirty_seen(false),
+              first_dirty_captured(false) {}
     ~AIIPC() = default;
+
+    void SetAIIPCType(int t) { aiipc_type = t; }
 
     void ResetStatus()
     {
@@ -47,38 +54,84 @@ public:
         detect_json = {};
         res_queue.clear();
         cur_dirty_img.clear();
-        //only for roof camera
-        roof_uncovered_seen.store(false, std::memory_order_relaxed);
-        first_uncovered_captured = false;
-        roof_detect_json = {};
-        roof_res_queue.clear();
-        roof_cur_uncovered_img.clear();
     }
 
-    void DealAIIPCData(const json &pjson);
-  
+    // 统一入口：所有类型处理 clean/dirty 标签
+    void DealAIIPCData(const json &pjson)
+    {
+        try
+        {
+            std::lock_guard<std::mutex> lk(mtx);
+
+            if (!pjson.contains("label") || !pjson["label"].is_string())
+                return;
+
+            const std::string lbl = pjson["label"].get<std::string>();
+
+            // 仅处理 clean / dirty 标签
+            if (lbl != "clean" && lbl != "dirty")
+                return;
+
+            // 记录标签队列
+            res_queue.push_back(lbl);
+            if (res_queue.size() > MAX_AI_LABEL_QUEUE_SIZE)
+                res_queue.pop_front();
+
+            // 标记脏车
+            if (lbl == "dirty")
+                dirty_seen.store(true, std::memory_order_relaxed);
+
+            detect_json["raw_label"] = lbl;
+
+            // 提取 score
+            if (pjson.contains("extend") && pjson["extend"].is_object())
+            {
+                auto &ext = pjson["extend"];
+                if (ext.contains("alarm_objs") && ext["alarm_objs"].is_array() && !ext["alarm_objs"].empty())
+                {
+                    auto &first = ext["alarm_objs"][0];
+                    if (first.contains("score") && first["score"].is_number())
+                        detect_json["score"] = first["score"];
+                }
+            }
+
+            // 提取图片
+            if (pjson.contains("img_base64") && pjson["img_base64"].is_string())
+            {
+                const std::string img = pjson["img_base64"].get<std::string>();
+                if (!first_dirty_captured && lbl == "dirty")
+                {
+                    cur_dirty_img = img;
+                    first_dirty_captured = true;
+                }
+                detect_json["latest_img_base64"] = img;
+            }
+
+            has_res.store(true, std::memory_order_release);
+        }
+        catch (const std::exception &e)
+        {
+            g_console_logger->error("DealAIIPCData exception: {}", e.what());
+            g_file_logger->error("DealAIIPCData exception: {}", e.what());
+        }
+    }
+
+    // 获取检测结果
     json GetDetectRes()
     {
         std::lock_guard<std::mutex> lk(mtx);
-        json out = detect_json; // 拷贝当前快照
-        // 决策 label
+        json out = detect_json;
         if (dirty_seen.load(std::memory_order_relaxed))
         {
             out["label"] = "dirty";
             if (!cur_dirty_img.empty())
-            {
-                out["img_base64"] = cur_dirty_img; // 第一张脏图
-            }
+                out["img_base64"] = cur_dirty_img;
         }
         else if (has_res.load(std::memory_order_relaxed))
         {
-            // 只有出现过数据但没有脏标签时判断为 clean
             out["label"] = "clean";
-            // 若未出现脏，提供最新图片（如果有）
             if (out.contains("latest_img_base64"))
-            {
                 out["img_base64"] = out["latest_img_base64"];
-            }
         }
         else
         {
@@ -87,99 +140,17 @@ public:
         return out;
     }
 
-    json GetRoofDetectRes()
-    {
-        std::lock_guard<std::mutex> lk(mtx);
-        json out = roof_detect_json; // 拷贝当前快照
-        // 决策 label
-        if (roof_uncovered_seen.load(std::memory_order_relaxed))
-        {
-            out["label"] = "uncovered";
-            if (!roof_cur_uncovered_img.empty())
-            {
-                out["img_base64"] = roof_cur_uncovered_img; // 第一张 uncovered 图
-            }
-        }
-        else if (has_res.load(std::memory_order_relaxed))
-        {
-            // 只有出现过数据但没有 uncovered 标签时判断为 covered
-            out["label"] = "covered";
-            // 若未出现 uncovered，提供最新图片（如果有）
-            if (out.contains("latest_img_base64"))
-            {
-                out["img_base64"] = out["latest_img_base64"];
-            }
-        }
-        else
-        {
-            out["label"] = "unknown";
-        }
-        return out;
-    }
-
-
-    bool GetResult()
-    {
-      
-        std::lock_guard<std::mutex> lk(mtx);
-        if (aiipc_type == 1)
-        {
-            return has_res.load(std::memory_order_acquire);
-        }else{
-            //复合摄像头需要判断两个队列是否都有数据
-            if(roof_res_queue.size() > 0 && res_queue.size() > 0){
-                return true;
-            }else{
-                return false;
-            }
-        }
-        return false;
-    }
- 
-    bool IsCovered()
-    {
-        std::lock_guard<std::mutex> lk(mtx);
-        if (aiipc_type == 3)
-        {
-            return !roof_uncovered_seen.load(std::memory_order_relaxed);
-        }
-        return false;
-    }
-
-    void SetAIIPCType(int type)
-    {
-        aiipc_type = type;
-    }
+    bool GetResult() const { return has_res.load(std::memory_order_acquire); }
 
 private:
-    int aiipc_type = 1;                     // AI IPC 类型标识
-    std::atomic<bool> has_res;          // 是否至少收到过一帧
-    std::atomic<bool> dirty_seen;       // 是否出现过非 clean 标签
-
-    
-
-    bool first_dirty_captured;          // 第一张脏图是否已捕获
-    json detect_json;                   // 聚合结果
-
-    json roof_detect_json;               // 顶棚聚合结果
-
-    std::deque<std::string> res_queue;  // 最近标签窗口（调试用途）
-    std::string cur_dirty_img;          // 第一张脏图
-    std::mutex mtx;                     // 保护聚合状态
-
-
-    //only for side + roof camera
-    std::deque<std::string> roof_res_queue;  // 最近标签窗口（调试用途）
-    std::atomic<bool> roof_uncovered_seen; // 是否出现过 uncovered 标签（顶棚专用
-    std::string roof_cur_uncovered_img;          // 第一张uncovered图
-    bool first_uncovered_captured;          // 第一张uncovered图是否已捕获
-
-
-    void DealWheelAIIPCData(const json &pjson);
-    void DealBodyAIIPCData(const json &pjson);
-    void DealRoofAIIPCData(const json &pjson);
-
-
+    int aiipc_type;
+    std::atomic<bool> has_res;
+    std::atomic<bool> dirty_seen;
+    bool first_dirty_captured;
+    json detect_json;
+    std::deque<std::string> res_queue;
+    std::string cur_dirty_img;
+    std::mutex mtx;
 };
 
 #endif // __AIIPC_H__

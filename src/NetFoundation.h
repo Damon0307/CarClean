@@ -1,127 +1,94 @@
 #ifndef __NETFOUNDATION_H__
 #define __NETFOUNDATION_H__
 
-
 /**
  * @brief  网络连接相关功能处理
- * @author Damon0307
- * @copyright 1294056177@qq.com
- * @date 2023/09/16
-*/
+ *
+ * 路由映射:
+ *   /wash_report      → WashIPCDataHandler      (车牌抓拍)
+ *   /detour_report     → DetourIPCDataHandler     (绕道抓拍)
+ *   /car_in            → CarInIPCDataHandler      (车辆进场)
+ *   /aiipc/left        → LeftWheelAIIPCHandler    (左轮AI)
+ *   /aiipc/right       → RightWheelAIIPCHandler   (右轮AI)
+ *   /aiipc/roof_and_tail → RoofAIIPCHandler       (顶棚+车尾AI)
+ *   /aiipc/side_left   → LeftSideAIIPCHandler     (左侧车身AI)
+ *   /aiipc/side_right  → RightSideAIIPCHandler    (右侧车身AI)
+ */
 
-
-#include <string> 
+#include <string>
+#include <map>
 #include "httplib.h"
 #include "json.hpp"
- 
-using json =nlohmann::json;
+
+using json = nlohmann::json;
 using namespace httplib;
+
+using IPCHandlerFunc = std::function<void(const json&, Response&)>;
 
 class NetFoundation
 {
-
 public:
     NetFoundation(/* args */);
     ~NetFoundation();
- 
+
     void InitNetCFG(const char* file_name);
-    //处理 正常冲洗场景的  摄像头数据
+
+    // IPC 数据处理handler（thin wrappers → 内部委托给GenericHandler）
     void WashIPCDataHandler(const Request& req, Response& res);
     void DetourIPCDataHandler(const Request& req, Response& res);
     void CarInIPCDataHandler(const Request& req, Response& res);
     void LeftWheelAIIPCHandler(const Request& req, Response& res);
     void RightWheelAIIPCHandler(const Request& req, Response& res);
-
     void TailAIIPCHandler(const Request& req, Response& res);
     void RoofAIIPCHandler(const Request& req, Response& res);
     void LeftSideAIIPCHandler(const Request& req, Response& res);
     void RightSideAIIPCHandler(const Request& req, Response& res);
 
- 
     bool PostDataToServer(json p_json);
-    
-    void SetWashIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      wash_hadler_func =  p_func; 
-    }
 
-    void SetDetourIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      detour_hadler_func =  p_func; 
-    }
+    // 设置各IPC数据处理的回调函数
+    void SetWashIPCDataHandleFunc(IPCHandlerFunc func)    { m_handlers[WASH_IPC] = func; }
+    void SetDetourIPCDataHandleFunc(IPCHandlerFunc func)  { m_handlers[DETOUR_IPC] = func; }
+    void Set_L_IPCDataHandleFunc(IPCHandlerFunc func)     { m_handlers[LEFT_WHEEL_AI] = func; }
+    void Set_R_IPCDataHandleFunc(IPCHandlerFunc func)     { m_handlers[RIGHT_WHEEL_AI] = func; }
+    void SetCarInIPCDataHandleFunc(IPCHandlerFunc func)   { m_handlers[CAR_IN_IPC] = func; }
+    void SetTailIPCDataHandleFunc(IPCHandlerFunc func)    { m_handlers[TAIL_AI] = func; }
+    void SetRoofIPCDataHandleFunc(IPCHandlerFunc func)    { m_handlers[ROOF_AI] = func; }
+    void SetLeftSideIPCDataHandleFunc(IPCHandlerFunc func)  { m_handlers[LEFT_SIDE_AI] = func; }
+    void SetRightSideIPCDataHandleFunc(IPCHandlerFunc func) { m_handlers[RIGHT_SIDE_AI] = func; }
 
-    void Set_L_IPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      wash_l_aiipc_func =  p_func; 
-    }
-
-    void Set_R_IPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      wash_r_aiipc_func =  p_func; 
-    }
-    void SetCarInIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      car_in_ipc_func =  p_func; 
-    } 
-
-    void SetTailIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      wash_tail_aiipc_func =  p_func; 
-    }
-
-    void SetRoofIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      wash_roof_aiipc_func =  p_func; 
-    }
-
-    void SetLeftSideIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      wash_side_l_aiipc_func =  p_func; 
-    }
-
-    void SetRightSideIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
-    {
-      wash_side_r_aiipc_func =  p_func; 
-    }
-
-
-
- 
-    //注册AIIPC 的webhook
-    void RegisterWebHookForAIIPC();
-
-//服务器开始监听
     void StartServer();
-    
     void ConfigRV1106IP(const std::string& ip);
-
-    //ntp时间同步
     void SyncTimeWithNTP();
 
 private:
-// json参考链接  https://www.cnblogs.com/linuxAndMcu/p/14503341.html
-    
-    //冲洗摄像头
-    std::function<void(const json&, Response&)> wash_hadler_func;
-    //绕道摄像头
-    std::function<void(const json&, Response&)> detour_hadler_func;
-    //左侧车轮ai ipc
-    std::function<void(const json&, Response&)> wash_l_aiipc_func;
-    //右侧车轮ai ipc
-    std::function<void(const json&, Response&)> wash_r_aiipc_func;
-    //车辆入场摄像头
-    std::function<void(const json&, Response&)> car_in_ipc_func; 
+    // IPC handler keys
+    enum HandlerKey {
+        WASH_IPC,
+        DETOUR_IPC,
+        CAR_IN_IPC,
+        LEFT_WHEEL_AI,
+        RIGHT_WHEEL_AI,
+        TAIL_AI,
+        ROOF_AI,
+        LEFT_SIDE_AI,
+        RIGHT_SIDE_AI
+    };
 
-    //车尾部AI IPC
-    std::function<void(const json&, Response&)> wash_tail_aiipc_func;
-    //车顶AI IPC
-    std::function<void(const json&, Response&)> wash_roof_aiipc_func;
-    //左侧AI IPC
-    std::function<void(const json&, Response&)> wash_side_l_aiipc_func;
-    //右侧AI IPC
-    std::function<void(const json&, Response&)> wash_side_r_aiipc_func;
+    // 通用处理：解析JSON并委托给对应handler
+    void GenericHandler(HandlerKey key, const Request& req, Response& res)
+    {
+        auto body = req.body;
+        json req_data = json::parse(body);
+        auto it = m_handlers.find(key);
+        if (it != m_handlers.end() && it->second)
+        {
+            it->second(req_data, res);
+        }
+    }
 
-  
+    std::map<HandlerKey, IPCHandlerFunc> m_handlers;
+
     httplib::Server mServer;
 
     std::string local_server;
@@ -131,9 +98,6 @@ private:
     std::string GetPhyIP(const std::string& interface);
 
     std::thread ip_check_thread;
-
 };
 
-
- 
- #endif // __NETFOUNDATION_H__
+#endif // __NETFOUNDATION_H__
