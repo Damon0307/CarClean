@@ -285,7 +285,7 @@ int CarColorConvert(int p)
     case 2:
         return 2;
     case 6:
-        return 1;
+        return 6;
     case 8:
         return 4;
     case 5:
