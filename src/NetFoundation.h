@@ -10,7 +10,8 @@
 */
 
 
-#include <string> 
+#include <string>
+#include <atomic>
 #include "httplib.h"
 #include "json.hpp"
  
@@ -34,7 +35,7 @@ public:
 
 
  
-    void PostDataToServer(json p_json);
+    bool PostDataToServer(json p_json);
     
     void SetWashIPCDataHandleFunc(std::function<void(const json &, Response&)> p_func)
     {
@@ -65,6 +66,11 @@ public:
 
 //服务器开始监听
     void StartServer();
+    
+    void ConfigRV1106IP(const std::string& ip);
+
+    //ntp时间同步
+    void SyncTimeWithNTP();
 
 private:
 // json参考链接  https://www.cnblogs.com/linuxAndMcu/p/14503341.html
@@ -86,7 +92,10 @@ private:
     std::string remote_server;
     int local_port;
     int remote_port;
-   
+    std::string GetPhyIP(const std::string& interface);
+
+    std::thread ip_check_thread;
+    std::atomic<bool> ip_check_running{true};
 
 };
 

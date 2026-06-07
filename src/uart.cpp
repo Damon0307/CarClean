@@ -36,8 +36,6 @@ using namespace std;
 *******************************************************************/    
 int UART_Open(int fd,char*port)
 {   
-
-    
     fd = open( port, O_RDWR|O_NOCTTY|O_NDELAY);    
     if (fd<0)    
     {    
@@ -53,17 +51,7 @@ int UART_Open(int fd,char*port)
     else    
     {    
         printf("fcntl=%d\n",fcntl(fd, F_SETFL,0));    
-    }    
-    //测试是否为终端设备        
-    // if(0 == isatty(STDIN_FILENO))    
-    // {    
-    //     printf("standard input is not a terminal device\n");    
-    //     return(FALSE);    
-    // }    
-    // else    
-    // {    
-    //     printf("isatty success!\n");    
-    // }                  
+    }                   
     printf("fd->open=%d\n",fd);    
     return fd;    
 }    
@@ -235,19 +223,7 @@ int UART_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity
 *                        
 *出口参数：正确返回为1，错误返回为0  
 *******************************************************************/    
-int UART_Init(int fd, int speed,int flow_ctrl,int databits,int stopbits,int parity)    
-{       
-    //设置串口数据帧格式    
-    if (UART_Set(fd,115200,0,8,1,'N') == FALSE)    
-    {                                                             
-        return FALSE;    
-    }    
-    else    
-    {    
-        return  TRUE;    
-    }    
-}    
-     
+ 
 /*******************************************************************  
 * 名称：            UART_Recv  
 * 功能：            接收串口数据  

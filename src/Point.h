@@ -19,7 +19,8 @@ class Point
 {
 private:
   //小模块 就不做数据保护了
- 
+    alarm_func_t alarm_func;
+
 public:
     Point(/* args */)
     {
@@ -31,7 +32,7 @@ public:
         alarm_timer.stop();
     };
     ~Point(){};
-    alarm_func_t alarm_func;
+    void SetAlarmFunc(alarm_func_t func) { alarm_func = func; }
     void SetPonintExit(bool status) // 设置该点是否为出口点
     {
         is_exit = status;
@@ -43,6 +44,7 @@ public:
     bool is_working;    // 光电模块此次已经触发,需要整个流程结束才能被重置
     bool is_exit;           // 表明该点是否为出口
     bool exit_car_leaving;  // 出口点是否有车离开
+ 
     
     Timer alarm_timer; //雷达异常告警
 
@@ -57,7 +59,7 @@ public:
             if (is_working == false)
             {
                  //异常报警开启
-                alarm_timer.setTimeout([&](){
+                alarm_timer.setTimeout([alarm_func = this->alarm_func, is_exit = this->is_exit](){
                     if(is_exit==true){
                     alarm_func(3);
                     }else{
@@ -97,6 +99,9 @@ public:
                     {
                         exit_car_leaving = true;
                         time(&leave_time);
+                        g_console_logger->debug("Point B Exit Car Leaving time {}",leave_time);
+                        
+                        cur_status = status; // 更新状态
                         // 表明出口有下降沿信号
                     }
 
@@ -115,7 +120,7 @@ public:
         trigger_time = 0;
         leave_time = 0;
         is_working = false;
-        exit_car_leaving =false;
+        exit_car_leaving = false;
         alarm_timer.stop();
     }
 };

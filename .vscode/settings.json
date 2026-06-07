@@ -72,9 +72,12 @@
         "charconv": "cpp",
         "compare": "cpp",
         "concepts": "cpp",
-        "source_location": "cpp",
+        "numbers": "cpp",
         "ranges": "cpp",
+        "semaphore": "cpp",
         "span": "cpp",
-        "stop_token": "cpp"
-    }
+        "stop_token": "cpp",
+        "source_location": "cpp"
+    },
+    "Codegeex.RepoIndex": true
 }
