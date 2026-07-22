@@ -138,15 +138,14 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
     {
         std::lock_guard<std::mutex> lk(sensor_data_mutex);
 
-        ipc.json_data = p_json;
-        ipc.has_trigger = true;
+      // 有效车牌标记一辆新车周期的开始，清除上一周期状态
+point_b.ResetStatus();
+water_pump.ResetStatus();
+ai_ipc_mgr.ResetAll();
 
-        // 新一辆车进入：清空上一辆车的AI摄像头数据
-        // point_b 和 water_pump 由串口驱动，不在此处重置
-        ai_ipc_mgr.ResetAll();
-        point_b.ResetStatus();
-        water_pump.ResetStatus();
-        time(&car_active_time);
+ipc.json_data = p_json;
+ipc.has_trigger = true;
+time(&car_active_time);
     }
 
     std::cout << "Got Car license : " << p_json["AlarmInfoPlate"]["result"]["PlateResult"]["license"].dump() << std::endl;
