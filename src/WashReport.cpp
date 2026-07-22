@@ -144,7 +144,8 @@ void WashReport::DealWashIPCData(const json &p_json, Response &res)
         // 新一辆车进入：清空上一辆车的AI摄像头数据
         // point_b 和 water_pump 由串口驱动，不在此处重置
         ai_ipc_mgr.ResetAll();
-
+        point_b.ResetStatus();
+        water_pump.ResetStatus();
         time(&car_active_time);
     }
 
