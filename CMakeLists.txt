@@ -32,6 +32,13 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
 # 将 ARM_FLAG 传递给配置文件
 configure_file(config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/config.h @ONLY)
 
+# 测试模式：开启后会注册 /test/serial 等调试用 HTTP 路由
+option(WASH_TEST_MODE "Build with test HTTP handlers (for integration test only)" OFF)
+if(WASH_TEST_MODE)
+    add_definitions(-DWASH_TEST_MODE)
+    message(STATUS "WASH_TEST_MODE enabled: /test/* routes will be registered")
+endif()
+
 file(GLOB_RECURSE SOURCES  src/*.cpp src/*.c  )
 
 # 合并重复的include路径（优化，不影响功能）

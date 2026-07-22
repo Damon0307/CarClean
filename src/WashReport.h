@@ -60,6 +60,13 @@ public:
     void StartReportingProcess();
     void SetPassJsonFunc(std::function<bool(json)> func);
 
+#ifdef WASH_TEST_MODE
+    // 测试模式：直接注入串口协议帧
+    void InjectSerialFrame(const std::deque<char> &frame);
+    // 测试模式：获取传感器内部状态
+    json GetSensorStatusJson();
+#endif
+
     void SetDLWashFunc(dl_report_wash_func_t func);
     void SetDLCarPassFunc(dl_report_car_pass_func_t func);
     void SetDLStatusFunc(dl_report_status_func_t func);

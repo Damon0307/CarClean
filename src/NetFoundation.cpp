@@ -23,6 +23,7 @@
 #include "spdlog/spdlog.h"
 #include "json.hpp"
 #include "NetFoundation.h"
+#include "WashReport.h"
 
 // NTP时间戳是从1900年1月1日开始的秒数
 #define NTP_TIMESTAMP_DELTA 2208988800ull
@@ -54,6 +55,10 @@ using namespace std;
 
 extern std::shared_ptr<spdlog::logger> g_console_logger;
 extern std::shared_ptr<spdlog::logger> g_file_logger;
+
+#ifdef WASH_TEST_MODE
+#include <deque>
+#endif
 
 bool updateConfigFile(const string &file_path, const string &new_content)
 {
@@ -155,6 +160,50 @@ void NetFoundation::RightSideAIIPCHandler(const Request& req, Response& res)
   GenericHandler(RIGHT_SIDE_AI, req, res);
 }
 
+#ifdef WASH_TEST_MODE
+void NetFoundation::SetupTestMode(WashReport *wash_report)
+{
+  m_wash_report = wash_report;
+  RegisterTestRoutes(*m_wash_report);
+}
+
+void NetFoundation::RegisterTestRoutes(WashReport &wash_report)
+{
+  // 串口协议帧注入：Body {"frame": [0x55, power_type, point_b_status, 0, 0, water_pump_status, crc_h, crc_l, 0xAA]}
+  mServer.Post("/test/serial", [&wash_report](const Request &req, Response &res) {
+    try
+    {
+      json body = json::parse(req.body);
+      if (!body.contains("frame") || !body["frame"].is_array())
+      {
+        res.status = 400;
+        res.set_content("Missing or invalid 'frame' array", "text/plain");
+        return;
+      }
+
+      std::deque<char> queue;
+      for (const auto &item : body["frame"])
+      {
+        queue.push_back(static_cast<char>(item.get<int>()) & 0xFF);
+      }
+
+      wash_report.InjectSerialFrame(queue);
+      res.set_content("ok", "text/plain");
+    }
+    catch (const std::exception &e)
+    {
+      res.status = 500;
+      res.set_content(std::string("Error: ") + e.what(), "text/plain");
+    }
+  });
+
+  // 查询内部传感器状态
+  mServer.Post("/test/status", [&wash_report](const Request &req, Response &res) {
+    res.set_content(wash_report.GetSensorStatusJson().dump(), "application/json");
+  });
+}
+#endif
+
 bool NetFoundation::PostDataToServer(json p_json)
 {
   httplib::Client cli(remote_server, remote_port);
@@ -207,6 +256,8 @@ void NetFoundation::StartServer()
   // 保留旧路由兼容 (roof_and_tail → 现在只处理tail)
   mServer.Post("/aiipc/roof_and_tail", [&](const Request &req, Response &res)
                { RoofAIIPCHandler(req, res); });
+
+
 
   // 修改配置文件
   mServer.Post("/update_def", [](const Request &req, Response &res)

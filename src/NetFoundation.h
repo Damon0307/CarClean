@@ -20,6 +20,11 @@
 #include "httplib.h"
 #include "json.hpp"
 
+#ifdef WASH_TEST_MODE
+// 前向声明，避免 NetFoundation.h 与 WashReport.h 双向 include
+class WashReport;
+#endif
+
 using json = nlohmann::json;
 using namespace httplib;
 
@@ -61,6 +66,11 @@ public:
     void ConfigRV1106IP(const std::string& ip);
     void SyncTimeWithNTP();
 
+#ifdef WASH_TEST_MODE
+    // 测试模式：设置 WashReport 指针并注册调试路由
+    void SetupTestMode(WashReport *wash_report);
+#endif
+
 private:
     // IPC handler keys
     enum HandlerKey {
@@ -98,6 +108,11 @@ private:
     std::string GetPhyIP(const std::string& interface);
 
     std::thread ip_check_thread;
+
+#ifdef WASH_TEST_MODE
+    WashReport *m_wash_report = nullptr;
+    void RegisterTestRoutes(WashReport &wash_report);
+#endif
 };
 
 #endif // __NETFOUNDATION_H__

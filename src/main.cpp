@@ -169,6 +169,11 @@ int main()
   // 传感器数据与摄像头数据处理线程
   std::thread reporter_thread(&WashReport::StartReportingProcess, uni_wash_report.get());
 
+#ifdef WASH_TEST_MODE
+  // 测试模式：注册 /test/serial 等调试路由
+  uni_net.get()->SetupTestMode(uni_wash_report.get());
+#endif
+
 #if 0
 
   // 每晚退出程序的检测线程 有其他系统脚本实现
