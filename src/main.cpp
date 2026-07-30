@@ -42,7 +42,7 @@ const char *RS232_CFG_FILE = "/rs232.json";
 const char *NET_CFG_FILE = "/net_cfg.json";
 const char *DEF_CFG_FILE = "/default_info.json";
 
-const char *version_str = "RV1106 Simple, 3 AI IPC (L/R wheel + tail), refactored"
+const char *version_str = "RV1106 Simple, 3 AI IPC (L/R wheel + tail), KIMI "
                           " | Build: " __DATE__ " " __TIME__;
 
 //当前启用3路AI: 左轮/右轮/车尾  (车身两侧暂时屏蔽)
